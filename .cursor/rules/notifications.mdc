@@ -1,0 +1,63 @@
+---
+alwaysApply: true
+---
+
+# Notifications Module Rules
+
+## Notification Entity
+
+Notification for users.
+
+## Notification Fields
+
+- `id` - Unique identifier
+- `userId` - User ID (foreign key to User)
+- `type` - Notification type
+- `title` - Title
+- `message` - Message text
+- `link` - Link to related resource (optional)
+- `read` - Whether notification is read
+- `createdAt` - Creation date
+
+## Notification Types
+
+- `new_proposal` - New proposal on request
+- `proposal_accepted` - Proposal was accepted
+- `proposal_rejected` - Proposal was rejected
+- `new_message` - New message received
+- `review_received` - Review received
+- `achievement_unlocked` - Achievement unlocked
+- `request_approved` - Request approved by admin
+- `request_rejected` - Request rejected by admin
+
+## Notification Endpoints
+
+- `GET /api/notifications` - Get notifications (with filters)
+- `PATCH /api/notifications/:id/read` - Mark as read
+- `PATCH /api/notifications/read-all` - Mark all as read
+
+## Notification Service
+
+- Create notifications for events
+- Deliver real-time via WebSocket or SSE
+- Mark notifications as read
+- Get unread count
+- Support pagination
+
+## Business Logic
+
+Notifications are created when:
+1. New proposal on request → notify buyer
+2. Proposal accepted → notify seller
+3. Proposal rejected → notify seller
+4. New message → notify receiver
+5. Review received → notify target user
+6. Achievement unlocked → notify user
+7. Request approved/rejected → notify buyer
+
+## Real-time Delivery
+
+- Use WebSocket or Server-Sent Events
+- Emit notification events to connected users
+- Store notifications in database for offline users
+- Show notification badge with unread count

@@ -1,0 +1,102 @@
+---
+alwaysApply: true
+---
+
+# DTO (Data Transfer Objects) Rules
+
+## General Rules
+
+1. **Use class-validator for validation**
+2. **Use class-transformer for transformation**
+3. **Create separate DTOs for:**
+   - Creation (Create*Dto)
+   - Update (Update*Dto)
+   - Query/Filter (Get*Dto)
+   - Response (Response*Dto - optional)
+
+## DTO Structure
+
+```typescript
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  Min,
+  Max,
+  IsEnum,
+  IsOptional,
+  IsArray,
+  MinLength,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class CreateRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(1)
+  title: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(10)
+  description: string;
+
+  @IsString()
+  @IsNotEmpty()
+  category: string;
+
+  @IsNumber()
+  @Type(() => Number)
+  @Min(0)
+  budgetMin: number;
+
+  @IsNumber()
+  @Type(() => Number)
+  @Min(0)
+  budgetMax: number;
+
+  @IsString()
+  @IsNotEmpty()
+  location: string;
+
+  @IsEnum(['Гнучко', 'Протягом тижня', '2-3 дні', 'Терміново'])
+  urgency: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  images?: string[];
+}
+```
+
+## Validation
+
+- Use `ValidationPipe` in `main.ts` or at controller level
+- Always validate input data
+- Provide clear error messages
+
+## Query DTOs
+
+For pagination and filtering:
+```typescript
+export class GetRequestsDto {
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(100)
+  pageSize?: number = 20;
+}
+```

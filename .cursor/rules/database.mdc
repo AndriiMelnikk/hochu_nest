@@ -1,0 +1,86 @@
+---
+alwaysApply: true
+---
+
+# Database Rules
+
+## TypeORM Entities
+
+1. **Use TypeORM for database operations**
+2. **Entities in `database/entities/` directory**
+3. **Use TypeORM decorators properly**
+
+## Entity Structure
+
+```typescript
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+@Entity('requests')
+export class Request {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar', length: 255 })
+  title: string;
+
+  @Column({ type: 'text' })
+  description: string;
+
+  @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'buyer_id' })
+  buyer: User;
+
+  @Column({ name: 'buyer_id' })
+  buyerId: number;
+
+  @Column({
+    type: 'enum',
+    enum: RequestStatus,
+    default: RequestStatus.PENDING,
+  })
+  status: RequestStatus;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+}
+```
+
+## Repository Pattern
+
+- Use Repository pattern for database access
+- Inject repositories using `@InjectRepository(Entity)`
+- Use query builder for complex queries
+
+## Migrations
+
+1. **Use TypeORM migrations**
+2. **Migrations in `database/migrations/` directory**
+3. **Migration naming: `YYYYMMDDHHMMSS-Description.ts`**
+4. **Always create migrations for entity changes**
+
+## Database Indexes
+
+Create indexes for:
+- `email` in users (unique)
+- `buyer_id`, `category`, `status`, `created_at` in requests
+- `request_id`, `seller_id`, `status` in proposals
+- `sender_id`, `receiver_id` in messages
+- FULLTEXT index on `title`, `description` in requests for search
+
+## Naming Conventions
+
+- Table names: snake_case (e.g., `service_requests`)
+- Column names: snake_case (e.g., `buyer_id`, `created_at`)
+- Entity class names: PascalCase (e.g., `Request`, `User`)

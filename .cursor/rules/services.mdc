@@ -1,0 +1,67 @@
+---
+alwaysApply: true
+---
+
+# Services Rules
+
+## General Rules
+
+1. **All business logic in services, not in controllers**
+2. **Services can depend on other services via dependency injection**
+3. **Use async/await for asynchronous operations**
+4. **Handle errors through exceptions (NotFoundException, BadRequestException, etc.)**
+5. **Services must be easily testable (dependency injection)**
+
+## Service Structure
+
+```typescript
+@Injectable()
+export class RequestsService {
+  constructor(
+    @InjectRepository(Request)
+    private requestsRepository: Repository<Request>,
+    private usersService: UsersService,
+    private xpService: XpService,
+    private notificationsService: NotificationsService,
+  ) {}
+
+  async create(
+    createRequestDto: CreateRequestDto,
+    buyerId: number,
+  ): Promise<Request> {
+    // Validation
+    // Create request
+    // Award XP
+    // Create notifications
+    // Return result
+  }
+}
+```
+
+## Error Handling
+
+- Use NestJS built-in exceptions:
+  - `NotFoundException` - Resource not found
+  - `BadRequestException` - Invalid input
+  - `UnauthorizedException` - Not authenticated
+  - `ForbiddenException` - Insufficient permissions
+  - `ConflictException` - Resource conflict
+
+## Transactions
+
+- Use transactions for complex operations:
+  - Accepting proposals (update statuses, award XP)
+  - Completing deals (update statistics, award XP)
+  - Leaving reviews (create review, update rating)
+
+```typescript
+await this.dataSource.transaction(async (manager) => {
+  // Multiple database operations
+});
+```
+
+## Service Dependencies
+
+- Inject repositories using `@InjectRepository(Entity)`
+- Inject other services via constructor
+- Never create instances manually, always use DI

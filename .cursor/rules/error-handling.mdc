@@ -1,0 +1,71 @@
+---
+alwaysApply: true
+---
+
+# Error Handling Rules
+
+## Exception Filters
+
+Use Exception Filters for centralized error handling:
+- Create global exception filter
+- Transform errors to consistent format
+- Log errors appropriately
+
+## Error Format
+
+```json
+{
+  "error": {
+    "message": "string",
+    "code": "string",
+    "details": "object (optional)"
+  }
+}
+```
+
+## Built-in Exceptions
+
+Use NestJS built-in exceptions:
+- `NotFoundException` - Resource not found
+- `BadRequestException` - Invalid input data
+- `UnauthorizedException` - Not authenticated
+- `ForbiddenException` - Insufficient permissions
+- `ConflictException` - Resource conflict
+- `UnprocessableEntityException` - Validation error
+
+## Custom Exceptions
+
+Create custom exceptions when needed:
+```typescript
+export class RequestNotFoundException extends NotFoundException {
+  constructor(id: number) {
+    super(`Request with ID ${id} not found`);
+  }
+}
+```
+
+## Error Handling in Services
+
+```typescript
+async findOne(id: number): Promise<Request> {
+  const request = await this.repository.findOne({ where: { id } });
+  
+  if (!request) {
+    throw new NotFoundException(`Request with ID ${id} not found`);
+  }
+  
+  return request;
+}
+```
+
+## Validation Errors
+
+- Use ValidationPipe for automatic validation
+- Return 422 Unprocessable Entity for validation errors
+- Include field-level error details
+
+## Logging
+
+- Use NestJS Logger for error logging
+- Log errors with context
+- Don't log sensitive information (passwords, tokens)

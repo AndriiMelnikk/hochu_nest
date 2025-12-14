@@ -1,0 +1,50 @@
+---
+alwaysApply: true
+---
+
+# File Upload Rules
+
+## Upload Endpoints
+
+- `POST /api/upload` - Upload image file
+
+## File Restrictions
+
+- **Maximum file size:** 10 MB
+- **Allowed formats:** JPEG, PNG, WebP
+- **Maximum count:** 5 images per request/proposal
+
+## Upload Service
+
+- Validate file type and size
+- Process and optimize images
+- Store in cloud storage (AWS S3, Cloudinary) or locally
+- Return URL of uploaded file
+- Handle upload errors gracefully
+
+## Validation
+
+- Use custom pipe for file validation
+- Check MIME type
+- Check file size
+- Validate image dimensions (optional)
+
+## Storage Strategy
+
+- Recommended: Cloud storage (AWS S3, Google Cloud Storage, Cloudinary)
+- Use CDN for fast image delivery
+- Generate unique filenames
+- Store file metadata in database
+
+## Implementation
+
+```typescript
+@Post('upload')
+@UseInterceptors(FileInterceptor('file'))
+@UsePipes(FileValidationPipe)
+async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  // Validate file
+  // Upload to storage
+  // Return URL
+}
+```

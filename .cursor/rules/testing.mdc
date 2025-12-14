@@ -1,0 +1,118 @@
+---
+alwaysApply: true
+---
+
+# Testing Rules
+
+## Test Coverage Requirements
+
+- **Minimum coverage: 80%**
+- **Required tests for:**
+  - All services (unit tests)
+  - All controllers (e2e tests for critical endpoints)
+  - Guards and interceptors
+  - Complex business processes (request → proposal → deal flow)
+
+## Test Structure
+
+- `*.spec.ts` - Unit tests (next to the file)
+- `*.e2e-spec.ts` - E2E tests (in `test/` directory or module)
+
+## Testing Tools
+
+- Use Jest and @nestjs/testing
+- Mock dependencies in unit tests
+- Use test database for e2e tests
+
+## Unit Test Example
+
+```typescript
+describe('RequestsService', () => {
+  let service: RequestsService;
+  let repository: Repository<Request>;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        RequestsService,
+        {
+          provide: getRepositoryToken(Request),
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
+            find: jest.fn(),
+            findOne: jest.fn(),
+          },
+        },
+        {
+          provide: UsersService,
+          useValue: {
+            findOne: jest.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<RequestsService>(RequestsService);
+    repository = module.get<Repository<Request>>(getRepositoryToken(Request));
+  });
+
+  it('should create a request', async () => {
+    // Arrange
+    const dto = { title: 'Test', description: 'Test description', ... };
+    const userId = 1;
+    
+    // Act
+    const result = await service.create(dto, userId);
+    
+    // Assert
+    expect(repository.create).toHaveBeenCalled();
+    expect(repository.save).toHaveBeenCalled();
+  });
+});
+```
+
+## E2E Test Example
+
+```typescript
+describe('RequestsController (e2e)', () => {
+  let app: INestApplication;
+  let authToken: string;
+
+  beforeAll(async () => {
+    const moduleFixture = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+    
+    // Get token for tests
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'test@example.com', password: 'password' });
+    authToken = response.body.access_token;
+  });
+
+  it('/api/requests (POST) should create request', () => {
+    return request(app.getHttpServer())
+      .post('/api/requests')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({ title: 'Test', ... })
+      .expect(201)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('id');
+        expect(res.body.title).toBe('Test');
+      });
+  });
+});
+```
+
+## Test Best Practices
+
+- Use AAA pattern (Arrange, Act, Assert)
+- Test one thing per test
+- Use descriptive test names
+- Mock external dependencies
+- Test error cases
+- Test edge cases

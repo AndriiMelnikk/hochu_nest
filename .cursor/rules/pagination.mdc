@@ -1,0 +1,96 @@
+---
+alwaysApply: true
+---
+
+# Pagination & Filtering Rules
+
+## Pagination
+
+All list endpoints must support pagination:
+- Query parameters: `page` (default: 1), `pageSize` (default: 20, max: 100)
+- Response format: `{ count, next, previous, results }`
+
+## Pagination DTO
+
+```typescript
+export class PaginationDto {
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(100)
+  pageSize?: number = 20;
+}
+```
+
+## Response Format
+
+```typescript
+{
+  count: 150,
+  next: "https://api.hochu.com/api/requests?page=2",
+  previous: null,
+  results: [...]
+}
+```
+
+## Filtering
+
+- Filter through query parameters in DTO
+- Support multiple filters simultaneously
+- Use TypeORM query builder for complex filters
+
+## Sorting
+
+Sorting through `sort` query parameter:
+- `sort=createdAt` - Sort by creation date (ASC)
+- `sort=-createdAt` - Sort by creation date (DESC)
+- `sort=price` - Sort by price (ASC)
+- `sort=-price` - Sort by price (DESC)
+- `sort=rating` - Sort by rating (ASC)
+- `sort=-rating` - Sort by rating (DESC)
+
+## Search
+
+- Full-text search on `title` and `description` fields
+- Use FULLTEXT index in MySQL/MariaDB
+- Or use Elasticsearch for complex cases
+
+## Implementation
+
+```typescript
+async findAll(dto: GetRequestsDto) {
+  const { page = 1, pageSize = 20, ...filters } = dto;
+  const skip = (page - 1) * pageSize;
+
+  const query = this.repository.createQueryBuilder('request');
+  
+  // Apply filters
+  if (filters.category) {
+    query.andWhere('request.category = :category', { category: filters.category });
+  }
+  
+  // Apply sorting
+  if (filters.sort) {
+    const order = filters.sort.startsWith('-') ? 'DESC' : 'ASC';
+    const field = filters.sort.replace('-', '');
+    query.orderBy(`request.${field}`, order);
+  }
+  
+  const [results, count] = await query
+    .skip(skip)
+    .take(pageSize)
+    .getManyAndCount();
+  
+  return {
+    count,
+    next: page * pageSize < count ? `?page=${page + 1}` : null,
+    previous: page > 1 ? `?page=${page - 1}` : null,
+    results,
+  };
+}
+```

@@ -1,0 +1,59 @@
+---
+alwaysApply: true
+---
+
+# Reviews Module Rules
+
+## Review Entity
+
+Review between users after deal completion.
+
+## Review Fields
+
+- `id` - Unique identifier
+- `userId` - ID of user who left review (foreign key to User)
+- `targetUserId` - ID of user being reviewed (foreign key to User)
+- `requestId` - Request ID (foreign key to Request, optional)
+- `proposalId` - Proposal ID (foreign key to Proposal, optional)
+- `rating` - Rating (1-5)
+- `comment` - Review text
+- `createdAt` - Creation date
+
+## Review Endpoints
+
+- `GET /api/reviews` - Get reviews (with filters)
+- `GET /api/reviews/:id` - Get review details
+- `POST /api/reviews` - Create review
+- `PATCH /api/reviews/:id` - Update review (author only)
+- `DELETE /api/reviews/:id` - Delete review (author only)
+- `GET /api/users/:id/reviews` - Get reviews about user
+
+## Review Service
+
+- Create review after deal completion
+- Update target user's rating and reviews count
+- Award XP:
+  - +5 XP to reviewer (buyer)
+  - +15 XP to seller if rating is 5★
+- Check for achievements after review
+- Calculate average rating for target user
+
+## Business Logic
+
+1. **Creation (transaction required):**
+   - Create review
+   - Update target user's rating (recalculate average)
+   - Increment target user's reviews count
+   - Award XP
+   - Check achievements
+
+2. **Rating Calculation:**
+   - Recalculate average rating: sum of all ratings / count
+   - Round to 2 decimal places
+
+## Validation
+
+- Rating: required, 1-5 integer
+- Comment: optional, max 1000 characters
+- Can only review after completed deal
+- Can only review once per deal

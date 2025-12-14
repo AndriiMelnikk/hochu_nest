@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+---
+
+# Messages Module Rules
+
+## Message Entity
+
+Message in chat between users.
+
+## Message Fields
+
+- `id` - Unique identifier
+- `senderId` - Sender ID (foreign key to User)
+- `receiverId` - Receiver ID (foreign key to User)
+- `requestId` - Related request ID (foreign key to Request, optional)
+- `proposalId` - Related proposal ID (foreign key to Proposal, optional)
+- `content` - Message text
+- `read` - Whether message is read
+- `createdAt` - Creation date
+
+## Message Endpoints
+
+- `GET /api/messages` - Get messages (with filters)
+- `POST /api/messages` - Send message
+- `PATCH /api/messages/:id/read` - Mark message as read
+- `GET /api/messages/conversations` - Get list of conversations
+
+## WebSocket Events
+
+**Client → Server:**
+- `message:send` - Send message
+- `message:read` - Mark as read
+- `typing:start` - Start typing indicator
+- `typing:stop` - Stop typing indicator
+
+**Server → Client:**
+- `message:new` - New message received
+- `message:read` - Message read confirmation
+- `typing` - User is typing
+- `user:online` - User came online
+- `user:offline` - User went offline
+
+## Message Service
+
+- Send message and save to database
+- Emit WebSocket event to receiver
+- Mark messages as read
+- Get conversation list with last message and unread count
+- Filter messages by request/proposal/user
+
+## Real-time Communication
+
+- Use Socket.io for WebSocket communication
+- Authenticate WebSocket connections with JWT
+- Create separate WebSocket gateway module
+- Handle connection/disconnection events
+- Support typing indicators
+
+## Business Logic
+
+1. **Sending message:**
+   - Save message to database
+   - Emit `message:new` event to receiver
+   - Create notification if receiver is offline
+
+2. **Reading message:**
+   - Update message `read` status
+   - Emit `message:read` event to sender
+
+3. **Conversations:**
+   - Group messages by sender/receiver pair
+   - Show last message and unread count
+   - Sort by last message date

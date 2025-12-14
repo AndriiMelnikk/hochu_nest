@@ -1,0 +1,82 @@
+---
+alwaysApply: true
+---
+
+# Proposals Module Rules
+
+## Proposal Entity
+
+Proposal from seller on buyer's request.
+
+## Proposal Fields
+
+- `id` - Unique identifier
+- `requestId` - Request ID (foreign key to Request)
+- `sellerId` - Seller ID (foreign key to User)
+- `price` - Proposed price (UAH)
+- `title` - Proposal title
+- `description` - Detailed service description
+- `estimatedTime` - Estimated completion time (1-2 days, week, etc.)
+- `warranty` - Warranty (1 month, 3 months, etc.)
+- `images` - Array of seller's work image URLs
+- `status` - Status (pending, accepted, rejected, completed)
+
+## Proposal Statuses
+
+- `pending` - Awaiting buyer's decision
+- `accepted` - Accepted by buyer
+- `rejected` - Rejected by buyer
+- `completed` - Deal completed
+
+## Proposal Endpoints
+
+- `GET /api/proposals/:id` - Get proposal details
+- `POST /api/requests/:id/proposals` - Create proposal (seller only)
+- `POST /api/proposals/:id/accept` - Accept proposal (buyer only)
+- `POST /api/proposals/:id/reject` - Reject proposal (buyer only)
+- `POST /api/proposals/:id/complete` - Complete deal (buyer only)
+- `GET /api/proposals/:id/comments` - Get comments on proposal
+- `POST /api/proposals/:id/comments` - Add comment to proposal
+
+## Proposal Service
+
+- Create proposal with status `pending`
+- Award +5 XP to seller on creation
+- Notify buyer when new proposal is created
+- Handle proposal acceptance:
+  - Update proposal status to `accepted`
+  - Update request status to `closed`
+  - Reject all other proposals for the request
+  - Award +20 XP to buyer, +25 XP to seller
+- Handle deal completion:
+  - Update proposal status to `completed`
+  - Update user statistics
+  - Award +30 XP to buyer, +50 XP to seller
+
+## Business Logic
+
+1. **Creation:**
+   - Seller creates proposal → status `pending`
+   - Increment `proposalsCount` on request
+   - Create notification for buyer
+
+2. **Acceptance (transaction required):**
+   - Update proposal status to `accepted`
+   - Update request status to `closed`
+   - Reject all other proposals
+   - Award XP to both users
+   - Create notifications
+
+3. **Completion:**
+   - Buyer marks deal as completed
+   - Update user statistics
+   - Award XP
+   - Enable review option
+
+## Validation
+
+- Price: min 0
+- Title: required, min 1 character
+- Description: required, min 10 characters
+- Estimated time: required
+- Images: max 5 images

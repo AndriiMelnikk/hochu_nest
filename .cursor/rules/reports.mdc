@@ -1,0 +1,60 @@
+---
+alwaysApply: true
+---
+
+# Reports Module Rules
+
+## Report Entity
+
+Report on content or users.
+
+## Report Fields
+
+- `id` - Unique identifier
+- `reporterId` - ID of user who submitted report (foreign key to User)
+- `targetType` - Target type (request, proposal, user, discussion)
+- `targetId` - ID of target object
+- `reason` - Reason (low-price, scam, inappropriate, spam, duplicate, other)
+- `details` - Additional details
+- `status` - Status (pending, reviewed, resolved, rejected)
+- `createdAt` - Creation date
+- `updatedAt` - Update date
+
+## Report Reasons
+
+- `low-price` - Suspiciously low price
+- `scam` - Scam or fraud
+- `inappropriate` - Inappropriate content
+- `spam` - Spam
+- `duplicate` - Duplicate content
+- `other` - Other reason
+
+## Report Statuses
+
+- `pending` - Awaiting review
+- `reviewed` - Under review
+- `resolved` - Resolved
+- `rejected` - Rejected (false report)
+
+## Report Endpoints
+
+- `POST /api/requests/:id/report` - Report request
+- `POST /api/proposals/:id/report` - Report proposal
+- `POST /api/users/:id/report` - Report user
+- `POST /api/discussions/:id/report` - Report discussion
+- `GET /api/admin/reports` - Get reports (admin only)
+- `PATCH /api/admin/reports/:id` - Update report status (admin only)
+
+## Report Service
+
+- Create reports on various content types
+- Track report status
+- Link reports to target objects
+- Admin can review and resolve reports
+
+## Business Logic
+
+- Users can report requests, proposals, users, or discussions
+- Reports are stored with target type and ID
+- Admin reviews reports and takes action
+- Track report history and resolution
