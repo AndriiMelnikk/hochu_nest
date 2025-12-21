@@ -1,0 +1,62 @@
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { DiscussionsService } from './discussions.service';
+import { CreateDiscussionDto } from './dto/create-discussion.dto';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+@ApiTags('Discussions')
+@Controller()
+export class DiscussionsController {
+  constructor(private readonly discussionsService: DiscussionsService) {}
+
+  @Post('requests/:requestId/discussions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add comment to request' })
+  async createForRequest(
+    @Param('requestId') requestId: string,
+    @Body() createDiscussionDto: CreateDiscussionDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.discussionsService.createForRequest(
+      requestId,
+      createDiscussionDto,
+      user.id,
+    );
+  }
+
+  @Get('requests/:requestId/discussions')
+  @ApiOperation({ summary: 'Get discussions for request' })
+  async findAllForRequest(@Param('requestId') requestId: string) {
+    return this.discussionsService.findAllForRequest(requestId);
+  }
+
+  @Post('proposals/:proposalId/comments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Add comment to proposal' })
+  async createForProposal(
+    @Param('proposalId') proposalId: string,
+    @Body() createDiscussionDto: CreateDiscussionDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.discussionsService.createForProposal(
+      proposalId,
+      createDiscussionDto,
+      user.id,
+    );
+  }
+
+  @Get('proposals/:proposalId/comments')
+  @ApiOperation({ summary: 'Get comments for proposal' })
+  async findAllForProposal(@Param('proposalId') proposalId: string) {
+    return this.discussionsService.findAllForProposal(proposalId);
+  }
+}
+

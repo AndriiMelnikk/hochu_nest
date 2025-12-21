@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
+manual: true
 ---
 
 # Swagger/OpenAPI Documentation Rules

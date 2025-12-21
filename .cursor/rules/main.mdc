@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+alwaysApply: false
+manual: true
 ---
 
 You are a senior backend developer working on Hochu - a marketplace for services (freelance platform).

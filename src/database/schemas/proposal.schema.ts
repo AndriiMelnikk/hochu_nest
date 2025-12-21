@@ -1,0 +1,59 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
+
+export type ProposalDocument = Proposal & Document;
+
+export enum ProposalStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  REJECTED = 'rejected',
+  COMPLETED = 'completed',
+}
+
+@Schema({ timestamps: true })
+export class Proposal {
+  _id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Request', required: true, index: true })
+  requestId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  sellerId: Types.ObjectId;
+
+  @Prop({ type: Number, required: true, min: 0 })
+  price: number;
+
+  @Prop({ required: true, trim: true })
+  title: string;
+
+  @Prop({ required: true })
+  description: string;
+
+  @Prop({ required: true })
+  estimatedTime: string;
+
+  @Prop({ default: null })
+  warranty: string;
+
+  @Prop({ type: [String], default: [] })
+  images: string[];
+
+  @Prop({
+    type: String,
+    enum: Object.values(ProposalStatus),
+    default: ProposalStatus.PENDING,
+    index: true,
+  })
+  status: ProposalStatus;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const ProposalSchema = SchemaFactory.createForClass(Proposal);
+
+// Indexes
+ProposalSchema.index({ requestId: 1 });
+ProposalSchema.index({ sellerId: 1 });
+ProposalSchema.index({ status: 1 });
+ProposalSchema.index({ createdAt: -1 });
