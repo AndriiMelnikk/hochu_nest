@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Husky
+.husky/_
+
+# Uploads
+uploads/
+
