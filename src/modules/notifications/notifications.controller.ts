@@ -15,6 +15,7 @@ import {
 import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -38,7 +39,10 @@ export class NotificationsController {
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark notification as read' })
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
-  async markAsRead(@Param('id') id: string, @CurrentUser() user: any) {
+  async markAsRead(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.notificationsService.markAsRead(id, user.id);
   }
 

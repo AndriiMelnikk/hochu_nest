@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Proposals')
 @Controller('proposals')
@@ -33,7 +34,7 @@ export class ProposalsController {
   @ApiParam({ name: 'requestId', description: 'Request ID' })
   @ApiResponse({ status: 201, description: 'Proposal created' })
   async create(
-    @Param('requestId') requestId: string,
+    @Param('requestId', ParseObjectIdPipe) requestId: string,
     @Body() createProposalDto: CreateProposalDto,
     @CurrentUser() user: any,
   ) {
@@ -44,7 +45,9 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Get proposals for request' })
   @ApiParam({ name: 'requestId', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'List of proposals' })
-  async findAllByRequest(@Param('requestId') requestId: string) {
+  async findAllByRequest(
+    @Param('requestId', ParseObjectIdPipe) requestId: string,
+  ) {
     return this.proposalsService.findAllByRequest(requestId);
   }
 
@@ -53,7 +56,7 @@ export class ProposalsController {
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal found' })
   @ApiResponse({ status: 404, description: 'Proposal not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.proposalsService.findOne(id);
   }
 
@@ -64,7 +67,10 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Accept proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal accepted' })
-  async accept(@Param('id') id: string, @CurrentUser() user: any) {
+  async accept(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.proposalsService.accept(id, user.id);
   }
 
@@ -75,7 +81,10 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Reject proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal rejected' })
-  async reject(@Param('id') id: string, @CurrentUser() user: any) {
+  async reject(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.proposalsService.reject(id, user.id);
   }
 
@@ -86,7 +95,10 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Complete deal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Deal completed' })
-  async complete(@Param('id') id: string, @CurrentUser() user: any) {
+  async complete(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.proposalsService.complete(id, user.id);
   }
 }

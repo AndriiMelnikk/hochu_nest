@@ -34,6 +34,11 @@ export class UsersService {
     return user;
   }
 
+  async findOnePublic(id: string) {
+    const user = await this.findOne(id);
+    return this.sanitizeUser(user);
+  }
+
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }

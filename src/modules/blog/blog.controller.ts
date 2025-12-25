@@ -20,6 +20,7 @@ import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Blog')
 @Controller('blog')
@@ -41,7 +42,7 @@ export class BlogController {
   @ApiOperation({ summary: 'Get blog post by ID' })
   @ApiResponse({ status: 200, description: 'Blog post found' })
   @ApiResponse({ status: 404, description: 'Blog post not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.blogService.findOne(id);
   }
 
@@ -62,7 +63,7 @@ export class BlogController {
   @ApiOperation({ summary: 'Update blog post (admin only)' })
   @ApiResponse({ status: 200, description: 'Blog post updated' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateDto: Partial<CreateBlogPostDto>,
   ) {
     return this.blogService.update(id, updateDto);
@@ -74,7 +75,7 @@ export class BlogController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete blog post (admin only)' })
   @ApiResponse({ status: 200, description: 'Blog post deleted' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ParseObjectIdPipe) id: string) {
     return this.blogService.remove(id);
   }
 }

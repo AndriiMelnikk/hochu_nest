@@ -17,6 +17,7 @@ import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -51,7 +52,7 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Get review by ID' })
   @ApiResponse({ status: 200, description: 'Review found' })
   @ApiResponse({ status: 404, description: 'Review not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.reviewsService.findOne(id);
   }
 }

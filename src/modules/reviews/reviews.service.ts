@@ -2,7 +2,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -59,7 +58,9 @@ export class ReviewsService {
         .exec();
 
       if (existingReview) {
-        throw new BadRequestException('Review already exists for this proposal');
+        throw new BadRequestException(
+          'Review already exists for this proposal',
+        );
       }
     }
 
@@ -111,22 +112,22 @@ export class ReviewsService {
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: any = {};
+    const query: Record<string, any> = {};
     if (targetUserId) {
       query.targetUserId = new Types.ObjectId(targetUserId);
     }
 
-    const [results, count] = await Promise.all([
-      this.reviewModel
-        .find(query)
-        .populate('userId', 'name avatar')
-        .populate('targetUserId', 'name avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(normalizedPageSize)
-        .exec(),
-      this.reviewModel.countDocuments(query).exec(),
-    ]);
+    const results = await this.reviewModel
+      .find(query)
+      .populate('userId', 'name avatar')
+      .populate('targetUserId', 'name avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedPageSize)
+      .lean()
+      .exec();
+
+    const count = await this.reviewModel.countDocuments(query).exec();
 
     return PaginationUtil.createPaginationResult(
       results,
@@ -161,16 +162,21 @@ export class ReviewsService {
       return;
     }
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
-    const averageRating = Math.round((totalRating / reviews.length) * 100) / 100;
+    let totalRating = 0;
+    for (const review of reviews) {
+      totalRating += review.rating;
+    }
+    const averageRating =
+      Math.round((totalRating / reviews.length) * 100) / 100;
 
-    await this.userModel.updateOne(
-      { _id: userId },
-      {
-        rating: averageRating,
-        reviewsCount: reviews.length,
-      },
-    ).exec();
+    await this.userModel
+      .updateOne(
+        { _id: userId },
+        {
+          rating: averageRating,
+          reviewsCount: reviews.length,
+        },
+      )
+      .exec();
   }
 }
-

@@ -18,6 +18,7 @@ import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Messages')
 @Controller('messages')
@@ -67,7 +68,10 @@ export class MessagesController {
   @Patch(':id/read')
   @ApiOperation({ summary: 'Mark message as read' })
   @ApiResponse({ status: 200, description: 'Message marked as read' })
-  async markAsRead(@Param('id') id: string, @CurrentUser() user: any) {
+  async markAsRead(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.messagesService.markAsRead(id, user.id);
   }
 }

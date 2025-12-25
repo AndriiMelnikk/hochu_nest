@@ -39,15 +39,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
       code = exception.name;
     }
 
-    const errorResponse = {
+    const errorResponse: {
+      error: {
+        message: string;
+        code: string;
+        details?: any;
+      };
+    } = {
       error: {
         message,
         code,
-        ...(details && { details }),
-        timestamp: new Date().toISOString(),
-        path: request.url,
       },
     };
+
+    if (details) {
+      errorResponse.error.details = details;
+    }
 
     this.logger.error(
       `${request.method} ${request.url} - ${status} - ${message}`,

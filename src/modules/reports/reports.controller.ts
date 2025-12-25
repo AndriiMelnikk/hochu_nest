@@ -9,6 +9,7 @@ import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Reports')
 @Controller()
@@ -20,7 +21,7 @@ export class ReportsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Report request' })
   async reportRequest(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
     @CurrentUser() user: any,
   ) {
@@ -39,7 +40,7 @@ export class ReportsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Report proposal' })
   async reportProposal(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
     @CurrentUser() user: any,
   ) {

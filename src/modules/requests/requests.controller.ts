@@ -24,6 +24,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Requests')
 @Controller('requests')
@@ -56,7 +57,7 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request found' })
   @ApiResponse({ status: 404, description: 'Request not found' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.requestsService.findOne(id);
   }
 
@@ -68,7 +69,7 @@ export class RequestsController {
   @ApiResponse({ status: 200, description: 'Request updated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateRequestDto: UpdateRequestDto,
     @CurrentUser() user: any,
   ) {
@@ -82,7 +83,10 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request deleted' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  async remove(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: any,
+  ) {
     return this.requestsService.remove(id, user.id);
   }
 }

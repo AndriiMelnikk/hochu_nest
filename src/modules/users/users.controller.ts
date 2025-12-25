@@ -19,6 +19,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersDto } from './dto/get-users.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Users')
 @Controller('users')
@@ -51,18 +52,15 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User found' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOne(id);
-    const userObj = user.toObject();
-    delete userObj.password;
-    return userObj;
+  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
+    return this.usersService.findOnePublic(id);
   }
 
   @Get(':id/stats')
   @ApiOperation({ summary: 'Get user statistics' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User statistics' })
-  async getStats(@Param('id') id: string) {
+  async getStats(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usersService.getUserStats(id);
   }
 
@@ -70,7 +68,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user achievements' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User achievements' })
-  async getAchievements(@Param('id') id: string) {
+  async getAchievements(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usersService.getUserAchievements(id);
   }
 
@@ -79,7 +77,7 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User requests' })
   async getRequests(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Query('status') status?: string,
   ) {
     return this.usersService.getUserRequests(id, status);
@@ -90,7 +88,7 @@ export class UsersController {
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User proposals' })
   async getProposals(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Query('status') status?: string,
   ) {
     return this.usersService.getUserProposals(id, status);
@@ -100,7 +98,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get reviews about user' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User reviews' })
-  async getReviews(@Param('id') id: string) {
+  async getReviews(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usersService.getUserReviews(id);
   }
 }

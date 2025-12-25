@@ -17,6 +17,7 @@ import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -44,14 +45,14 @@ export class AdminController {
 
   @Post('requests/:id/approve')
   @ApiOperation({ summary: 'Approve request' })
-  async approveRequest(@Param('id') id: string) {
+  async approveRequest(@Param('id', ParseObjectIdPipe) id: string) {
     return this.adminService.approveRequest(id);
   }
 
   @Post('requests/:id/reject')
   @ApiOperation({ summary: 'Reject request' })
   async rejectRequest(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() body: { reason: string },
   ) {
     return this.adminService.rejectRequest(id, body.reason);
@@ -68,14 +69,14 @@ export class AdminController {
 
   @Post('proposals/:id/approve')
   @ApiOperation({ summary: 'Approve proposal' })
-  async approveProposal(@Param('id') id: string) {
+  async approveProposal(@Param('id', ParseObjectIdPipe) id: string) {
     return this.adminService.approveProposal(id);
   }
 
   @Post('proposals/:id/reject')
   @ApiOperation({ summary: 'Reject proposal' })
   async rejectProposal(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() body: { reason: string },
   ) {
     return this.adminService.rejectProposal(id, body.reason);
@@ -103,7 +104,7 @@ export class AdminController {
   @Post('reports/:id/update-status')
   @ApiOperation({ summary: 'Update report status' })
   async updateReportStatus(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() body: { status: string },
   ) {
     return this.adminService.updateReportStatus(id, body.status as any);
@@ -112,7 +113,7 @@ export class AdminController {
   @Post('users/:id/block')
   @ApiOperation({ summary: 'Block user' })
   async blockUser(
-    @Param('id') id: string,
+    @Param('id', ParseObjectIdPipe) id: string,
     @Body() body: { reason: string; duration: string },
   ) {
     return this.adminService.blockUser(id, body.reason, body.duration);
@@ -120,7 +121,7 @@ export class AdminController {
 
   @Post('users/:id/unblock')
   @ApiOperation({ summary: 'Unblock user' })
-  async unblockUser(@Param('id') id: string) {
+  async unblockUser(@Param('id', ParseObjectIdPipe) id: string) {
     return this.adminService.unblockUser(id);
   }
 }
