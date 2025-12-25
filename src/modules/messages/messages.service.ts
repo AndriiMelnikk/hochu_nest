@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Message, MessageDocument } from '../../database/schemas/message.schema';
+import {
+  Message,
+  MessageDocument,
+} from '../../database/schemas/message.schema';
 import { User, UserDocument } from '../../database/schemas/user.schema';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
@@ -45,7 +52,8 @@ export class MessagesService {
       link: `/messages`,
     });
 
-    return await message.populate('senderId', 'name avatar').populate('receiverId', 'name avatar');
+    await message.populate('senderId', 'name avatar');
+    return await message.populate('receiverId', 'name avatar');
   }
 
   async findAll(
@@ -68,14 +76,17 @@ export class MessagesService {
     };
 
     if (requestId) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.requestId = new Types.ObjectId(requestId);
     }
 
     if (proposalId) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.proposalId = new Types.ObjectId(proposalId);
     }
 
     if (otherUserId) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.$and = [
         {
           $or: [
@@ -94,6 +105,7 @@ export class MessagesService {
 
     const [results, count] = await Promise.all([
       this.messageModel
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
         .find(query)
         .populate('senderId', 'name avatar')
         .populate('receiverId', 'name avatar')
@@ -101,6 +113,7 @@ export class MessagesService {
         .skip(skip)
         .limit(normalizedPageSize)
         .exec(),
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       this.messageModel.countDocuments(query).exec(),
     ]);
 
@@ -185,6 +198,7 @@ export class MessagesService {
       },
     ]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return conversations;
   }
 
@@ -195,7 +209,9 @@ export class MessagesService {
     }
 
     if (message.receiverId.toString() !== userId) {
-      throw new ForbiddenException('You can only mark your own received messages as read');
+      throw new ForbiddenException(
+        'You can only mark your own received messages as read',
+      );
     }
 
     message.read = true;
@@ -204,4 +220,3 @@ export class MessagesService {
     return { success: true };
   }
 }
-

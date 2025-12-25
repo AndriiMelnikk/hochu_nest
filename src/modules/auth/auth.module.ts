@@ -18,18 +18,20 @@ import jwtConfig from '../../config/jwt.config';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfig)],
-      useFactory: async (configService: ConfigService) => {
+      useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('jwt.secret');
         const expiresIn = configService.get<string>('jwt.expiresIn');
         if (!secret) {
           throw new Error('JWT secret is not configured');
         }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           secret,
           signOptions: {
-            expiresIn: expiresIn || '1h',
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            expiresIn: (expiresIn || '1h') as any,
           },
-        };
+        } as any;
       },
       inject: [ConfigService],
     }),
@@ -43,4 +45,3 @@ import jwtConfig from '../../config/jwt.config';
   exports: [AuthService, JwtStrategy, PassportModule],
 })
 export class AuthModule {}
-

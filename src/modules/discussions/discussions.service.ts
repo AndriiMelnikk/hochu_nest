@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -29,7 +29,8 @@ export class DiscussionsService {
     });
 
     await discussion.save();
-    return await discussion.populate('userId', 'name avatar').populate('replyToId');
+    await discussion.populate('userId', 'name avatar');
+    return await discussion.populate('replyToId');
   }
 
   async createForProposal(
@@ -47,7 +48,8 @@ export class DiscussionsService {
     });
 
     await discussion.save();
-    return await discussion.populate('userId', 'name avatar').populate('replyToId');
+    await discussion.populate('userId', 'name avatar');
+    return await discussion.populate('replyToId');
   }
 
   async findAllForRequest(requestId: string) {
@@ -68,4 +70,3 @@ export class DiscussionsService {
       .exec();
   }
 }
-
