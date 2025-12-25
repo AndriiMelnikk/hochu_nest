@@ -5,9 +5,11 @@ manual: true
 
 # Error Handling Rules
 
+**Note:** This rule provides specific guidance for error handling. For architectural error handling principles, see `nestjs-architecture.mdc` section 5.
+
 ## Exception Filters
 
-Use Exception Filters for centralized error handling:
+Use Exception Filters for centralized error handling (see `nestjs-architecture.mdc` section 5):
 - Create global exception filter
 - Transform errors to consistent format
 - Log errors appropriately
@@ -39,7 +41,7 @@ Use NestJS built-in exceptions:
 Create custom exceptions when needed:
 ```typescript
 export class RequestNotFoundException extends NotFoundException {
-  constructor(id: number) {
+  constructor(id: string) {
     super(`Request with ID ${id} not found`);
   }
 }
@@ -48,8 +50,8 @@ export class RequestNotFoundException extends NotFoundException {
 ## Error Handling in Services
 
 ```typescript
-async findOne(id: number): Promise<Request> {
-  const request = await this.repository.findOne({ where: { id } });
+async findOne(id: string): Promise<RequestDocument> {
+  const request = await this.requestModel.findById(id).exec();
   
   if (!request) {
     throw new NotFoundException(`Request with ID ${id} not found`);

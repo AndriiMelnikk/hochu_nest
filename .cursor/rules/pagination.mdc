@@ -5,6 +5,8 @@ manual: true
 
 # Pagination & Filtering Rules
 
+**Note:** This rule provides specific pagination patterns. All implementations must follow `nestjs-architecture.mdc` section 6 for data access patterns.
+
 ## Pagination
 
 All list endpoints must support pagination:
@@ -43,7 +45,7 @@ export class PaginationDto {
 
 - Filter through query parameters in DTO
 - Support multiple filters simultaneously
-- Use TypeORM query builder for complex filters
+- Use Mongoose query methods for filtering
 
 ## Sorting
 
@@ -57,41 +59,55 @@ Sorting through `sort` query parameter:
 
 ## Search
 
-- Full-text search on `title` and `description` fields
-- Use FULLTEXT index in MySQL/MariaDB
-- Or use Elasticsearch for complex cases
+- Text search on `title` and `description` fields using MongoDB text indexes
+- Use `$text` operator for text search
+- Create text indexes: `Schema.index({ title: 'text', description: 'text' })`
+- For complex cases, consider Elasticsearch or Atlas Search
 
 ## Implementation
 
 ```typescript
 async findAll(dto: GetRequestsDto) {
-  const { page = 1, pageSize = 20, ...filters } = dto;
-  const skip = (page - 1) * pageSize;
+  const page = PaginationUtil.normalizePage(dto.page);
+  const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
+  const skip = PaginationUtil.getSkip(page, pageSize);
 
-  const query = this.repository.createQueryBuilder('request');
+  const query: any = {};
   
   // Apply filters
-  if (filters.category) {
-    query.andWhere('request.category = :category', { category: filters.category });
+  if (dto.category) {
+    query.category = dto.category;
   }
   
-  // Apply sorting
-  if (filters.sort) {
-    const order = filters.sort.startsWith('-') ? 'DESC' : 'ASC';
-    const field = filters.sort.replace('-', '');
-    query.orderBy(`request.${field}`, order);
+  if (dto.search) {
+    query.$text = { $search: dto.search };
   }
   
-  const [results, count] = await query
-    .skip(skip)
-    .take(pageSize)
-    .getManyAndCount();
+  // Build sort object
+  let sort: any = { createdAt: -1 };
+  if (dto.sort) {
+    const order = dto.sort.startsWith('-') ? -1 : 1;
+    const field = dto.sort.replace('-', '');
+    sort = { [field]: order };
+  }
   
-  return {
-    count,
-    next: page * pageSize < count ? `?page=${page + 1}` : null,
-    previous: page > 1 ? `?page=${page - 1}` : null,
+  const [results, count] = await Promise.all([
+    this.requestModel
+      .find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize)
+      .exec(),
+    this.requestModel.countDocuments(query).exec(),
+  ]);
+  
+  return PaginationUtil.createPaginationResult(
     results,
-  };
+    count,
+    page,
+    pageSize,
+    '/api/requests',
+    dto,
+  );
 }
 ```

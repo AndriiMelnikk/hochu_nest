@@ -5,6 +5,8 @@ manual: true
 
 # Swagger/OpenAPI Documentation Rules
 
+**Note:** This rule provides specific guidance for API documentation. Controllers must follow `nestjs-architecture.mdc` section 2.
+
 ## Setup
 
 - Use @nestjs/swagger for API documentation
@@ -19,7 +21,7 @@ Add decorators for API documentation:
 - `@ApiResponse({ status: 200, description: 'Success' })` - Response documentation
 - `@ApiBearerAuth()` - For protected endpoints
 - `@ApiBody({ type: CreateRequestDto })` - Request body documentation
-- `@ApiParam({ name: 'id', type: 'number' })` - Path parameter documentation
+- `@ApiParam({ name: 'id', type: 'string' })` - Path parameter documentation (MongoDB ObjectId as string)
 - `@ApiQuery({ name: 'page', required: false })` - Query parameter documentation
 
 ## Example

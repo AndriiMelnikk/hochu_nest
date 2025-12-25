@@ -5,11 +5,13 @@ manual: true
 
 # Testing Rules
 
+**Note:** This rule provides specific testing guidance. For architectural testability requirements, see `nestjs-architecture.mdc` section 8.
+
 ## Test Coverage Requirements
 
 - **Minimum coverage: 80%**
 - **Required tests for:**
-  - All services (unit tests)
+  - All services (unit tests) - must be testable without database (see `nestjs-architecture.mdc` section 8)
   - All controllers (e2e tests for critical endpoints)
   - Guards and interceptors
   - Complex business processes (request → proposal → deal flow)
@@ -28,21 +30,42 @@ manual: true
 ## Unit Test Example
 
 ```typescript
+import { Test } from '@nestjs/testing';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { RequestsService } from './requests.service';
+import { Request, RequestDocument } from '../../database/schemas/request.schema';
+
 describe('RequestsService', () => {
   let service: RequestsService;
-  let repository: Repository<Request>;
+  let requestModel: Model<RequestDocument>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         RequestsService,
         {
-          provide: getRepositoryToken(Request),
+          provide: getModelToken(Request.name),
           useValue: {
             create: jest.fn(),
-            save: jest.fn(),
-            find: jest.fn(),
-            findOne: jest.fn(),
+            find: jest.fn().mockReturnValue({
+              sort: jest.fn().mockReturnValue({
+                skip: jest.fn().mockReturnValue({
+                  limit: jest.fn().mockReturnValue({
+                    exec: jest.fn(),
+                  }),
+                }),
+              }),
+            }),
+            findOne: jest.fn().mockReturnValue({
+              exec: jest.fn(),
+            }),
+            findById: jest.fn().mockReturnValue({
+              exec: jest.fn(),
+            }),
+            countDocuments: jest.fn().mockReturnValue({
+              exec: jest.fn(),
+            }),
           },
         },
         {
@@ -55,20 +78,22 @@ describe('RequestsService', () => {
     }).compile();
 
     service = module.get<RequestsService>(RequestsService);
-    repository = module.get<Repository<Request>>(getRepositoryToken(Request));
+    requestModel = module.get<Model<RequestDocument>>(getModelToken(Request.name));
   });
 
   it('should create a request', async () => {
     // Arrange
     const dto = { title: 'Test', description: 'Test description', ... };
-    const userId = 1;
+    const userId = '507f1f77bcf86cd799439011';
+    const mockRequest = { _id: userId, ...dto, save: jest.fn() };
+    
+    jest.spyOn(requestModel, 'create').mockResolvedValue(mockRequest as any);
     
     // Act
     const result = await service.create(dto, userId);
     
     // Assert
-    expect(repository.create).toHaveBeenCalled();
-    expect(repository.save).toHaveBeenCalled();
+    expect(requestModel.create).toHaveBeenCalled();
   });
 });
 ```
@@ -102,7 +127,7 @@ describe('RequestsController (e2e)', () => {
       .send({ title: 'Test', ... })
       .expect(201)
       .expect((res) => {
-        expect(res.body).toHaveProperty('id');
+        expect(res.body).toHaveProperty('_id');
         expect(res.body.title).toBe('Test');
       });
   });

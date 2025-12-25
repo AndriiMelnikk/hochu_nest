@@ -5,10 +5,12 @@ manual: true
 
 # DTO (Data Transfer Objects) Rules
 
+**Note:** This rule provides specific guidance for DTOs. For validation principles, see `nestjs-architecture.mdc` section 5.
+
 ## General Rules
 
-1. **Use class-validator for validation**
-2. **Use class-transformer for transformation**
+1. **Use class-validator for validation** (see `nestjs-architecture.mdc` section 5)
+2. **Use class-transformer for transformation** (see `nestjs-architecture.mdc` section 5)
 3. **Create separate DTOs for:**
    - Creation (Create*Dto)
    - Update (Update*Dto)

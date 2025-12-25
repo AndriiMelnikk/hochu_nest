@@ -5,12 +5,14 @@ manual: true
 
 # Controllers Rules
 
+**Note:** This rule provides specific guidance for controllers. It complements the architectural principles in `nestjs-architecture.mdc` (always applied).
+
 ## General Rules
 
-1. **Controllers only handle HTTP requests, no business logic**
-2. **All business logic must be in services**
+1. **Controllers only handle HTTP requests, no business logic** (see `nestjs-architecture.mdc` section 2)
+2. **All business logic must be in services** (see `nestjs-architecture.mdc` section 2)
 3. **Use NestJS decorators properly**
-4. **All endpoints must have corresponding DTOs for validation**
+4. **All endpoints must have corresponding DTOs for validation** (see `nestjs-architecture.mdc` section 5)
 
 ## Decorators Usage
 
@@ -31,8 +33,9 @@ export class RequestsController {
   @Roles('buyer')
   async create(
     @Body() createRequestDto: CreateRequestDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
   ) {
+    // user.id is already a string (from JWT strategy)
     return this.requestsService.create(createRequestDto, user.id);
   }
 }

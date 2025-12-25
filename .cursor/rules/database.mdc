@@ -5,83 +5,128 @@ manual: true
 
 # Database Rules
 
-## TypeORM Entities
+**Note:** This rule provides specific guidance for MongoDB/Mongoose. It complements the architectural principles in `nestjs-architecture.mdc` (always applied). For detailed schema and model patterns, see `nestjs-architecture.mdc` section 10.
 
-1. **Use TypeORM for database operations**
-2. **Entities in `database/entities/` directory**
-3. **Use TypeORM decorators properly**
+## MongoDB with Mongoose
 
-## Entity Structure
+1. **Use MongoDB with Mongoose for database operations**
+2. **Schemas in `database/schemas/` directory** (see `nestjs-architecture.mdc` section 1)
+3. **Use Mongoose decorators from @nestjs/mongoose** (see `nestjs-architecture.mdc` section 10)
+
+## Schema Structure
 
 ```typescript
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Types } from 'mongoose';
 
-@Entity('requests')
+export type RequestDocument = Request & Document;
+
+export enum RequestStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+  CLOSED = 'closed',
+}
+
+@Schema({ timestamps: true })
 export class Request {
-  @PrimaryGeneratedColumn()
-  id: number;
+  _id: Types.ObjectId;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Prop({ required: true, trim: true, index: 'text' })
   title: string;
 
-  @Column({ type: 'text' })
+  @Prop({ required: true, index: 'text' })
   description: string;
 
-  @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'buyer_id' })
-  buyer: User;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  buyerId: Types.ObjectId;
 
-  @Column({ name: 'buyer_id' })
-  buyerId: number;
-
-  @Column({
-    type: 'enum',
-    enum: RequestStatus,
+  @Prop({
+    type: String,
+    enum: Object.values(RequestStatus),
     default: RequestStatus.PENDING,
+    index: true,
   })
   status: RequestStatus;
 
-  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
+}
+
+export const RequestSchema = SchemaFactory.createForClass(Request);
+
+// Indexes
+RequestSchema.index({ buyerId: 1 });
+RequestSchema.index({ status: 1 });
+RequestSchema.index({ createdAt: -1 });
+RequestSchema.index({ title: 'text', description: 'text' });
+```
+
+## Schema Registration in Modules
+
+Register schemas in modules using `MongooseModule.forFeature()`:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Request, RequestSchema } from '../../database/schemas/request.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Request.name, schema: RequestSchema },
+    ]),
+  ],
+  // ...
+})
+export class RequestsModule {}
+```
+
+## Model Injection Pattern
+
+- Use Mongoose models for database access
+- Inject models using `@InjectModel(Schema.name)`
+- Models are injected as `Model<SchemaDocument>`
+- Always register schemas in the module before injecting
+
+```typescript
+@Injectable()
+export class RequestsService {
+  constructor(
+    @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+  ) {}
 }
 ```
 
-## Repository Pattern
-
-- Use Repository pattern for database access
-- Inject repositories using `@InjectRepository(Entity)`
-- Use query builder for complex queries
-
-## Migrations
-
-1. **Use TypeORM migrations**
-2. **Migrations in `database/migrations/` directory**
-3. **Migration naming: `YYYYMMDDHHMMSS-Description.ts`**
-4. **Always create migrations for entity changes**
-
 ## Database Indexes
 
-Create indexes for:
+Create indexes in schema definition or after schema creation:
 - `email` in users (unique)
-- `buyer_id`, `category`, `status`, `created_at` in requests
-- `request_id`, `seller_id`, `status` in proposals
-- `sender_id`, `receiver_id` in messages
-- FULLTEXT index on `title`, `description` in requests for search
+- `buyerId`, `category`, `status`, `createdAt` in requests
+- `requestId`, `sellerId`, `status` in proposals
+- `senderId`, `receiverId` in messages
+- Text index on `title`, `description` in requests for search
+
+```typescript
+// In schema definition
+@Prop({ required: true, unique: true, index: true })
+email: string;
+
+// After schema creation
+Schema.index({ field: 1 }); // ascending
+Schema.index({ field: -1 }); // descending
+Schema.index({ field1: 1, field2: -1 }); // compound
+Schema.index({ title: 'text', description: 'text' }); // text search
+```
+
+## ObjectId Usage
+
+- Use `Types.ObjectId` for references and IDs
+- IDs can be stored as `Types.ObjectId` or converted to `string`
+- Use `new Types.ObjectId(id)` to convert string to ObjectId
 
 ## Naming Conventions
 
-- Table names: snake_case (e.g., `service_requests`)
-- Column names: snake_case (e.g., `buyer_id`, `created_at`)
-- Entity class names: PascalCase (e.g., `Request`, `User`)
+- Collection names: Mongoose automatically pluralizes (User → users)
+- Field names: camelCase (e.g., `buyerId`, `createdAt`)
+- Schema class names: PascalCase (e.g., `Request`, `User`)
+- Document types: `SchemaDocument` (e.g., `RequestDocument`)
