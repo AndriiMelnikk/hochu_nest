@@ -4,10 +4,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { User, UserSchema } from '../../database/schemas/user.schema';
 import { Request, RequestSchema } from '../../database/schemas/request.schema';
-import {
-  Proposal,
-  ProposalSchema,
-} from '../../database/schemas/proposal.schema';
+import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { Report, ReportSchema } from '../../database/schemas/report.schema';
 
 @Module({
@@ -24,4 +21,3 @@ import { Report, ReportSchema } from '../../database/schemas/report.schema';
   exports: [AdminService],
 })
 export class AdminModule {}
-

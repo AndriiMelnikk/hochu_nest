@@ -37,4 +37,3 @@ export class CreateBlogPostDto {
   @IsOptional()
   published?: boolean;
 }
-

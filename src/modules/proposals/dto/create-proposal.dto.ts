@@ -49,4 +49,3 @@ export class CreateProposalDto {
   @ArrayMaxSize(5)
   images?: string[];
 }
-

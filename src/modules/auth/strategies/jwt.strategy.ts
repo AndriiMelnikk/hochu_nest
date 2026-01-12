@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: { sub: string }) {
     const user = await this.userModel.findById(payload.sub).exec();
     if (!user || user.isBlocked) {
       throw new UnauthorizedException('User not found or blocked');
@@ -35,4 +35,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
-

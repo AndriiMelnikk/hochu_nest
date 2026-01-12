@@ -1,10 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsMongoId,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsMongoId } from 'class-validator';
 
 export class CreateMessageDto {
   @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Receiver ID' })
@@ -27,4 +22,3 @@ export class CreateMessageDto {
   @IsOptional()
   proposalId?: string;
 }
-

@@ -1,25 +1,11 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Param,
-  Body,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { GetUsersDto } from './dto/get-users.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Users')
 @Controller('users')
@@ -31,8 +17,8 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
-  async getMe(@CurrentUser() user: any) {
-    return this.usersService.findMe(user.id);
+  async getMe(@CurrentUser() user: userSchema.UserDocument) {
+    return this.usersService.findMe(user._id.toString());
   }
 
   @Patch('me')
@@ -41,10 +27,10 @@ export class UsersController {
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'User profile updated' })
   async updateMe(
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.updateMe(user.id, updateUserDto);
+    return this.usersService.updateMe(user._id.toString(), updateUserDto);
   }
 
   @Get(':id')
@@ -76,10 +62,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user requests' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User requests' })
-  async getRequests(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @Query('status') status?: string,
-  ) {
+  async getRequests(@Param('id', ParseObjectIdPipe) id: string, @Query('status') status?: string) {
     return this.usersService.getUserRequests(id, status);
   }
 
@@ -87,10 +70,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get user proposals' })
   @ApiParam({ name: 'id', description: 'User ID' })
   @ApiResponse({ status: 200, description: 'User proposals' })
-  async getProposals(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @Query('status') status?: string,
-  ) {
+  async getProposals(@Param('id', ParseObjectIdPipe) id: string, @Query('status') status?: string) {
     return this.usersService.getUserProposals(id, status);
   }
 
@@ -102,4 +82,3 @@ export class UsersController {
     return this.usersService.getUserReviews(id);
   }
 }
-

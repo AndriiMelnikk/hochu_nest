@@ -4,10 +4,7 @@ import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { User, UserSchema } from '../../database/schemas/user.schema';
 import { Request, RequestSchema } from '../../database/schemas/request.schema';
-import {
-  Proposal,
-  ProposalSchema,
-} from '../../database/schemas/proposal.schema';
+import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { Review, ReviewSchema } from '../../database/schemas/review.schema';
 import { AchievementsModule } from '../achievements/achievements.module';
 

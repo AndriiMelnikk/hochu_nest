@@ -1,18 +1,11 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../../database/schemas/user.schema';
-import {
-  RefreshToken,
-  RefreshTokenDocument,
-} from '../../database/schemas/refresh-token.schema';
+import { RefreshToken, RefreshTokenDocument } from '../../database/schemas/refresh-token.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -91,9 +84,7 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     // Find refresh token
-    const tokenDoc = await this.refreshTokenModel
-      .findOne({ token: refreshToken })
-      .exec();
+    const tokenDoc = await this.refreshTokenModel.findOne({ token: refreshToken }).exec();
 
     if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -119,9 +110,7 @@ export class AuthService {
 
   async logout(userId: string, refreshToken?: string) {
     if (refreshToken) {
-      await this.refreshTokenModel
-        .deleteOne({ token: refreshToken, userId })
-        .exec();
+      await this.refreshTokenModel.deleteOne({ token: refreshToken, userId }).exec();
     }
     return { success: true };
   }
@@ -131,8 +120,7 @@ export class AuthService {
 
     const expiresIn = this.configService.get<string>('jwt.expiresIn') || '1h';
     const refreshSecret = this.configService.get<string>('jwt.refreshSecret');
-    const refreshExpiresIn =
-      this.configService.get<string>('jwt.refreshExpiresIn') || '7d';
+    const refreshExpiresIn = this.configService.get<string>('jwt.refreshExpiresIn') || '7d';
 
     if (!refreshSecret) {
       throw new Error('JWT refresh secret is not configured');

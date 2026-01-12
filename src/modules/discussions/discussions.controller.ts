@@ -1,14 +1,10 @@
 import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { DiscussionsService } from './discussions.service';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Discussions')
 @Controller()
@@ -22,12 +18,12 @@ export class DiscussionsController {
   async createForRequest(
     @Param('requestId') requestId: string,
     @Body() createDiscussionDto: CreateDiscussionDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
     return this.discussionsService.createForRequest(
       requestId,
       createDiscussionDto,
-      user.id,
+      user._id.toString(),
     );
   }
 
@@ -44,12 +40,12 @@ export class DiscussionsController {
   async createForProposal(
     @Param('proposalId') proposalId: string,
     @Body() createDiscussionDto: CreateDiscussionDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
     return this.discussionsService.createForProposal(
       proposalId,
       createDiscussionDto,
-      user.id,
+      user._id.toString(),
     );
   }
 
@@ -59,4 +55,3 @@ export class DiscussionsController {
     return this.discussionsService.findAllForProposal(proposalId);
   }
 }
-

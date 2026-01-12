@@ -58,4 +58,3 @@ export class UpdateRequestDto {
   @ArrayMaxSize(5)
   images?: string[];
 }
-

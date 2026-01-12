@@ -19,4 +19,3 @@ export class UpdateUserDto {
   @MaxLength(255)
   location?: string;
 }
-

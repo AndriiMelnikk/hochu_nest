@@ -1,18 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -36,10 +23,7 @@ export class AdminController {
 
   @Get('requests/pending')
   @ApiOperation({ summary: 'Get pending requests for moderation' })
-  async getPendingRequests(
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
+  async getPendingRequests(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.adminService.getPendingRequests(page, pageSize);
   }
 
@@ -60,10 +44,7 @@ export class AdminController {
 
   @Get('proposals/pending')
   @ApiOperation({ summary: 'Get pending proposals for moderation' })
-  async getPendingProposals(
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
+  async getPendingProposals(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.adminService.getPendingProposals(page, pageSize);
   }
 
@@ -84,10 +65,7 @@ export class AdminController {
 
   @Get('users/reported')
   @ApiOperation({ summary: 'Get reported users' })
-  async getReportedUsers(
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
+  async getReportedUsers(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
     return this.adminService.getReportedUsers(page, pageSize);
   }
 

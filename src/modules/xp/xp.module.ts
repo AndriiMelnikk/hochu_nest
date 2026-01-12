@@ -4,11 +4,8 @@ import { XpService } from './xp.service';
 import { User, UserSchema } from '../../database/schemas/user.schema';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
-  ],
+  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
   providers: [XpService],
   exports: [XpService],
 })
 export class XpModule {}
-

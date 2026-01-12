@@ -1,14 +1,7 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Message,
-  MessageDocument,
-} from '../../database/schemas/message.schema';
+import { Message, MessageDocument } from '../../database/schemas/message.schema';
 import { User, UserDocument } from '../../database/schemas/user.schema';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
@@ -68,25 +61,19 @@ export class MessagesService {
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: any = {
-      $or: [
-        { senderId: new Types.ObjectId(userId) },
-        { receiverId: new Types.ObjectId(userId) },
-      ],
+    const query: Record<string, any> = {
+      $or: [{ senderId: new Types.ObjectId(userId) }, { receiverId: new Types.ObjectId(userId) }],
     };
 
     if (requestId) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.requestId = new Types.ObjectId(requestId);
     }
 
     if (proposalId) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.proposalId = new Types.ObjectId(proposalId);
     }
 
     if (otherUserId) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       query.$and = [
         {
           $or: [
@@ -103,23 +90,21 @@ export class MessagesService {
       ];
     }
 
-    const [results, count] = await Promise.all([
-      this.messageModel
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        .find(query)
-        .populate('senderId', 'name avatar')
-        .populate('receiverId', 'name avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(normalizedPageSize)
-        .exec(),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      this.messageModel.countDocuments(query).exec(),
-    ]);
+    // To address the lint error regarding union type complexity, separate the await calls
+    const foundResults = await this.messageModel
+      .find(query)
+      .populate('senderId', 'name avatar')
+      .populate('receiverId', 'name avatar')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedPageSize)
+      .exec();
+
+    const totalCount = await this.messageModel.countDocuments(query).exec();
 
     return PaginationUtil.createPaginationResult(
-      results.reverse(),
-      count,
+      foundResults.reverse(),
+      totalCount,
       normalizedPage,
       normalizedPageSize,
       '/api/messages',
@@ -143,11 +128,7 @@ export class MessagesService {
       {
         $group: {
           _id: {
-            $cond: [
-              { $eq: ['$senderId', new Types.ObjectId(userId)] },
-              '$receiverId',
-              '$senderId',
-            ],
+            $cond: [{ $eq: ['$senderId', new Types.ObjectId(userId)] }, '$receiverId', '$senderId'],
           },
           lastMessage: { $first: '$$ROOT' },
           unreadCount: {
@@ -202,16 +183,14 @@ export class MessagesService {
     return conversations;
   }
 
-  async markAsRead(id: string, userId: string) {
-    const message = await this.messageModel.findById(id).exec();
+  async markAsRead(messageId: string, userId: string) {
+    const message = await this.messageModel.findById(messageId).exec();
     if (!message) {
-      throw new NotFoundException(`Message with ID ${id} not found`);
+      throw new NotFoundException(`Message with ID ${messageId} not found`);
     }
 
     if (message.receiverId.toString() !== userId) {
-      throw new ForbiddenException(
-        'You can only mark your own received messages as read',
-      );
+      throw new ForbiddenException('You can only mark your own received messages as read');
     }
 
     message.read = true;

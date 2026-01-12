@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  Min,
-  Max,
-  IsOptional,
-  MaxLength,
-} from 'class-validator';
+import { IsString, IsNumber, Min, Max, IsOptional, MaxLength } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateReviewDto {
@@ -37,4 +30,3 @@ export class CreateReviewDto {
   @MaxLength(1000)
   comment?: string;
 }
-

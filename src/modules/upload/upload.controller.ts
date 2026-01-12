@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Post,
-  UseInterceptors,
-  UploadedFile,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
@@ -45,4 +39,3 @@ export class UploadController {
     return this.uploadService.uploadFile(file);
   }
 }
-

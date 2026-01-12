@@ -9,12 +9,7 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BlogService } from './blog.service';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -79,4 +74,3 @@ export class BlogController {
     return this.blogService.remove(id);
   }
 }
-

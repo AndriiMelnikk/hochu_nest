@@ -1,16 +1,8 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Review, ReviewDocument } from '../../database/schemas/review.schema';
-import {
-  Proposal,
-  ProposalDocument,
-  ProposalStatus,
-} from '../../database/schemas/proposal.schema';
+import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { User, UserDocument } from '../../database/schemas/user.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { XpService } from '../xp/xp.service';
@@ -58,9 +50,7 @@ export class ReviewsService {
         .exec();
 
       if (existingReview) {
-        throw new BadRequestException(
-          'Review already exists for this proposal',
-        );
+        throw new BadRequestException('Review already exists for this proposal');
       }
     }
 
@@ -87,10 +77,7 @@ export class ReviewsService {
     }
 
     // Check achievements
-    await this.achievementsService.checkAndUnlockAchievements(
-      userId,
-      'review_created',
-    );
+    await this.achievementsService.checkAndUnlockAchievements(userId, 'review_created');
 
     // Notify target user
     const targetUser = await this.userModel.findById(targetUserId).exec();
@@ -166,8 +153,7 @@ export class ReviewsService {
     for (const review of reviews) {
       totalRating += review.rating;
     }
-    const averageRating =
-      Math.round((totalRating / reviews.length) * 100) / 100;
+    const averageRating = Math.round((totalRating / reviews.length) * 100) / 100;
 
     await this.userModel
       .updateOne(

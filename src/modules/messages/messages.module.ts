@@ -17,7 +17,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
       }),
       inject: [ConfigService],
@@ -29,4 +29,3 @@ import { NotificationsModule } from '../notifications/notifications.module';
   exports: [MessagesService],
 })
 export class MessagesModule {}
-

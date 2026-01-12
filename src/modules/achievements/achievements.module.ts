@@ -20,4 +20,3 @@ import { User, UserSchema } from '../../database/schemas/user.schema';
   exports: [AchievementsService],
 })
 export class AchievementsModule {}
-

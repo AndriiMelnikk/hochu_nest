@@ -6,14 +6,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersDto } from './dto/get-users.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { AchievementsService } from '../achievements/achievements.service';
-import {
-  Request,
-  RequestDocument,
-} from '../../database/schemas/request.schema';
-import {
-  Proposal,
-  ProposalDocument,
-} from '../../database/schemas/proposal.schema';
+import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
+import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Review, ReviewDocument } from '../../database/schemas/review.schema';
 
 @Injectable()
@@ -26,7 +20,7 @@ export class UsersService {
     private achievementsService: AchievementsService,
   ) {}
 
-  async findOne(id: string): Promise<UserDocument> {
+  async findOne(id: string) {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -40,10 +34,10 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ email }).exec() as Promise<UserDocument | null>;
   }
 
-  async findMe(userId: string): Promise<UserDocument> {
+  async findMe(userId: string) {
     return this.findOne(userId);
   }
 
@@ -57,21 +51,16 @@ export class UsersService {
   async getUserStats(userId: string) {
     const user = await this.findOne(userId);
 
-    const [totalRequests, totalProposals, acceptedProposals] =
-      await Promise.all([
-        this.requestModel
-          .countDocuments({ buyerId: new Types.ObjectId(userId) })
-          .exec(),
-        this.proposalModel
-          .countDocuments({ sellerId: new Types.ObjectId(userId) })
-          .exec(),
-        this.proposalModel
-          .countDocuments({
-            sellerId: new Types.ObjectId(userId),
-            status: 'accepted',
-          })
-          .exec(),
-      ]);
+    const [totalRequests, totalProposals, acceptedProposals] = await Promise.all([
+      this.requestModel.countDocuments({ buyerId: new Types.ObjectId(userId) }).exec(),
+      this.proposalModel.countDocuments({ sellerId: new Types.ObjectId(userId) }).exec(),
+      this.proposalModel
+        .countDocuments({
+          sellerId: new Types.ObjectId(userId),
+          status: 'accepted',
+        })
+        .exec(),
+    ]);
 
     const totalEarned = await this.proposalModel
       .aggregate([
@@ -124,8 +113,8 @@ export class UsersService {
       acceptedProposals,
       completedDeals: user.completedDeals,
       averageRating: user.rating,
-      totalEarned: totalEarned[0]?.total || 0,
-      totalSpent: totalSpent[0]?.total || 0,
+      totalEarned: (totalEarned[0] as { total: number })?.total || 0,
+      totalSpent: (totalSpent[0] as { total: number })?.total || 0,
     };
   }
 
@@ -138,7 +127,7 @@ export class UsersService {
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
 
-    const query: any = {};
+    const query: Record<string, any> = {};
 
     if (dto.role) {
       query.role = dto.role;
@@ -151,15 +140,14 @@ export class UsersService {
       ];
     }
 
-    const [results, count] = await Promise.all([
-      this.userModel
-        .find(query)
-        .skip(skip)
-        .limit(pageSize)
-        .select('-password')
-        .exec(),
-      this.userModel.countDocuments(query).exec(),
-    ]);
+    const results = await this.userModel
+      .find(query)
+      .skip(skip)
+      .limit(pageSize)
+      .select('-password')
+      .lean()
+      .exec();
+    const count = await this.userModel.countDocuments(query).exec();
 
     return PaginationUtil.createPaginationResult(
       results.map((user) => this.sanitizeUser(user)),
@@ -172,48 +160,42 @@ export class UsersService {
   }
 
   async getUserRequests(userId: string, status?: string) {
-    const query: any = { buyerId: new Types.ObjectId(userId) };
+    const query: Record<string, any> = { buyerId: new Types.ObjectId(userId) };
     if (status) {
-      query.status = status;
+      query.status = status as RequestStatus;
     }
 
-    const [results, count] = await Promise.all([
-      this.requestModel.find(query).sort({ createdAt: -1 }).exec(),
-      this.requestModel.countDocuments(query).exec(),
-    ]);
+    const results = await this.requestModel.find(query).sort({ createdAt: -1 }).exec();
+    const count = await this.requestModel.countDocuments(query).exec();
 
     return { count, results };
   }
 
   async getUserProposals(userId: string, status?: string) {
-    const query: any = { sellerId: new Types.ObjectId(userId) };
+    const query: Record<string, any> = { sellerId: new Types.ObjectId(userId) };
     if (status) {
-      query.status = status;
+      query.status = status as ProposalStatus;
     }
 
-    const [results, count] = await Promise.all([
-      this.proposalModel
-        .find(query)
-        .populate('requestId', 'title')
-        .sort({ createdAt: -1 })
-        .exec(),
-      this.proposalModel.countDocuments(query).exec(),
-    ]);
+    const results = await this.proposalModel
+      .find(query)
+      .populate('requestId', 'title')
+      .sort({ createdAt: -1 })
+      .exec();
+    const count = await this.proposalModel.countDocuments(query).exec();
 
     return { count, results };
   }
 
   async getUserReviews(userId: string) {
-    const [results, count] = await Promise.all([
-      this.reviewModel
-        .find({ targetUserId: new Types.ObjectId(userId) })
-        .populate('userId', 'name avatar')
-        .sort({ createdAt: -1 })
-        .exec(),
-      this.reviewModel
-        .countDocuments({ targetUserId: new Types.ObjectId(userId) })
-        .exec(),
-    ]);
+    const results = await this.reviewModel
+      .find({ targetUserId: new Types.ObjectId(userId) })
+      .populate('userId', 'name avatar')
+      .sort({ createdAt: -1 })
+      .exec();
+    const count = await this.reviewModel
+      .countDocuments({ targetUserId: new Types.ObjectId(userId) })
+      .exec();
 
     return { count, results };
   }
@@ -232,9 +214,12 @@ export class UsersService {
     return user.rating;
   }
 
-  private sanitizeUser(user: UserDocument) {
-    const userObj = user.toObject();
-    delete userObj.password;
-    return userObj;
+  private sanitizeUser(user: User | UserDocument) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const userObj = 'toObject' in user ? user.toObject() : { ...user };
+    if ('password' in userObj) {
+      delete (userObj as { password?: string }).password;
+    }
+    return userObj as User;
   }
 }

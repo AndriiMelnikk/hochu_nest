@@ -1,23 +1,11 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -32,9 +20,9 @@ export class ReviewsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @Body() createReviewDto: CreateReviewDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.reviewsService.create(createReviewDto, user.id);
+    return this.reviewsService.create(createReviewDto, user._id.toString());
   }
 
   @Get()
@@ -56,4 +44,3 @@ export class ReviewsController {
     return this.reviewsService.findOne(id);
   }
 }
-

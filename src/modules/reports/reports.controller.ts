@@ -1,15 +1,12 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import * as userSchema from 'src/database/schemas/user.schema';
+import { ReportTargetType } from 'src/database/schemas/report.schema';
 
 @ApiTags('Reports')
 @Controller()
@@ -23,15 +20,15 @@ export class ReportsController {
   async reportRequest(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
     return this.reportsService.create(
       {
         ...createReportDto,
-        targetType: 'request' as any,
+        targetType: 'request' as ReportTargetType,
         targetId: id,
       },
-      user.id,
+      user._id.toString(),
     );
   }
 
@@ -42,16 +39,15 @@ export class ReportsController {
   async reportProposal(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
     return this.reportsService.create(
       {
         ...createReportDto,
-        targetType: 'proposal' as any,
+        targetType: 'proposal' as ReportTargetType,
         targetId: id,
       },
-      user.id,
+      user._id.toString(),
     );
   }
 }
-

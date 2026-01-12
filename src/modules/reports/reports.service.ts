@@ -1,19 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Report,
-  ReportDocument,
-  ReportStatus,
-} from '../../database/schemas/report.schema';
+import { Report, ReportDocument, ReportStatus } from '../../database/schemas/report.schema';
 import { CreateReportDto } from './dto/create-report.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class ReportsService {
-  constructor(
-    @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
-  ) {}
+  constructor(@InjectModel(Report.name) private reportModel: Model<ReportDocument>) {}
 
   async create(createReportDto: CreateReportDto, reporterId: string) {
     const report = new this.reportModel({
@@ -34,21 +28,23 @@ export class ReportsService {
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: any = {};
+    const query: Record<string, any> = {};
     if (status) {
       query.status = status;
     }
 
-    const [results, count] = await Promise.all([
-      this.reportModel
-        .find(query)
-        .populate('reporterId', 'name email')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(normalizedPageSize)
-        .exec(),
-      this.reportModel.countDocuments(query).exec(),
-    ]);
+    // Manually await both promises to help TypeScript's type resolution
+    const resultsPromise = this.reportModel
+      .find(query)
+      .populate('reporterId', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedPageSize)
+      .exec();
+    const countPromise = this.reportModel.countDocuments(query).exec();
+
+    const results = await resultsPromise;
+    const count = await countPromise;
 
     return PaginationUtil.createPaginationResult(
       results,
@@ -65,4 +61,3 @@ export class ReportsService {
     return { success: true };
   }
 }
-

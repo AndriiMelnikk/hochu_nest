@@ -27,4 +27,3 @@ import { RequestsModule } from '../requests/requests.module';
   exports: [ProposalsService],
 })
 export class ProposalsModule {}
-

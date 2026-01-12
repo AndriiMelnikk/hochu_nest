@@ -1,14 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsEnum,
-  IsOptional,
-} from 'class-validator';
-import {
-  ReportReason,
-  ReportTargetType,
-} from '../../../database/schemas/report.schema';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { ReportReason, ReportTargetType } from '../../../database/schemas/report.schema';
 
 export class CreateReportDto {
   @ApiProperty({ enum: ReportTargetType })
@@ -31,4 +23,3 @@ export class CreateReportDto {
   @IsOptional()
   details?: string;
 }
-

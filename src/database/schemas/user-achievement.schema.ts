@@ -17,8 +17,7 @@ export class UserAchievement {
   unlockedAt: Date;
 }
 
-export const UserAchievementSchema =
-  SchemaFactory.createForClass(UserAchievement);
+export const UserAchievementSchema = SchemaFactory.createForClass(UserAchievement);
 
 // Indexes
 UserAchievementSchema.index({ userId: 1 });

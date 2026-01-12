@@ -1,18 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -20,6 +7,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Proposals')
 @Controller('proposals')
@@ -36,7 +24,7 @@ export class ProposalsController {
   async create(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
     @Body() createProposalDto: CreateProposalDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
     return this.proposalsService.create(requestId, createProposalDto, user.id);
   }
@@ -45,9 +33,7 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Get proposals for request' })
   @ApiParam({ name: 'requestId', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'List of proposals' })
-  async findAllByRequest(
-    @Param('requestId', ParseObjectIdPipe) requestId: string,
-  ) {
+  async findAllByRequest(@Param('requestId', ParseObjectIdPipe) requestId: string) {
     return this.proposalsService.findAllByRequest(requestId);
   }
 
@@ -69,9 +55,9 @@ export class ProposalsController {
   @ApiResponse({ status: 200, description: 'Proposal accepted' })
   async accept(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.proposalsService.accept(id, user.id);
+    return this.proposalsService.accept(id, user._id.toString());
   }
 
   @Post(':id/reject')
@@ -83,9 +69,9 @@ export class ProposalsController {
   @ApiResponse({ status: 200, description: 'Proposal rejected' })
   async reject(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.proposalsService.reject(id, user.id);
+    return this.proposalsService.reject(id, user._id.toString());
   }
 
   @Post(':id/complete')
@@ -97,8 +83,8 @@ export class ProposalsController {
   @ApiResponse({ status: 200, description: 'Deal completed' })
   async complete(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.proposalsService.complete(id, user.id);
+    return this.proposalsService.complete(id, user._id.toString());
   }
 }

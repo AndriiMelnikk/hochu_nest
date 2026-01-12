@@ -12,9 +12,7 @@ export interface LevelInfo {
 
 @Injectable()
 export class XpService {
-  constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
-  ) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async awardXp(userId: string, amount: number): Promise<UserDocument> {
     const user = await this.userModel.findById(userId).exec();
@@ -77,4 +75,3 @@ export class XpService {
     return this.calculateLevel(xp, role);
   }
 }
-

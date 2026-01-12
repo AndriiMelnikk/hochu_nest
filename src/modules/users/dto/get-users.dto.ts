@@ -29,4 +29,3 @@ export class GetUsersDto {
   @Max(100)
   pageSize?: number = 20;
 }
-

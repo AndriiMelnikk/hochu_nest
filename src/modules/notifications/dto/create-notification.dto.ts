@@ -1,4 +1,3 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { NotificationType } from '../../../database/schemas/notification.schema';
 
 export class CreateNotificationDto {
@@ -8,4 +7,3 @@ export class CreateNotificationDto {
   message: string;
   link?: string;
 }
-

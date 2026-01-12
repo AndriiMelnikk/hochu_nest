@@ -1,12 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsString,
-  IsNumber,
-  IsEnum,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsOptional, IsString, IsNumber, IsEnum, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 import { RequestStatus } from '../../../database/schemas/request.schema';
 
@@ -63,4 +56,3 @@ export class GetRequestsDto {
   @IsString()
   sort?: string;
 }
-

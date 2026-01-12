@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Discussion,
-  DiscussionDocument,
-} from '../../database/schemas/discussion.schema';
+import { Discussion, DiscussionDocument } from '../../database/schemas/discussion.schema';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 
 @Injectable()

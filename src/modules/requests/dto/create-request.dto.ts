@@ -68,4 +68,3 @@ export class CreateRequestDto {
   @ArrayMaxSize(5)
   images?: string[];
 }
-

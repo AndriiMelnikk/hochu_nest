@@ -13,4 +13,3 @@ export class CreateDiscussionDto {
   @IsOptional()
   replyToId?: string;
 }
-

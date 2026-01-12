@@ -1,15 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Achievement,
-  AchievementDocument,
-} from '../../database/schemas/achievement.schema';
+import { Achievement, AchievementDocument } from '../../database/schemas/achievement.schema';
 import {
   UserAchievement,
   UserAchievementDocument,
 } from '../../database/schemas/user-achievement.schema';
-import { User, UserDocument, UserRole } from '../../database/schemas/user.schema';
+import { User, UserDocument } from '../../database/schemas/user.schema';
 
 @Injectable()
 export class AchievementsService {
@@ -32,11 +29,13 @@ export class AchievementsService {
   async getUserAchievements(userId: string) {
     const userAchievements = await this.userAchievementModel
       .find({ userId: new Types.ObjectId(userId) })
+      .lean()
       .exec();
 
-    const achievementIds = userAchievements.map((ua) => ua.achievementId);
+    const achievementIds: string[] = userAchievements.map((ua) => ua.achievementId);
     const achievements = await this.achievementModel
       .find({ id: { $in: achievementIds } })
+      .lean()
       .exec();
 
     return userAchievements.map((ua) => {
@@ -48,18 +47,15 @@ export class AchievementsService {
     });
   }
 
-  async checkAndUnlockAchievements(
-    userId: string,
-    achievementType: string,
-    context?: any,
-  ) {
-    const user = await this.userModel.findById(userId).exec();
+  async checkAndUnlockAchievements(userId: string) {
+    const user = await this.userModel.findById(userId).lean().exec();
     if (!user) return;
 
     const achievements = await this.achievementModel
       .find({
         role: { $in: [user.role, 'both'] },
       })
+      .lean()
       .exec();
 
     for (const achievement of achievements) {
@@ -74,8 +70,8 @@ export class AchievementsService {
       if (existing) continue;
 
       // Check condition
-      if (this.checkCondition(achievement, user, context)) {
-        await this.unlockAchievement(userId, achievement.id);
+      if (this.checkCondition(achievement, user)) {
+        await this.unlockAchievement(userId, achievement.id as string);
       }
     }
   }
@@ -89,11 +85,7 @@ export class AchievementsService {
     await userAchievement.save();
   }
 
-  private checkCondition(
-    achievement: AchievementDocument,
-    user: UserDocument,
-    context?: any,
-  ): boolean {
+  private checkCondition(achievement: Achievement, user: User): boolean {
     const condition = achievement.condition;
 
     switch (achievement.id) {
@@ -102,23 +94,13 @@ export class AchievementsService {
       case 'first_sale':
         return condition.type === 'first_sale' && user.completedDeals >= 1;
       case 'deal_maker':
-        return (
-          condition.type === 'deal_maker' && user.completedDeals >= condition.count
-        );
+        return condition.type === 'deal_maker' && user.completedDeals >= condition.count;
       case 'reviewer':
-        return (
-          condition.type === 'reviewer' && user.reviewsCount >= condition.count
-        );
+        return condition.type === 'reviewer' && user.reviewsCount >= condition.count;
       case 'loyal_customer':
-        return (
-          condition.type === 'loyal_customer' &&
-          user.completedDeals >= condition.count
-        );
+        return condition.type === 'loyal_customer' && user.completedDeals >= condition.count;
       case 'trusted_seller':
-        return (
-          condition.type === 'trusted_seller' &&
-          user.completedDeals >= condition.count
-        );
+        return condition.type === 'trusted_seller' && user.completedDeals >= condition.count;
       case 'perfect_rating':
         return (
           condition.type === 'perfect_rating' &&
@@ -198,11 +180,10 @@ export class AchievementsService {
     ];
 
     for (const achievement of achievements) {
-      await this.achievementModel.findOneAndUpdate(
-        { id: achievement.id },
-        achievement,
-        { upsert: true, new: true },
-      );
+      await this.achievementModel.findOneAndUpdate({ id: achievement.id }, achievement, {
+        upsert: true,
+        new: true,
+      });
     }
   }
 }

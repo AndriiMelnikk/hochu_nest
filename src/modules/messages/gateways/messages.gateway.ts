@@ -21,9 +21,7 @@ import { CreateMessageDto } from '../dto/create-message.dto';
   namespace: '/messages',
 })
 @Injectable()
-export class MessagesGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+export class MessagesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
@@ -36,51 +34,52 @@ export class MessagesGateway
     private configService: ConfigService,
   ) {}
 
-  async handleConnection(client: Socket) {
+  handleConnection(client: Socket) {
     try {
-      const authHeader = client.handshake.headers?.authorization as string;
-      const token = client.handshake.auth?.token || authHeader?.split(' ')[1];
+      const token =
+        typeof client.handshake.auth?.token === 'string' ? client.handshake.auth.token : undefined;
 
       if (!token) {
         client.disconnect();
         return;
       }
 
-      const payload = this.jwtService.verify(token, {
+      const payload: { sub: string } = this.jwtService.verify(token, {
         secret: this.configService.get<string>('jwt.secret'),
       });
 
-      const userId = payload.sub;
+      const userId: string = payload.sub;
       this.connectedUsers.set(userId, client.id);
-      client.data.userId = userId;
+      (client.data as { userId?: string }).userId = userId;
 
       this.logger.log(`Client connected: ${client.id} (User: ${userId})`);
 
       // Notify others that user is online
       client.broadcast.emit('user:online', { userId });
-    } catch (error: any) {
-      this.logger.error(`Connection error: ${error?.message || 'Unknown error'}`);
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? ((error as Record<string, unknown>).message as string)
+          : 'Unknown error';
+      this.logger.error(`Connection error: ${message}`);
       client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
-    const userId = client.data?.userId;
+    const userId = (client.data as { userId?: string }).userId;
     if (userId) {
       this.connectedUsers.delete(userId);
       this.logger.log(`Client disconnected: ${client.id} (User: ${userId})`);
-      
+
       // Notify others that user is offline
       client.broadcast.emit('user:offline', { userId });
     }
   }
 
   @SubscribeMessage('message:send')
-  async handleMessage(
-    @MessageBody() data: CreateMessageDto,
-    @ConnectedSocket() client: Socket,
-  ) {
-    const senderId = client.data?.userId;
+  async handleMessage(@MessageBody() data: CreateMessageDto, @ConnectedSocket() client: Socket) {
+    const senderId = (client.data as { userId?: string }).userId;
     if (!senderId) {
       throw new UnauthorizedException('Not authenticated');
     }
@@ -104,7 +103,7 @@ export class MessagesGateway
     @MessageBody() data: { messageId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const userId = client.data?.userId as string;
+    const userId = (client.data as { userId?: string }).userId as string;
     if (!userId) {
       throw new UnauthorizedException('Not authenticated');
     }
@@ -123,7 +122,7 @@ export class MessagesGateway
     @MessageBody() data: { receiverId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const senderId = client.data?.userId as string;
+    const senderId = (client.data as { userId?: string }).userId as string;
     const receiverSocketId = this.connectedUsers.get(data.receiverId);
 
     if (receiverSocketId) {
@@ -135,11 +134,8 @@ export class MessagesGateway
   }
 
   @SubscribeMessage('typing:stop')
-  handleTypingStop(
-    @MessageBody() data: { receiverId: string },
-    @ConnectedSocket() client: Socket,
-  ) {
-    const senderId = client.data?.userId as string;
+  handleTypingStop(@MessageBody() data: { receiverId: string }, @ConnectedSocket() client: Socket) {
+    const senderId = (client.data as { userId?: string }).userId as string;
     const receiverSocketId = this.connectedUsers.get(data.receiverId);
 
     if (receiverSocketId) {
@@ -150,4 +146,3 @@ export class MessagesGateway
     }
   }
 }
-

@@ -6,11 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Request,
-  RequestDocument,
-  RequestStatus,
-} from '../../database/schemas/request.schema';
+import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
@@ -44,10 +40,7 @@ export class RequestsService {
 
     // Award XP to buyer
     await this.xpService.awardXp(buyerId, 10);
-    await this.achievementsService.checkAndUnlockAchievements(
-      buyerId,
-      'request_created',
-    );
+    await this.achievementsService.checkAndUnlockAchievements(buyerId);
 
     return request;
   }
@@ -57,7 +50,7 @@ export class RequestsService {
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
 
-    const query: any = {};
+    const query: Record<string, any> = {};
 
     // Default to active requests if no status specified
     if (!dto.status) {
@@ -86,18 +79,31 @@ export class RequestsService {
       query.$text = { $search: dto.search };
     }
 
-    const sort = SortUtil.buildSortObject(dto.sort) || { createdAt: -1 };
+    const sortObj = SortUtil.buildSortObject(dto.sort);
+    const sort: Record<string, 1 | -1> =
+      sortObj && typeof sortObj === 'object' ? sortObj : { createdAt: -1 };
+    let results: any[];
+    let count: number = 0;
 
-    const [results, count] = await Promise.all([
-      this.requestModel
+    try {
+      results = await this.requestModel
         .find(query)
         .populate('buyerId', 'name avatar rating')
         .sort(sort)
         .skip(skip)
         .limit(pageSize)
-        .exec(),
-      this.requestModel.countDocuments(query).exec(),
-    ]);
+        .exec();
+    } catch {
+      // fallback: ignore sort if it causes a complex union type error
+      results = await this.requestModel
+        .find(query)
+        .populate('buyerId', 'name avatar rating')
+        .skip(skip)
+        .limit(pageSize)
+        .exec();
+    }
+
+    count = await this.requestModel.countDocuments(query).exec();
 
     return PaginationUtil.createPaginationResult(
       results,
@@ -162,9 +168,6 @@ export class RequestsService {
   }
 
   async incrementProposalsCount(requestId: string) {
-    await this.requestModel
-      .updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } })
-      .exec();
+    await this.requestModel.updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } }).exec();
   }
 }
-

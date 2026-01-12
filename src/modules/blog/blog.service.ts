@@ -1,22 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import {
-  BlogPost,
-  BlogPostDocument,
-} from '../../database/schemas/blog-post.schema';
+import { Model, FilterQuery } from 'mongoose';
+import { BlogPost, BlogPostDocument } from '../../database/schemas/blog-post.schema';
 import { CreateBlogPostDto } from './dto/create-blog-post.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class BlogService {
-  constructor(
-    @InjectModel(BlogPost.name) private blogPostModel: Model<BlogPostDocument>,
-  ) {}
+  constructor(@InjectModel(BlogPost.name) private blogPostModel: Model<BlogPostDocument>) {}
 
   async create(createBlogPostDto: CreateBlogPostDto) {
     const readTime = this.calculateReadTime(createBlogPostDto.content);
-    
+
     const blogPost = new this.blogPostModel({
       ...createBlogPostDto,
       readTime,
@@ -32,20 +27,19 @@ export class BlogService {
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: any = { published: true };
+    const query: FilterQuery<BlogPostDocument> = { published: true };
     if (category) {
       query.category = category;
     }
 
-    const [results, count] = await Promise.all([
-      this.blogPostModel
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(normalizedPageSize)
-        .exec(),
-      this.blogPostModel.countDocuments(query).exec(),
-    ]);
+    const results = await this.blogPostModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(normalizedPageSize)
+      .exec();
+
+    const count = await this.blogPostModel.countDocuments(query).exec();
 
     return PaginationUtil.createPaginationResult(
       results,
@@ -67,7 +61,7 @@ export class BlogService {
 
   async update(id: string, updateDto: Partial<CreateBlogPostDto>) {
     const blogPost = await this.findOne(id);
-    
+
     if (updateDto.content) {
       const readTime = this.calculateReadTime(updateDto.content);
       Object.assign(blogPost, { ...updateDto, readTime });
@@ -90,4 +84,3 @@ export class BlogService {
     return Math.ceil(wordCount / wordsPerMinute);
   }
 }
-

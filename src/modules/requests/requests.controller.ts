@@ -9,13 +9,7 @@ import {
   UseGuards,
   Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { RequestsService } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
@@ -25,6 +19,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Requests')
 @Controller('requests')
@@ -40,9 +35,9 @@ export class RequestsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @Body() createRequestDto: CreateRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.requestsService.create(createRequestDto, user.id);
+    return this.requestsService.create(createRequestDto, user._id.toString());
   }
 
   @Get()
@@ -71,9 +66,9 @@ export class RequestsController {
   async update(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateRequestDto: UpdateRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.requestsService.update(id, updateRequestDto, user.id);
+    return this.requestsService.update(id, updateRequestDto, user._id.toString());
   }
 
   @Delete(':id')
@@ -85,9 +80,8 @@ export class RequestsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async remove(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: userSchema.UserDocument,
   ) {
-    return this.requestsService.remove(id, user.id);
+    return this.requestsService.remove(id, user._id.toString());
   }
 }
-

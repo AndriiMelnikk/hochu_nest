@@ -71,4 +71,3 @@ UserSchema.index({ email: 1 }, { unique: true });
 UserSchema.index({ role: 1 });
 UserSchema.index({ rating: -1 });
 UserSchema.index({ xp: -1 });
-

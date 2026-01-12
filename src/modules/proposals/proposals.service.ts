@@ -6,16 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import {
-  Proposal,
-  ProposalDocument,
-  ProposalStatus,
-} from '../../database/schemas/proposal.schema';
-import {
-  Request,
-  RequestDocument,
-  RequestStatus,
-} from '../../database/schemas/request.schema';
+import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
+import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { User, UserDocument } from '../../database/schemas/user.schema';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { XpService } from '../xp/xp.service';
@@ -34,11 +26,7 @@ export class ProposalsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async create(
-    requestId: string,
-    createProposalDto: CreateProposalDto,
-    sellerId: string,
-  ) {
+  async create(requestId: string, createProposalDto: CreateProposalDto, sellerId: string) {
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException(`Request with ID ${requestId} not found`);
@@ -61,9 +49,7 @@ export class ProposalsService {
       .exec();
 
     if (existingProposal) {
-      throw new BadRequestException(
-        'You have already created a proposal for this request',
-      );
+      throw new BadRequestException('You have already created a proposal for this request');
     }
 
     const proposal = new this.proposalModel({
@@ -76,17 +62,11 @@ export class ProposalsService {
     await proposal.save();
 
     // Increment proposals count
-    await this.requestModel.updateOne(
-      { _id: requestId },
-      { $inc: { proposalsCount: 1 } },
-    ).exec();
+    await this.requestModel.updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } }).exec();
 
     // Award XP to seller
     await this.xpService.awardXp(sellerId, 5);
-    await this.achievementsService.checkAndUnlockAchievements(
-      sellerId,
-      'proposal_created',
-    );
+    await this.achievementsService.checkAndUnlockAchievements(sellerId);
 
     // Notify buyer
     const buyer = await this.userModel.findById(request.buyerId).exec();
@@ -129,9 +109,7 @@ export class ProposalsService {
 
   async accept(id: string, buyerId: string) {
     const proposal = await this.findOne(id);
-    const request = await this.requestModel
-      .findById(proposal.requestId)
-      .exec();
+    const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
       throw new NotFoundException('Request not found');
@@ -152,10 +130,7 @@ export class ProposalsService {
     // Transaction-like operation: accept proposal and reject others
     await Promise.all([
       // Accept this proposal
-      this.proposalModel.updateOne(
-        { _id: id },
-        { status: ProposalStatus.ACCEPTED },
-      ),
+      this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.ACCEPTED }),
       // Reject all other proposals
       this.proposalModel.updateMany(
         {
@@ -166,10 +141,7 @@ export class ProposalsService {
         { status: ProposalStatus.REJECTED },
       ),
       // Close request
-      this.requestModel.updateOne(
-        { _id: request._id },
-        { status: RequestStatus.CLOSED },
-      ),
+      this.requestModel.updateOne({ _id: request._id }, { status: RequestStatus.CLOSED }),
     ]);
 
     // Award XP
@@ -180,14 +152,8 @@ export class ProposalsService {
 
     // Check achievements
     await Promise.all([
-      this.achievementsService.checkAndUnlockAchievements(
-        buyerId,
-        'proposal_accepted',
-      ),
-      this.achievementsService.checkAndUnlockAchievements(
-        proposal.sellerId.toString(),
-        'proposal_accepted',
-      ),
+      this.achievementsService.checkAndUnlockAchievements(buyerId),
+      this.achievementsService.checkAndUnlockAchievements(proposal.sellerId.toString()),
     ]);
 
     // Notify seller
@@ -204,9 +170,7 @@ export class ProposalsService {
 
   async reject(id: string, buyerId: string) {
     const proposal = await this.findOne(id);
-    const request = await this.requestModel
-      .findById(proposal.requestId)
-      .exec();
+    const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
       throw new NotFoundException('Request not found');
@@ -220,10 +184,7 @@ export class ProposalsService {
       throw new BadRequestException('Proposal is not pending');
     }
 
-    await this.proposalModel.updateOne(
-      { _id: id },
-      { status: ProposalStatus.REJECTED },
-    );
+    await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.REJECTED });
 
     // Notify seller
     await this.notificationsService.create({
@@ -231,7 +192,7 @@ export class ProposalsService {
       type: NotificationType.PROPOSAL_REJECTED,
       title: 'Пропозицію відхилено',
       message: `Вашу пропозицію на запит "${request.title}" відхилено`,
-      link: `/request/${request._id}`,
+      link: `/request/${request._id.toString()}`,
     });
 
     return { success: true, message: 'Proposal rejected successfully' };
@@ -239,9 +200,7 @@ export class ProposalsService {
 
   async complete(id: string, buyerId: string) {
     const proposal = await this.findOne(id);
-    const request = await this.requestModel
-      .findById(proposal.requestId)
-      .exec();
+    const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
       throw new NotFoundException('Request not found');
@@ -255,21 +214,12 @@ export class ProposalsService {
       throw new BadRequestException('Proposal must be accepted to complete');
     }
 
-    await this.proposalModel.updateOne(
-      { _id: id },
-      { status: ProposalStatus.COMPLETED },
-    );
+    await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.COMPLETED });
 
     // Update completed deals for both users
     await Promise.all([
-      this.userModel.updateOne(
-        { _id: buyerId },
-        { $inc: { completedDeals: 1 } },
-      ),
-      this.userModel.updateOne(
-        { _id: proposal.sellerId },
-        { $inc: { completedDeals: 1 } },
-      ),
+      this.userModel.updateOne({ _id: buyerId }, { $inc: { completedDeals: 1 } }),
+      this.userModel.updateOne({ _id: proposal.sellerId }, { $inc: { completedDeals: 1 } }),
     ]);
 
     // Award XP
@@ -280,17 +230,10 @@ export class ProposalsService {
 
     // Check achievements
     await Promise.all([
-      this.achievementsService.checkAndUnlockAchievements(
-        buyerId,
-        'deal_completed',
-      ),
-      this.achievementsService.checkAndUnlockAchievements(
-        proposal.sellerId.toString(),
-        'deal_completed',
-      ),
+      this.achievementsService.checkAndUnlockAchievements(buyerId),
+      this.achievementsService.checkAndUnlockAchievements(proposal.sellerId.toString()),
     ]);
 
     return { success: true, message: 'Deal completed successfully' };
   }
 }
-

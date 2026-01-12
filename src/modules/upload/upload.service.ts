@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnsupportedMediaTypeException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { promises as fs } from 'fs';
 import * as path from 'path';
@@ -15,18 +11,16 @@ export class UploadService {
 
   constructor(private configService: ConfigService) {
     this.uploadPath = this.configService.get<string>('upload.dest') || './uploads';
-    this.maxFileSize =
-      this.configService.get<number>('upload.maxFileSize') || 10485760;
-    this.allowedTypes =
-      this.configService.get<string[]>('upload.allowedFileTypes') || [
-        'jpg',
-        'jpeg',
-        'png',
-        'webp',
-      ];
+    this.maxFileSize = this.configService.get<number>('upload.maxFileSize') || 10485760;
+    this.allowedTypes = this.configService.get<string[]>('upload.allowedFileTypes') || [
+      'jpg',
+      'jpeg',
+      'png',
+      'webp',
+    ];
 
     // Create upload directory if it doesn't exist
-    this.ensureUploadDirectory();
+    void this.ensureUploadDirectory();
   }
 
   private async ensureUploadDirectory() {

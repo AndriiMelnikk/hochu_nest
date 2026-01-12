@@ -25,4 +25,3 @@ import { NotificationsModule } from '../notifications/notifications.module';
   exports: [ReviewsService],
 })
 export class ReviewsModule {}
-
