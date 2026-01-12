@@ -77,7 +77,7 @@ export class ReviewsService {
     }
 
     // Check achievements
-    await this.achievementsService.checkAndUnlockAchievements(userId, 'review_created');
+    await this.achievementsService.checkAndUnlockAchievements(userId);
 
     // Notify target user
     const targetUser = await this.userModel.findById(targetUserId).exec();
