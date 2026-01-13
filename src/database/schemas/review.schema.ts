@@ -7,16 +7,16 @@ export type ReviewDocument = Review & Document;
 export class Review {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   targetUserId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Request', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Request', default: null })
   requestId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null })
   proposalId: Types.ObjectId;
 
   @Prop({ type: Number, required: true, min: 1, max: 5 })

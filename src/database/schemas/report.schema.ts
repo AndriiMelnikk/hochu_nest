@@ -30,18 +30,17 @@ export enum ReportStatus {
 export class Report {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   reporterId: Types.ObjectId;
 
   @Prop({
     type: String,
     enum: Object.values(ReportTargetType),
     required: true,
-    index: true,
   })
   targetType: ReportTargetType;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   targetId: Types.ObjectId;
 
   @Prop({
@@ -58,7 +57,6 @@ export class Report {
     type: String,
     enum: Object.values(ReportStatus),
     default: ReportStatus.PENDING,
-    index: true,
   })
   status: ReportStatus;
 

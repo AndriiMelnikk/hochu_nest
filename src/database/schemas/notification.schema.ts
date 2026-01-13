@@ -18,7 +18,7 @@ export enum NotificationType {
 export class Notification {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
   @Prop({
@@ -37,7 +37,7 @@ export class Notification {
   @Prop({ default: null })
   link: string;
 
-  @Prop({ type: Boolean, default: false, index: true })
+  @Prop({ type: Boolean, default: false })
   read: boolean;
 
   createdAt: Date;

@@ -16,7 +16,7 @@ export class User {
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  @Prop({ required: true, lowercase: true, trim: true })
   email: string;
 
   @Prop({ required: true })
@@ -29,7 +29,6 @@ export class User {
     type: String,
     enum: Object.values(UserRole),
     default: UserRole.BUYER,
-    index: true,
   })
   role: UserRole;
 

@@ -7,22 +7,22 @@ export type MessageDocument = Message & Document;
 export class Message {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   senderId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   receiverId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Request', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Request', default: null })
   requestId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null })
   proposalId: Types.ObjectId;
 
   @Prop({ required: true })
   content: string;
 
-  @Prop({ type: Boolean, default: false, index: true })
+  @Prop({ type: Boolean, default: false })
   read: boolean;
 
   createdAt: Date;

@@ -20,7 +20,7 @@ export class Request {
   @Prop({ required: true, index: 'text' })
   description: string;
 
-  @Prop({ required: true, index: true })
+  @Prop({ required: true })
   category: string;
 
   @Prop({ type: Number, required: true, min: 0 })
@@ -35,7 +35,7 @@ export class Request {
   @Prop({ required: true })
   urgency: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   buyerId: Types.ObjectId;
 
   @Prop({ type: [String], default: [] })
@@ -51,7 +51,6 @@ export class Request {
     type: String,
     enum: Object.values(RequestStatus),
     default: RequestStatus.PENDING,
-    index: true,
   })
   status: RequestStatus;
 

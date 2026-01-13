@@ -7,10 +7,10 @@ export type RefreshTokenDocument = RefreshToken & Document;
 export class RefreshToken {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   token: string;
 
   @Prop({ required: true })

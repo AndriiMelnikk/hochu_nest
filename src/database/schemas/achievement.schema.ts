@@ -18,7 +18,7 @@ export enum AchievementRole {
 
 @Schema()
 export class Achievement {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   id: string;
 
   @Prop({ required: true })

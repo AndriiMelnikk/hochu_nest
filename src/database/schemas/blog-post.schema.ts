@@ -16,7 +16,7 @@ export class BlogPost {
   @Prop({ required: true, type: String })
   content: string;
 
-  @Prop({ default: null, index: true })
+  @Prop({ default: null })
   category: string;
 
   @Prop({ required: true })
@@ -28,7 +28,7 @@ export class BlogPost {
   @Prop({ type: Number, default: null })
   readTime: number;
 
-  @Prop({ type: Boolean, default: false, index: true })
+  @Prop({ type: Boolean, default: false })
   published: boolean;
 
   createdAt: Date;

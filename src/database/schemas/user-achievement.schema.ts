@@ -7,10 +7,10 @@ export type UserAchievementDocument = UserAchievement & Document;
 export class UserAchievement {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: String, required: true, index: true })
+  @Prop({ type: String, required: true })
   achievementId: string;
 
   @Prop({ type: Date, required: true, default: Date.now })

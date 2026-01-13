@@ -7,16 +7,16 @@ export type DiscussionDocument = Discussion & Document;
 export class Discussion {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Request', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Request', default: null })
   requestId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null })
   proposalId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Discussion', default: null, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Discussion', default: null })
   replyToId: Types.ObjectId;
 
   @Prop({ required: true, maxlength: 2000 })

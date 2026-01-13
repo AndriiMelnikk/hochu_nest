@@ -14,10 +14,10 @@ export enum ProposalStatus {
 export class Proposal {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Request', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'Request', required: true })
   requestId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   sellerId: Types.ObjectId;
 
   @Prop({ type: Number, required: true, min: 0 })
@@ -42,7 +42,6 @@ export class Proposal {
     type: String,
     enum: Object.values(ProposalStatus),
     default: ProposalStatus.PENDING,
-    index: true,
   })
   status: ProposalStatus;
 
