@@ -5,7 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
+import * as userSchema from '@database/schemas/user.schema';
 
 @ApiTags('Users')
 @Controller('users')

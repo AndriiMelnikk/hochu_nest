@@ -6,7 +6,7 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import * as userSchema from 'src/database/schemas/user.schema';
+import * as userSchema from '@database/schemas/user.schema';
 
 @ApiTags('Auth')
 @Controller('auth')
