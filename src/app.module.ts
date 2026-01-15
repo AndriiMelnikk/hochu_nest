@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
+import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -30,6 +32,14 @@ import { XpModule } from './modules/xp/xp.module';
       isGlobal: true,
       load: [databaseConfig, jwtConfig, uploadConfig, appConfig],
       envFilePath: '.env',
+    }),
+    I18nModule.forRoot({
+      fallbackLanguage: 'uk',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
     }),
     DatabaseModule,
     AuthModule,

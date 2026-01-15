@@ -1,0 +1,9 @@
+{
+  "auth": {
+    "user_exists": "User with this email already exists",
+    "invalid_credentials": "Invalid credentials",
+    "user_blocked": "User is blocked",
+    "invalid_token": "Invalid or expired refresh token",
+    "user_not_found": "User not found or blocked"
+  }
+}

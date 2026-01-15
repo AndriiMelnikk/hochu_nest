@@ -3,11 +3,16 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from '../../database/schemas/user.schema';
 import { RefreshToken, RefreshTokenDocument } from '../../database/schemas/refresh-token.schema';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { TokenResponseDto } from './dto/token-response.dto';
+import { LogoutResponseDto } from './dto/logout-response.dto';
+import { TokenPairDto } from './dto/token-pair.dto';
 
 @Injectable()
 export class AuthService {
@@ -17,15 +22,20 @@ export class AuthService {
     private refreshTokenModel: Model<RefreshTokenDocument>,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private readonly i18n: I18nService,
   ) {}
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
     const { email, password, name } = registerDto;
 
     // Check if user exists
     const existingUser = await this.userModel.findOne({ email }).exec();
     if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException(
+        this.i18n.t('common.auth.user_exists', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Hash password
@@ -38,6 +48,7 @@ export class AuthService {
       password: hashedPassword,
       memberSince: new Date(),
     });
+
     await user.save();
 
     // Generate tokens
@@ -46,29 +57,40 @@ export class AuthService {
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user as unknown as UserDocument),
     };
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto): Promise<AuthResponseDto> {
     const { email, password } = loginDto;
 
     // Find user
     const user = await this.userModel.findOne({ email }).exec();
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_credentials', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Check if blocked
     if (user.isBlocked) {
-      throw new UnauthorizedException('User is blocked');
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_blocked', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_credentials', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Generate tokens
@@ -77,26 +99,32 @@ export class AuthService {
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      user: this.sanitizeUser(user),
+      user: this.sanitizeUser(user as unknown as UserDocument),
     };
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(refreshToken: string): Promise<TokenResponseDto> {
     // Find refresh token
     const tokenDoc = await this.refreshTokenModel.findOne({ token: refreshToken }).exec();
 
     if (!tokenDoc || tokenDoc.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_token', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Find user
     const user = await this.userModel.findById(tokenDoc.userId).exec();
     if (!user || user.isBlocked) {
-      throw new UnauthorizedException('User not found or blocked');
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_not_found', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
-    // Delete old refresh token
     await this.refreshTokenModel.deleteOne({ _id: tokenDoc._id }).exec();
 
     // Generate new tokens
@@ -108,14 +136,14 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string, refreshToken?: string) {
+  async logout(userId: string, refreshToken?: string): Promise<LogoutResponseDto> {
     if (refreshToken) {
       await this.refreshTokenModel.deleteOne({ token: refreshToken, userId }).exec();
     }
     return { success: true };
   }
 
-  private async generateTokens(userId: string, role: string) {
+  private async generateTokens(userId: string, role: string): Promise<TokenPairDto> {
     const payload = { sub: userId, email: '', role };
 
     const expiresIn = this.configService.get<string>('jwt.expiresIn') || '1h';
@@ -135,7 +163,6 @@ export class AuthService {
       secret: refreshSecret,
       expiresIn: refreshExpiresIn as any,
     });
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
     // Calculate expiration date
     const expiresAt = this.calculateExpirationDate(refreshExpiresIn);
@@ -176,8 +203,7 @@ export class AuthService {
     }
   }
 
-  private sanitizeUser(user: UserDocument) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  private sanitizeUser(user: UserDocument): Omit<User, 'password'> {
     const userObj = user.toObject();
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     delete userObj.password;
