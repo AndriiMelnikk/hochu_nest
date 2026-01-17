@@ -27,10 +27,11 @@ cp .env.example .env
 ```
 
 Required environment variables:
+
 - `MONGODB_URI` - MongoDB connection string
 - `JWT_SECRET` - JWT secret key
 - `JWT_REFRESH_SECRET` - JWT refresh token secret
-- `PORT` - Server port (default: 3000)
+- `PORT` - Server port (default: 8080)
 
 ## Running the app
 
@@ -46,7 +47,8 @@ npm run start:prod
 ## API Documentation
 
 Swagger documentation is available at:
-- http://localhost:3000/api/docs
+
+- http://localhost:8080/api/docs
 
 ## Project Structure
 
