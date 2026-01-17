@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 
 export class CreateProposalDto {
-  @ApiProperty({ example: 3000, description: 'Proposed price' })
+  @ApiProperty({ example: 8080, description: 'Proposed price' })
   @IsNumber()
   @Min(0)
   price: number;
