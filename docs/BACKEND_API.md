@@ -24,6 +24,7 @@
 ### Основна ідея
 
 Платформа працює за принципом зворотного аукціону:
+
 - **Покупці** створюють запити (requests) на послуги, описуючи що їм потрібно, бюджет та інші вимоги
 - **Продавці** переглядають запити та надсилають пропозиції (proposals) з ціною, термінами виконання та описом послуги
 - Покупці обирають найкращу пропозицію та співпрацюють з продавцем
@@ -39,6 +40,7 @@
 ### Архітектура фронтенду
 
 Проєкт використовує Feature-Sliced Design з наступними шарами:
+
 - `app/` - ініціалізація, провайдери, роутинг
 - `pages/` - сторінки додатку
 - `widgets/` - складні композитні компоненти
@@ -55,11 +57,13 @@
 #### 1. User (Користувач)
 
 Користувачі платформи можуть бути:
+
 - **Buyer** (покупець/замовник) - створює запити на послуги
 - **Seller** (продавець/виконавець) - надсилає пропозиції на запити
 - **Admin** (адміністратор) - модерує контент та управляє платформою
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `name` - ім'я користувача
 - `email` - email адреса (унікальна)
@@ -85,6 +89,7 @@
 Запит на послугу від покупця.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `title` - заголовок запиту
 - `description` - детальний опис
@@ -107,6 +112,7 @@
 Пропозиція від продавця на запит покупця.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request)
 - `sellerId` - ID продавця (foreign key до User)
@@ -125,6 +131,7 @@
 Відгук між користувачами після завершення угоди.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `userId` - ID користувача, який залишив відгук (foreign key до User)
 - `targetUserId` - ID користувача, про якого відгук (foreign key до User)
@@ -140,6 +147,7 @@
 Повідомлення в чаті між користувачами.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `senderId` - ID відправника (foreign key до User)
 - `receiverId` - ID отримувача (foreign key до User)
@@ -154,6 +162,7 @@
 Публічні коментарі під запитом або пропозицією.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request, опціонально)
 - `proposalId` - ID пропозиції (foreign key до Proposal, опціонально)
@@ -168,6 +177,7 @@
 Статті в блозі платформи.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `title` - заголовок статті
 - `description` - короткий опис
@@ -185,6 +195,7 @@
 Скарги на контент або користувачів.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `reporterId` - ID користувача, який подал скаргу (foreign key до User)
 - `targetType` - тип об'єкта (request, proposal, user, discussion)
@@ -200,6 +211,7 @@
 Досягнення для гейміфікації.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор (string)
 - `name` - назва досягнення
 - `description` - опис
@@ -213,6 +225,7 @@
 Зв'язок між користувачем та досягненням.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `userId` - ID користувача (foreign key до User)
 - `achievementId` - ID досягнення (foreign key до Achievement)
@@ -229,17 +242,17 @@ erDiagram
     User ||--o{ Discussion : writes
     User ||--o{ Report : submits
     User ||--o{ UserAchievement : has
-    
+
     Request ||--o{ Proposal : receives
     Request ||--o{ Discussion : has
     Request ||--o{ Report : "can be reported"
-    
+
     Proposal ||--o{ Discussion : has
     Proposal ||--o{ Report : "can be reported"
     Proposal ||--o{ Review : "can have"
-    
+
     Achievement ||--o{ UserAchievement : "unlocked by"
-    
+
     Request {
         int id PK
         string title
@@ -255,7 +268,7 @@ erDiagram
         int proposalsCount
         string status
     }
-    
+
     Proposal {
         int id PK
         int requestId FK
@@ -268,7 +281,7 @@ erDiagram
         array images
         string status
     }
-    
+
     User {
         int id PK
         string name
@@ -284,7 +297,7 @@ erDiagram
         int xp
         boolean isBlocked
     }
-    
+
     Review {
         int id PK
         int userId FK
@@ -294,7 +307,7 @@ erDiagram
         int rating
         string comment
     }
-    
+
     Message {
         int id PK
         int senderId FK
@@ -304,7 +317,7 @@ erDiagram
         string content
         boolean read
     }
-    
+
     Discussion {
         int id PK
         int requestId FK
@@ -313,7 +326,7 @@ erDiagram
         int replyToId FK
         string content
     }
-    
+
     Report {
         int id PK
         int reporterId FK
@@ -323,7 +336,7 @@ erDiagram
         string details
         string status
     }
-    
+
     Achievement {
         string id PK
         string name
@@ -333,7 +346,7 @@ erDiagram
         string role
         json condition
     }
-    
+
     UserAchievement {
         int id PK
         int userId FK
@@ -351,9 +364,11 @@ erDiagram
 **Опис:** Лендінг сторінка з Hero секцією, Features, HowItWorks та Footer.
 
 **Дані з бекенду:**
+
 - Статистика платформи (опціонально, для динамічного відображення)
 
 **API Endpoints:**
+
 - `GET /api/stats` - статистика платформи
   - Response: `{ totalUsers: number, totalRequests: number, totalDeals: number, averageRating: number }`
 
@@ -364,10 +379,12 @@ erDiagram
 **Опис:** Сторінка зі списком запитів, фільтрацією за категорією, локацією, бюджетом та пошуком.
 
 **Дані з бекенду:**
+
 - Список активних запитів з пагінацією
 - Фільтри: категорія, локація, бюджет, пошук
 
 **API Endpoints:**
+
 - `GET /api/requests` - список запитів
   - Query параметри:
     - `category` (string, опціонально) - категорія
@@ -386,9 +403,11 @@ erDiagram
 **Опис:** Форма для створення нового запиту на послугу.
 
 **Дані з бекенду:**
+
 - Список категорій (може бути статичним на фронтенді)
 
 **API Endpoints:**
+
 - `POST /api/requests` - створення запиту
   - Headers: `Authorization: Bearer <access_token>`
   - Request Body:
@@ -411,6 +430,7 @@ erDiagram
 ### 4. Деталі запиту (`/request/[id]`)
 
 **Опис:** Детальна сторінка запиту з:
+
 - Інформацією про запит
 - Списком пропозицій від продавців
 - Публічними обговореннями
@@ -419,6 +439,7 @@ erDiagram
 - Можливістю скарги
 
 **Дані з бекенду:**
+
 - Деталі запиту
 - Інформація про покупця
 - Список пропозицій до запиту
@@ -428,6 +449,7 @@ erDiagram
 - Можливість скарги
 
 **API Endpoints:**
+
 - `GET /api/requests/:id` - деталі запиту
   - Response: `RequestWithBuyer` (запит з інформацією про покупця)
 
@@ -482,6 +504,7 @@ erDiagram
 ### 5. Деталі пропозиції (`/proposal/[id]`)
 
 **Опис:** Детальна сторінка пропозиції з:
+
 - Інформацією про пропозицію
 - Інформацією про продавця
 - Інформацією про покупця (оригінальний запит)
@@ -490,6 +513,7 @@ erDiagram
 - Можливістю прийняття/відхилення пропозиції
 
 **Дані з бекенду:**
+
 - Деталі пропозиції
 - Інформація про продавця
 - Інформація про покупця та оригінальний запит
@@ -497,6 +521,7 @@ erDiagram
 - Відгуки про продавця
 
 **API Endpoints:**
+
 - `GET /api/proposals/:id` - деталі пропозиції
   - Response: `ProposalWithSeller` (пропозиція з інформацією про продавця та запит)
 
@@ -527,6 +552,7 @@ erDiagram
 ### 6. Профіль користувача (`/profile`)
 
 **Опис:** Профіль користувача з вкладками:
+
 - Огляд (overview) - активні запити, останні угоди
 - Досягнення (gamification) - XP, рівні, досягнення
 - Аналітика (analytics) - статистика користувача
@@ -535,6 +561,7 @@ erDiagram
 - Налаштування (settings) - редагування профілю
 
 **Дані з бекенду:**
+
 - Дані поточного користувача
 - Запити користувача
 - Пропозиції користувача
@@ -543,6 +570,7 @@ erDiagram
 - Досягнення користувача
 
 **API Endpoints:**
+
 - `GET /api/users/me` - дані поточного користувача
   - Headers: `Authorization: Bearer <access_token>`
   - Response: `User`
@@ -603,11 +631,13 @@ erDiagram
 **Опис:** Сторінки входу та реєстрації.
 
 **Дані з бекенду:**
+
 - Вхід користувача
 - Реєстрація нового користувача
 - Оновлення токенів
 
 **API Endpoints:**
+
 - `POST /api/auth/register` - реєстрація
   - Request Body:
     ```json
@@ -649,10 +679,12 @@ erDiagram
 **Опис:** Список статей блогу та детальна сторінка статті.
 
 **Дані з бекенду:**
+
 - Список опублікованих статей
 - Деталі статті
 
 **API Endpoints:**
+
 - `GET /api/blog/posts` - список статей
   - Query параметри:
     - `category` (string, опціонально) - категорія
@@ -670,6 +702,7 @@ erDiagram
 **Опис:** Адміністративна панель для модерації контенту та управління платформою.
 
 **Дані з бекенду:**
+
 - Статистика платформи
 - Запити на модерацію
 - Пропозиції на модерацію
@@ -678,6 +711,7 @@ erDiagram
 - Можливість блокування користувачів
 
 **API Endpoints:**
+
 - `GET /api/admin/analytics` - статистика платформи
   - Headers: `Authorization: Bearer <access_token>` (тільки для admin)
   - Response:
@@ -770,6 +804,7 @@ erDiagram
 **Опис:** Статичні інформаційні сторінки. Можуть бути статичними або з невеликою кількістю даних з бекенду.
 
 **API Endpoints (опціонально):**
+
 - `POST /api/contact` - відправка форми зворотного зв'язку
   - Request Body:
     ```json
@@ -795,7 +830,7 @@ https://api.hochu.com/api
 або для розробки:
 
 ```
-http://localhost:3000/api
+http://localhost:8080/api
 ```
 
 ### Загальні принципи
@@ -847,19 +882,19 @@ erDiagram
     users ||--o{ discussions : "writes"
     users ||--o{ reports : "submits"
     users ||--o{ user_achievements : "has"
-    
+
     requests ||--o{ proposals : "receives"
     requests ||--o{ discussions : "has"
     requests ||--o{ reports : "can be reported"
     requests ||--o{ messages : "related to"
-    
+
     proposals ||--o{ discussions : "has"
     proposals ||--o{ reports : "can be reported"
     proposals ||--o{ reviews : "can have"
     proposals ||--o{ messages : "related to"
-    
+
     achievements ||--o{ user_achievements : "unlocked by"
-    
+
     discussions ||--o{ discussions : "replies to"
 ```
 
@@ -867,53 +902,55 @@ erDiagram
 
 #### users
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| name | VARCHAR(255) | NOT NULL | Ім'я користувача |
-| email | VARCHAR(255) | NOT NULL, UNIQUE | Email адреса |
-| password | VARCHAR(255) | NOT NULL | Хеш пароля |
-| avatar | VARCHAR(500) | NULL | URL аватара |
-| role | ENUM('buyer', 'seller', 'admin') | NOT NULL, DEFAULT 'buyer' | Роль користувача |
-| rating | DECIMAL(3,2) | DEFAULT 0.00 | Середній рейтинг (0-5) |
-| reviews_count | INT | DEFAULT 0 | Кількість відгуків |
-| is_verified | BOOLEAN | DEFAULT FALSE | Чи верифікований |
-| member_since | DATE | NOT NULL | Дата реєстрації |
-| completed_deals | INT | DEFAULT 0 | Кількість завершених угод |
-| location | VARCHAR(255) | NULL | Локація |
-| xp | INT | DEFAULT 0 | Досвід (experience points) |
-| is_blocked | BOOLEAN | DEFAULT FALSE | Чи заблокований |
-| blocked_until | DATETIME | NULL | Дата до якої заблокований |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле            | Тип                              | Обмеження                                             | Опис                       |
+| --------------- | -------------------------------- | ----------------------------------------------------- | -------------------------- |
+| id              | INT                              | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор   |
+| name            | VARCHAR(255)                     | NOT NULL                                              | Ім'я користувача           |
+| email           | VARCHAR(255)                     | NOT NULL, UNIQUE                                      | Email адреса               |
+| password        | VARCHAR(255)                     | NOT NULL                                              | Хеш пароля                 |
+| avatar          | VARCHAR(500)                     | NULL                                                  | URL аватара                |
+| role            | ENUM('buyer', 'seller', 'admin') | NOT NULL, DEFAULT 'buyer'                             | Роль користувача           |
+| rating          | DECIMAL(3,2)                     | DEFAULT 0.00                                          | Середній рейтинг (0-5)     |
+| reviews_count   | INT                              | DEFAULT 0                                             | Кількість відгуків         |
+| is_verified     | BOOLEAN                          | DEFAULT FALSE                                         | Чи верифікований           |
+| member_since    | DATE                             | NOT NULL                                              | Дата реєстрації            |
+| completed_deals | INT                              | DEFAULT 0                                             | Кількість завершених угод  |
+| location        | VARCHAR(255)                     | NULL                                                  | Локація                    |
+| xp              | INT                              | DEFAULT 0                                             | Досвід (experience points) |
+| is_blocked      | BOOLEAN                          | DEFAULT FALSE                                         | Чи заблокований            |
+| blocked_until   | DATETIME                         | NULL                                                  | Дата до якої заблокований  |
+| created_at      | TIMESTAMP                        | DEFAULT CURRENT_TIMESTAMP                             | Дата створення             |
+| updated_at      | TIMESTAMP                        | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення             |
 
 **Індекси:**
+
 - `idx_email` на `email`
 - `idx_role` на `role`
 - `idx_rating` на `rating`
 
 #### requests
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| title | VARCHAR(255) | NOT NULL | Заголовок запиту |
-| description | TEXT | NOT NULL | Детальний опис |
-| category | VARCHAR(100) | NOT NULL | Категорія |
-| budget_min | DECIMAL(10,2) | NOT NULL | Мінімальний бюджет |
-| budget_max | DECIMAL(10,2) | NOT NULL | Максимальний бюджет |
-| location | VARCHAR(255) | NOT NULL | Локація |
-| urgency | VARCHAR(50) | NOT NULL | Терміновість |
-| buyer_id | INT | NOT NULL, FOREIGN KEY | ID покупця |
-| images | JSON | NULL | Масив URL зображень |
-| views | INT | DEFAULT 0 | Кількість переглядів |
-| proposals_count | INT | DEFAULT 0 | Кількість пропозицій |
-| status | ENUM('pending', 'active', 'closed', 'rejected') | DEFAULT 'pending' | Статус |
-| edits | JSON | NULL | Історія редагувань |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле            | Тип                                             | Обмеження                                             | Опис                     |
+| --------------- | ----------------------------------------------- | ----------------------------------------------------- | ------------------------ |
+| id              | INT                                             | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор |
+| title           | VARCHAR(255)                                    | NOT NULL                                              | Заголовок запиту         |
+| description     | TEXT                                            | NOT NULL                                              | Детальний опис           |
+| category        | VARCHAR(100)                                    | NOT NULL                                              | Категорія                |
+| budget_min      | DECIMAL(10,2)                                   | NOT NULL                                              | Мінімальний бюджет       |
+| budget_max      | DECIMAL(10,2)                                   | NOT NULL                                              | Максимальний бюджет      |
+| location        | VARCHAR(255)                                    | NOT NULL                                              | Локація                  |
+| urgency         | VARCHAR(50)                                     | NOT NULL                                              | Терміновість             |
+| buyer_id        | INT                                             | NOT NULL, FOREIGN KEY                                 | ID покупця               |
+| images          | JSON                                            | NULL                                                  | Масив URL зображень      |
+| views           | INT                                             | DEFAULT 0                                             | Кількість переглядів     |
+| proposals_count | INT                                             | DEFAULT 0                                             | Кількість пропозицій     |
+| status          | ENUM('pending', 'active', 'closed', 'rejected') | DEFAULT 'pending'                                     | Статус                   |
+| edits           | JSON                                            | NULL                                                  | Історія редагувань       |
+| created_at      | TIMESTAMP                                       | DEFAULT CURRENT_TIMESTAMP                             | Дата створення           |
+| updated_at      | TIMESTAMP                                       | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення           |
 
 **Індекси:**
+
 - `idx_buyer_id` на `buyer_id`
 - `idx_category` на `category`
 - `idx_status` на `status`
@@ -922,22 +959,23 @@ erDiagram
 
 #### proposals
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| request_id | INT | NOT NULL, FOREIGN KEY | ID запиту |
-| seller_id | INT | NOT NULL, FOREIGN KEY | ID продавця |
-| price | DECIMAL(10,2) | NOT NULL | Запропонована ціна |
-| title | VARCHAR(255) | NOT NULL | Заголовок пропозиції |
-| description | TEXT | NOT NULL | Детальний опис |
-| estimated_time | VARCHAR(100) | NOT NULL | Термін виконання |
-| warranty | VARCHAR(100) | NULL | Гарантія |
-| images | JSON | NULL | Масив URL зображень |
-| status | ENUM('pending', 'accepted', 'rejected', 'completed') | DEFAULT 'pending' | Статус |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле           | Тип                                                  | Обмеження                                             | Опис                     |
+| -------------- | ---------------------------------------------------- | ----------------------------------------------------- | ------------------------ |
+| id             | INT                                                  | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор |
+| request_id     | INT                                                  | NOT NULL, FOREIGN KEY                                 | ID запиту                |
+| seller_id      | INT                                                  | NOT NULL, FOREIGN KEY                                 | ID продавця              |
+| price          | DECIMAL(10,2)                                        | NOT NULL                                              | Запропонована ціна       |
+| title          | VARCHAR(255)                                         | NOT NULL                                              | Заголовок пропозиції     |
+| description    | TEXT                                                 | NOT NULL                                              | Детальний опис           |
+| estimated_time | VARCHAR(100)                                         | NOT NULL                                              | Термін виконання         |
+| warranty       | VARCHAR(100)                                         | NULL                                                  | Гарантія                 |
+| images         | JSON                                                 | NULL                                                  | Масив URL зображень      |
+| status         | ENUM('pending', 'accepted', 'rejected', 'completed') | DEFAULT 'pending'                                     | Статус                   |
+| created_at     | TIMESTAMP                                            | DEFAULT CURRENT_TIMESTAMP                             | Дата створення           |
+| updated_at     | TIMESTAMP                                            | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення           |
 
 **Індекси:**
+
 - `idx_request_id` на `request_id`
 - `idx_seller_id` на `seller_id`
 - `idx_status` на `status`
@@ -945,19 +983,20 @@ erDiagram
 
 #### reviews
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| user_id | INT | NOT NULL, FOREIGN KEY | ID користувача, який залишив відгук |
-| target_user_id | INT | NOT NULL, FOREIGN KEY | ID користувача, про якого відгук |
-| request_id | INT | NULL, FOREIGN KEY | ID запиту |
-| proposal_id | INT | NULL, FOREIGN KEY | ID пропозиції |
-| rating | TINYINT | NOT NULL, CHECK (rating >= 1 AND rating <= 5) | Оцінка (1-5) |
-| comment | TEXT | NULL | Текст відгуку |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле           | Тип       | Обмеження                                             | Опис                                |
+| -------------- | --------- | ----------------------------------------------------- | ----------------------------------- |
+| id             | INT       | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор            |
+| user_id        | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача, який залишив відгук |
+| target_user_id | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача, про якого відгук    |
+| request_id     | INT       | NULL, FOREIGN KEY                                     | ID запиту                           |
+| proposal_id    | INT       | NULL, FOREIGN KEY                                     | ID пропозиції                       |
+| rating         | TINYINT   | NOT NULL, CHECK (rating >= 1 AND rating <= 5)         | Оцінка (1-5)                        |
+| comment        | TEXT      | NULL                                                  | Текст відгуку                       |
+| created_at     | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                      |
+| updated_at     | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                      |
 
 **Індекси:**
+
 - `idx_user_id` на `user_id`
 - `idx_target_user_id` на `target_user_id`
 - `idx_request_id` на `request_id`
@@ -965,18 +1004,19 @@ erDiagram
 
 #### messages
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| sender_id | INT | NOT NULL, FOREIGN KEY | ID відправника |
-| receiver_id | INT | NOT NULL, FOREIGN KEY | ID отримувача |
-| request_id | INT | NULL, FOREIGN KEY | ID запиту |
-| proposal_id | INT | NULL, FOREIGN KEY | ID пропозиції |
-| content | TEXT | NOT NULL | Текст повідомлення |
-| read | BOOLEAN | DEFAULT FALSE | Чи прочитано |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
+| Поле        | Тип       | Обмеження                   | Опис                     |
+| ----------- | --------- | --------------------------- | ------------------------ |
+| id          | INT       | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
+| sender_id   | INT       | NOT NULL, FOREIGN KEY       | ID відправника           |
+| receiver_id | INT       | NOT NULL, FOREIGN KEY       | ID отримувача            |
+| request_id  | INT       | NULL, FOREIGN KEY           | ID запиту                |
+| proposal_id | INT       | NULL, FOREIGN KEY           | ID пропозиції            |
+| content     | TEXT      | NOT NULL                    | Текст повідомлення       |
+| read        | BOOLEAN   | DEFAULT FALSE               | Чи прочитано             |
+| created_at  | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP   | Дата створення           |
 
 **Індекси:**
+
 - `idx_sender_id` на `sender_id`
 - `idx_receiver_id` на `receiver_id`
 - `idx_request_id` на `request_id`
@@ -985,18 +1025,19 @@ erDiagram
 
 #### discussions
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| request_id | INT | NULL, FOREIGN KEY | ID запиту |
-| proposal_id | INT | NULL, FOREIGN KEY | ID пропозиції |
-| user_id | INT | NOT NULL, FOREIGN KEY | ID користувача |
-| reply_to_id | INT | NULL, FOREIGN KEY | ID коментаря, на який відповідають |
-| content | TEXT | NOT NULL | Текст коментаря |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле        | Тип       | Обмеження                                             | Опис                               |
+| ----------- | --------- | ----------------------------------------------------- | ---------------------------------- |
+| id          | INT       | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор           |
+| request_id  | INT       | NULL, FOREIGN KEY                                     | ID запиту                          |
+| proposal_id | INT       | NULL, FOREIGN KEY                                     | ID пропозиції                      |
+| user_id     | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача                     |
+| reply_to_id | INT       | NULL, FOREIGN KEY                                     | ID коментаря, на який відповідають |
+| content     | TEXT      | NOT NULL                                              | Текст коментаря                    |
+| created_at  | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                     |
+| updated_at  | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                     |
 
 **Індекси:**
+
 - `idx_request_id` на `request_id`
 - `idx_proposal_id` на `proposal_id`
 - `idx_user_id` на `user_id`
@@ -1004,66 +1045,69 @@ erDiagram
 
 #### reports
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| reporter_id | INT | NOT NULL, FOREIGN KEY | ID користувача, який подал скаргу |
-| target_type | ENUM('request', 'proposal', 'user', 'discussion') | NOT NULL | Тип об'єкта |
-| target_id | INT | NOT NULL | ID об'єкта |
-| reason | ENUM('low-price', 'scam', 'inappropriate', 'spam', 'duplicate', 'other') | NOT NULL | Причина скарги |
-| details | TEXT | NULL | Додаткові деталі |
-| status | ENUM('pending', 'reviewed', 'resolved', 'rejected') | DEFAULT 'pending' | Статус |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле        | Тип                                                                      | Обмеження                                             | Опис                              |
+| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------- | --------------------------------- |
+| id          | INT                                                                      | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор          |
+| reporter_id | INT                                                                      | NOT NULL, FOREIGN KEY                                 | ID користувача, який подал скаргу |
+| target_type | ENUM('request', 'proposal', 'user', 'discussion')                        | NOT NULL                                              | Тип об'єкта                       |
+| target_id   | INT                                                                      | NOT NULL                                              | ID об'єкта                        |
+| reason      | ENUM('low-price', 'scam', 'inappropriate', 'spam', 'duplicate', 'other') | NOT NULL                                              | Причина скарги                    |
+| details     | TEXT                                                                     | NULL                                                  | Додаткові деталі                  |
+| status      | ENUM('pending', 'reviewed', 'resolved', 'rejected')                      | DEFAULT 'pending'                                     | Статус                            |
+| created_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                    |
+| updated_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                    |
 
 **Індекси:**
+
 - `idx_reporter_id` на `reporter_id`
 - `idx_target` на `target_type`, `target_id`
 - `idx_status` на `status`
 
 #### blog_posts
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| title | VARCHAR(255) | NOT NULL | Заголовок статті |
-| description | TEXT | NOT NULL | Короткий опис |
-| content | LONGTEXT | NOT NULL | Повний текст статті |
-| category | VARCHAR(100) | NULL | Категорія статті |
-| author | VARCHAR(255) | NOT NULL | Автор статті |
-| image | VARCHAR(500) | NULL | URL зображення |
-| read_time | INT | NULL | Час читання (хвилини) |
-| published | BOOLEAN | DEFAULT FALSE | Чи опублікована |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
-| updated_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення |
+| Поле        | Тип          | Обмеження                                             | Опис                     |
+| ----------- | ------------ | ----------------------------------------------------- | ------------------------ |
+| id          | INT          | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор |
+| title       | VARCHAR(255) | NOT NULL                                              | Заголовок статті         |
+| description | TEXT         | NOT NULL                                              | Короткий опис            |
+| content     | LONGTEXT     | NOT NULL                                              | Повний текст статті      |
+| category    | VARCHAR(100) | NULL                                                  | Категорія статті         |
+| author      | VARCHAR(255) | NOT NULL                                              | Автор статті             |
+| image       | VARCHAR(500) | NULL                                                  | URL зображення           |
+| read_time   | INT          | NULL                                                  | Час читання (хвилини)    |
+| published   | BOOLEAN      | DEFAULT FALSE                                         | Чи опублікована          |
+| created_at  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                             | Дата створення           |
+| updated_at  | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення           |
 
 **Індекси:**
+
 - `idx_category` на `category`
 - `idx_published` на `published`
 - `idx_created_at` на `created_at`
 
 #### achievements
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | VARCHAR(50) | PRIMARY KEY | Унікальний ідентифікатор |
-| name | VARCHAR(255) | NOT NULL | Назва досягнення |
-| description | TEXT | NOT NULL | Опис |
-| icon | VARCHAR(255) | NOT NULL | Іконка (emoji або URL) |
-| rarity | ENUM('common', 'rare', 'epic', 'legendary') | NOT NULL | Рідкісність |
-| role | ENUM('buyer', 'seller', 'both') | NOT NULL | Для якої ролі |
-| condition | JSON | NOT NULL | Умова отримання |
+| Поле        | Тип                                         | Обмеження   | Опис                     |
+| ----------- | ------------------------------------------- | ----------- | ------------------------ |
+| id          | VARCHAR(50)                                 | PRIMARY KEY | Унікальний ідентифікатор |
+| name        | VARCHAR(255)                                | NOT NULL    | Назва досягнення         |
+| description | TEXT                                        | NOT NULL    | Опис                     |
+| icon        | VARCHAR(255)                                | NOT NULL    | Іконка (emoji або URL)   |
+| rarity      | ENUM('common', 'rare', 'epic', 'legendary') | NOT NULL    | Рідкісність              |
+| role        | ENUM('buyer', 'seller', 'both')             | NOT NULL    | Для якої ролі            |
+| condition   | JSON                                        | NOT NULL    | Умова отримання          |
 
 #### user_achievements
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| user_id | INT | NOT NULL, FOREIGN KEY | ID користувача |
-| achievement_id | VARCHAR(50) | NOT NULL, FOREIGN KEY | ID досягнення |
-| unlocked_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата отримання |
+| Поле           | Тип         | Обмеження                   | Опис                     |
+| -------------- | ----------- | --------------------------- | ------------------------ |
+| id             | INT         | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
+| user_id        | INT         | NOT NULL, FOREIGN KEY       | ID користувача           |
+| achievement_id | VARCHAR(50) | NOT NULL, FOREIGN KEY       | ID досягнення            |
+| unlocked_at    | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP   | Дата отримання           |
 
 **Індекси:**
+
 - `idx_user_id` на `user_id`
 - `idx_achievement_id` на `achievement_id`
 - `UNIQUE idx_user_achievement` на `user_id`, `achievement_id`
@@ -1099,6 +1143,7 @@ erDiagram
 ### Захищені routes
 
 Деякі endpoints вимагають авторизації:
+
 - Створення/редагування/видалення запитів
 - Створення пропозицій
 - Оновлення профілю
@@ -1119,35 +1164,35 @@ sequenceDiagram
     participant Client
     participant API
     participant DB
-    
+
     Client->>API: POST /api/auth/register
     API->>DB: Створити користувача
     DB-->>API: User created
     API->>API: Генерувати JWT токени
     API-->>Client: { access_token, refresh_token, user }
-    
+
     Client->>API: POST /api/auth/login
     API->>DB: Перевірити credentials
     DB-->>API: User found
     API->>API: Генерувати JWT токени
     API-->>Client: { access_token, refresh_token, user }
-    
+
     Client->>API: GET /api/requests (з access_token)
     API->>API: Валідувати токен
     API->>DB: Отримати запити
     DB-->>API: Requests
     API-->>Client: { results: [...] }
-    
+
     Note over Client,API: Access token прострочений
     Client->>API: GET /api/requests (з простроченим токеном)
     API-->>Client: 401 Unauthorized
-    
+
     Client->>API: POST /api/auth/refresh (з refresh_token)
     API->>DB: Перевірити refresh_token
     DB-->>API: Token valid
     API->>API: Генерувати нові токени
     API-->>Client: { access_token, refresh_token }
-    
+
     Client->>API: GET /api/requests (з новим access_token)
     API->>DB: Отримати запити
     DB-->>API: Requests
@@ -1163,6 +1208,7 @@ sequenceDiagram
 Зображення завантажуються через окремий endpoint перед створенням запиту/пропозиції.
 
 **API Endpoint:**
+
 - `POST /api/upload` - завантаження зображення
   - Headers: `Authorization: Bearer <access_token>`
   - Content-Type: `multipart/form-data`
@@ -1178,6 +1224,7 @@ sequenceDiagram
 ### Storage Strategy
 
 Рекомендовано використовувати:
+
 - **Cloud Storage:** AWS S3, Google Cloud Storage, або Cloudinary
 - **CDN:** Для швидкої доставки зображень
 
@@ -1190,12 +1237,14 @@ sequenceDiagram
 XP нараховується за різні дії:
 
 **Для покупців:**
+
 - Створення запиту: +10 XP
 - Прийняття пропозиції: +20 XP
 - Залишення відгуку: +5 XP
 - Завершення угоди: +30 XP
 
 **Для продавців:**
+
 - Надсилання пропозиції: +5 XP
 - Прийняття пропозиції: +25 XP
 - Отримання відгуку 5★: +15 XP
@@ -1206,6 +1255,7 @@ XP нараховується за різні дії:
 Рівні визначаються на основі XP:
 
 **Покупці:**
+
 - Рівень 1 (Початківець): 0-49 XP
 - Рівень 2 (Активний): 50-199 XP
 - Рівень 3 (Досвідчений): 200-999 XP
@@ -1213,6 +1263,7 @@ XP нараховується за різні дії:
 - Рівень 5 (VIP): 3000+ XP
 
 **Продавці:**
+
 - Рівень 1 (Новачок): 0-99 XP
 - Рівень 2 (Майстер): 100-499 XP
 - Рівень 3 (Експерт): 500-1499 XP
@@ -1224,6 +1275,7 @@ XP нараховується за різні дії:
 Досягнення розблоковуються автоматично при виконанні умов.
 
 **Приклади досягнень для продавців:**
+
 - `first_sale` - Завершіть першу угоду
 - `fast_responder` - Відповідайте за 5 хв 10 разів
 - `perfect_rating` - 10 відгуків 5★ підряд
@@ -1232,6 +1284,7 @@ XP нараховується за різні дії:
 - `price_master` - 50% пропозицій прийнято
 
 **Приклади досягнень для покупців:**
+
 - `first_request` - Створіть перший запит
 - `deal_maker` - Завершіть 10 угод
 - `reviewer` - Залиште 20 відгуків
@@ -1242,12 +1295,14 @@ XP нараховується за різні дії:
 ### Логіка нарахування XP
 
 XP нараховується автоматично при:
+
 - Створенні запиту/пропозиції
 - Прийнятті пропозиції
 - Завершенні угоди
 - Залишенні відгуку
 
 **API Endpoint (внутрішній):**
+
 - Система автоматично оновлює XP при відповідних подіях
 - Можна додати endpoint для ручного нарахування (тільки для адмінів):
   - `POST /api/admin/users/:id/xp` - нарахування XP
@@ -1261,12 +1316,14 @@ XP нараховується автоматично при:
 ### Real-time комунікація
 
 Для real-time повідомлень рекомендовано використовувати:
+
 - **WebSocket** (Socket.io) - для двосторонньої комунікації
 - **Server-Sent Events (SSE)** - для односторонніх оновлень
 
 ### Структура повідомлень
 
 Повідомлення зберігаються в таблиці `messages` та можуть бути пов'язані з:
+
 - Запитом (`request_id`)
 - Пропозицією (`proposal_id`)
 - Або бути приватним чатом між користувачами
@@ -1274,6 +1331,7 @@ XP нараховується автоматично при:
 ### Історія чатів
 
 **API Endpoints:**
+
 - `GET /api/messages` - отримати повідомлення
   - Headers: `Authorization: Bearer <access_token>`
   - Query параметри:
@@ -1310,12 +1368,14 @@ XP нараховується автоматично при:
 Якщо використовується WebSocket:
 
 **Клієнт → Сервер:**
+
 - `message:send` - відправка повідомлення
 - `message:read` - позначення як прочитане
 - `typing:start` - початок набору тексту
 - `typing:stop` - кінець набору тексту
 
 **Сервер → Клієнт:**
+
 - `message:new` - нове повідомлення
 - `message:read` - повідомлення прочитано
 - `typing` - користувач набирає текст
@@ -1329,11 +1389,13 @@ XP нараховується автоматично при:
 ### Пошук та фільтрація
 
 **Пошук:**
+
 - Full-text search по заголовку та опису запитів
 - Використовується FULLTEXT індекс в MySQL/MariaDB
 - Або Elasticsearch для більш складних випадків
 
 **Фільтрація:**
+
 - За категорією
 - За локацією
 - За бюджетом (budgetMin, budgetMax)
@@ -1348,6 +1410,7 @@ XP нараховується автоматично при:
 - `pageSize` - розмір сторінки (за замовчуванням 20, максимум 100)
 
 **Response формат:**
+
 ```json
 {
   "count": 150,
@@ -1371,6 +1434,7 @@ XP нараховується автоматично при:
 ### Нотифікації
 
 Система нотифікацій для інформування користувачів про:
+
 - Нові пропозиції на їх запити
 - Прийняття/відхилення їх пропозицій
 - Нові повідомлення
@@ -1378,6 +1442,7 @@ XP нараховується автоматично при:
 - Розблоковування досягнень
 
 **API Endpoints:**
+
 - `GET /api/notifications` - отримати нотифікації
   - Headers: `Authorization: Bearer <access_token>`
   - Query параметри:
@@ -1396,16 +1461,16 @@ XP нараховується автоматично при:
 
 **Таблиця notifications:**
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| user_id | INT | NOT NULL, FOREIGN KEY | ID користувача |
-| type | VARCHAR(50) | NOT NULL | Тип нотифікації |
-| title | VARCHAR(255) | NOT NULL | Заголовок |
-| message | TEXT | NOT NULL | Текст нотифікації |
-| link | VARCHAR(500) | NULL | Посилання |
-| read | BOOLEAN | DEFAULT FALSE | Чи прочитано |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
+| Поле       | Тип          | Обмеження                   | Опис                     |
+| ---------- | ------------ | --------------------------- | ------------------------ |
+| id         | INT          | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
+| user_id    | INT          | NOT NULL, FOREIGN KEY       | ID користувача           |
+| type       | VARCHAR(50)  | NOT NULL                    | Тип нотифікації          |
+| title      | VARCHAR(255) | NOT NULL                    | Заголовок                |
+| message    | TEXT         | NOT NULL                    | Текст нотифікації        |
+| link       | VARCHAR(500) | NULL                        | Посилання                |
+| read       | BOOLEAN      | DEFAULT FALSE               | Чи прочитано             |
+| created_at | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP   | Дата створення           |
 
 ---
 
@@ -1417,23 +1482,23 @@ sequenceDiagram
     participant API
     participant DB
     participant Seller
-    
+
     Note over Buyer: Створення запиту
     Buyer->>API: POST /api/requests
     API->>DB: Створити запит (status: pending)
     DB-->>API: Request created
     API->>API: Нарахувати XP (+10)
     API-->>Buyer: Request created
-    
+
     Note over API: Модерація (якщо потрібна)
     API->>DB: Оновити статус (status: active)
-    
+
     Note over Seller: Перегляд запитів
     Seller->>API: GET /api/requests
     API->>DB: Отримати активні запити
     DB-->>API: Requests
     API-->>Seller: List of requests
-    
+
     Note over Seller: Створення пропозиції
     Seller->>API: POST /api/requests/:id/proposals
     API->>DB: Створити пропозицію (status: pending)
@@ -1442,13 +1507,13 @@ sequenceDiagram
     API->>API: Нарахувати XP (+5)
     API->>API: Створити нотифікацію для покупця
     API-->>Seller: Proposal created
-    
+
     Note over Buyer: Перегляд пропозицій
     Buyer->>API: GET /api/requests/:id/proposals
     API->>DB: Отримати пропозиції
     DB-->>API: Proposals
     API-->>Buyer: List of proposals
-    
+
     Note over Buyer: Прийняття пропозиції
     Buyer->>API: POST /api/proposals/:id/accept
     API->>DB: Оновити статус пропозиції (status: accepted)
@@ -1457,7 +1522,7 @@ sequenceDiagram
     API->>API: Нарахувати XP покупцю (+20) та продавцю (+25)
     API->>API: Створити нотифікацію для продавця
     API-->>Buyer: Proposal accepted
-    
+
     Note over Buyer,Seller: Чат та обговорення
     Buyer->>API: POST /api/messages
     API->>DB: Зберегти повідомлення
@@ -1465,14 +1530,14 @@ sequenceDiagram
     Seller->>API: POST /api/messages
     API->>DB: Зберегти повідомлення
     API->>API: WebSocket: відправити покупцю
-    
+
     Note over Buyer,Seller: Завершення угоди
     Buyer->>API: POST /api/proposals/:id/complete
     API->>DB: Оновити статус пропозиції (status: completed)
     API->>DB: Оновити completed_deals для обох користувачів
     API->>API: Нарахувати XP покупцю (+30) та продавцю (+50)
     API-->>Buyer: Deal completed
-    
+
     Note over Buyer: Залишення відгуку
     Buyer->>API: POST /api/reviews
     API->>DB: Створити відгук
@@ -1495,4 +1560,3 @@ sequenceDiagram
 5. Інтеграції додаткових функцій (чат, нотифікації, гейміфікація)
 
 Для додаткової інформації звертайтеся до команди розробки.
-

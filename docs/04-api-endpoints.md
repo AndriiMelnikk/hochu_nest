@@ -9,7 +9,7 @@ https://api.hochu.com/api
 або для розробки:
 
 ```
-http://localhost:3000/api
+http://localhost:8080/api
 ```
 
 ## Загальні принципи
