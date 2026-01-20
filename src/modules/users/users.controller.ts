@@ -5,7 +5,6 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from '@database/schemas/user.schema';
 
 @ApiTags('Users')
 @Controller('users')
@@ -17,20 +16,16 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile' })
-  async getMe(@CurrentUser() user: userSchema.UserDocument) {
-    return this.usersService.findMe(user._id.toString());
+  async getMe(@CurrentUser() user: { id: string }) {
+    return this.usersService.findMe(user.id);
   }
-
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current user profile' })
   @ApiResponse({ status: 200, description: 'User profile updated' })
-  async updateMe(
-    @CurrentUser() user: userSchema.UserDocument,
-    @Body() updateUserDto: UpdateUserDto,
-  ) {
-    return this.usersService.updateMe(user._id.toString(), updateUserDto);
+  async updateMe(@CurrentUser() user: { id: string }, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.updateMe(user.id, updateUserDto);
   }
 
   @Get(':id')
