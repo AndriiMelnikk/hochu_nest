@@ -1225,7 +1225,7 @@ sequenceDiagram
 
 Рекомендовано використовувати:
 
-- **Cloud Storage:** AWS S3, Google Cloud Storage, або Cloudinary
+- **Cloud Storage:** Cloudflare R2 (S3-compatible), Google Cloud Storage, або Cloudinary
 - **CDN:** Для швидкої доставки зображень
 
 ---

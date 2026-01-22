@@ -1,16 +1,17 @@
 import { Injectable, BadRequestException, UnsupportedMediaTypeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { promises as fs } from 'fs';
 import * as path from 'path';
+import { R2StorageService } from './storage/r2-storage.service';
 
 @Injectable()
 export class UploadService {
-  private readonly uploadPath: string;
   private readonly maxFileSize: number;
   private readonly allowedTypes: string[];
 
-  constructor(private configService: ConfigService) {
-    this.uploadPath = this.configService.get<string>('upload.dest') || './uploads';
+  constructor(
+    private configService: ConfigService,
+    private r2StorageService: R2StorageService,
+  ) {
     this.maxFileSize = this.configService.get<number>('upload.maxFileSize') || 10485760;
     this.allowedTypes = this.configService.get<string[]>('upload.allowedFileTypes') || [
       'jpg',
@@ -18,17 +19,6 @@ export class UploadService {
       'png',
       'webp',
     ];
-
-    // Create upload directory if it doesn't exist
-    void this.ensureUploadDirectory();
-  }
-
-  private async ensureUploadDirectory() {
-    try {
-      await fs.access(this.uploadPath);
-    } catch {
-      await fs.mkdir(this.uploadPath, { recursive: true });
-    }
   }
 
   async uploadFile(file: Express.Multer.File): Promise<{ url: string }> {
@@ -54,13 +44,15 @@ export class UploadService {
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const filename = `${uniqueSuffix}.${fileExtension}`;
-    const filepath = path.join(this.uploadPath, filename);
-
-    // Save file
-    await fs.writeFile(filepath, file.buffer);
-
-    // Return URL (in production, this would be a CDN URL)
-    const url = `/uploads/${filename}`;
-    return { url };
+    return this.r2StorageService.upload(file, filename);
   }
+
+  // async checkR2Health(): Promise<{ status: 'ok' }> {
+  //   if (this.storageProvider !== 'r2') {
+  //     throw new InternalServerErrorException('Cloudflare R2 is not configured');
+  //   }
+
+  //   await this.r2StorageService.checkConnection();
+  //   return { status: 'ok' };
+  // }
 }
