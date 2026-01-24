@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:unit": "jest --testPathIgnorePatterns=e2e",
     "test:staged": "jest --onlyChanged",
+    "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
     "prepare": "husky || true",
     "commit": "git-cz",
     "commit:retry": "git-cz --retry"

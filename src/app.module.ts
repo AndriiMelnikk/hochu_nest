@@ -25,6 +25,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 // import { UploadModule } from './modules/upload/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { XpModule } from './modules/xp/xp.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { XpModule } from './modules/xp/xp.module';
     BlogModule,
     ReportsModule,
     NotificationsModule,
+    CategoriesModule,
     // UploadModule,
     AdminModule,
   ],

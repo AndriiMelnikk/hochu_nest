@@ -5,11 +5,13 @@
 ### 1. User (Користувач)
 
 Користувачі платформи можуть бути:
+
 - **Buyer** (покупець/замовник) - створює запити на послуги
 - **Seller** (продавець/виконавець) - надсилає пропозиції на запити
 - **Admin** (адміністратор) - модерує контент та управляє платформою
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `name` - ім'я користувача
 - `email` - email адреса (унікальна)
@@ -35,6 +37,7 @@
 Запит на послугу від покупця.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `title` - заголовок запиту
 - `description` - детальний опис
@@ -57,6 +60,7 @@
 Пропозиція від продавця на запит покупця.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request)
 - `sellerId` - ID продавця (foreign key до User)
@@ -75,6 +79,7 @@
 Відгук між користувачами після завершення угоди.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `userId` - ID користувача, який залишив відгук (foreign key до User)
 - `targetUserId` - ID користувача, про якого відгук (foreign key до User)
@@ -90,6 +95,7 @@
 Повідомлення в чаті між користувачами.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `senderId` - ID відправника (foreign key до User)
 - `receiverId` - ID отримувача (foreign key до User)
@@ -104,6 +110,7 @@
 Публічні коментарі під запитом або пропозицією.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request, опціонально)
 - `proposalId` - ID пропозиції (foreign key до Proposal, опціонально)
@@ -118,6 +125,7 @@
 Статті в блозі платформи.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `title` - заголовок статті
 - `description` - короткий опис
@@ -135,6 +143,7 @@
 Скарги на контент або користувачів.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `reporterId` - ID користувача, який подал скаргу (foreign key до User)
 - `targetType` - тип об'єкта (request, proposal, user, discussion)
@@ -150,6 +159,7 @@
 Досягнення для гейміфікації.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор (string)
 - `name` - назва досягнення
 - `description` - опис
@@ -163,10 +173,29 @@
 Зв'язок між користувачем та досягненням.
 
 **Поля:**
+
 - `id` - унікальний ідентифікатор
 - `userId` - ID користувача (foreign key до User)
 - `achievementId` - ID досягнення (foreign key до Achievement)
 - `unlockedAt` - дата отримання
+
+### 11. Category (Категорія)
+
+Категорії для запитів та навігації. Підкатегорії реалізовані через `parentId` і масив `path` для швидкої побудови дерева.
+
+**Поля:**
+
+- `id` - унікальний ідентифікатор
+- `name` - назва категорії
+- `slug` - унікальний slug
+- `parentId` - ID батьківської категорії (null для кореня)
+- `path` - масив ID предків (від кореня до батька)
+- `level` - рівень вкладеності
+- `order` - порядок сортування
+- `icon` - іконка (опціонально)
+- `isActive` - чи активна категорія
+- `createdAt` - дата створення
+- `updatedAt` - дата оновлення
 
 ## Діаграма взаємодії сутностей
 
@@ -179,17 +208,17 @@ erDiagram
     User ||--o{ Discussion : writes
     User ||--o{ Report : submits
     User ||--o{ UserAchievement : has
-    
+
     Request ||--o{ Proposal : receives
     Request ||--o{ Discussion : has
     Request ||--o{ Report : "can be reported"
-    
+
     Proposal ||--o{ Discussion : has
     Proposal ||--o{ Report : "can be reported"
     Proposal ||--o{ Review : "can have"
-    
+
     Achievement ||--o{ UserAchievement : "unlocked by"
-    
+
     Request {
         int id PK
         string title
@@ -205,7 +234,7 @@ erDiagram
         int proposalsCount
         string status
     }
-    
+
     Proposal {
         int id PK
         int requestId FK
@@ -218,7 +247,7 @@ erDiagram
         array images
         string status
     }
-    
+
     User {
         int id PK
         string name
@@ -234,7 +263,7 @@ erDiagram
         int xp
         boolean isBlocked
     }
-    
+
     Review {
         int id PK
         int userId FK
@@ -244,7 +273,7 @@ erDiagram
         int rating
         string comment
     }
-    
+
     Message {
         int id PK
         int senderId FK
@@ -254,7 +283,7 @@ erDiagram
         string content
         boolean read
     }
-    
+
     Discussion {
         int id PK
         int requestId FK
@@ -263,7 +292,7 @@ erDiagram
         int replyToId FK
         string content
     }
-    
+
     Report {
         int id PK
         int reporterId FK
@@ -273,7 +302,7 @@ erDiagram
         string details
         string status
     }
-    
+
     Achievement {
         string id PK
         string name
@@ -283,7 +312,7 @@ erDiagram
         string role
         json condition
     }
-    
+
     UserAchievement {
         int id PK
         int userId FK
