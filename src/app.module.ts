@@ -9,6 +9,7 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import uploadConfig from './config/upload.config';
 import appConfig from './config/app.config';
+import novaPoshtaConfig from './config/nova-poshta.config';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -26,12 +27,13 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AdminModule } from './modules/admin/admin.module';
 import { XpModule } from './modules/xp/xp.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { LocationsModule } from './modules/locations/locations.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, uploadConfig, appConfig],
+      load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig],
       envFilePath: '.env',
     }),
     I18nModule.forRoot({
@@ -56,6 +58,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
     ReportsModule,
     NotificationsModule,
     CategoriesModule,
+    LocationsModule,
     // UploadModule,
     AdminModule,
   ],
