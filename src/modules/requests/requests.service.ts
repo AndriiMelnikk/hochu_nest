@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
@@ -21,12 +22,13 @@ export class RequestsService {
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
     private xpService: XpService,
     private achievementsService: AchievementsService,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(createRequestDto: CreateRequestDto, buyerId: string) {
     if (createRequestDto.budgetMax < createRequestDto.budgetMin) {
       throw new BadRequestException(
-        'Maximum budget must be greater than or equal to minimum budget',
+        this.i18n.t('common.requests.budget_min_max_error', { lang: I18nContext.current()?.lang }),
       );
     }
 
@@ -122,7 +124,12 @@ export class RequestsService {
       .exec();
 
     if (!request) {
-      throw new NotFoundException(`Request with ID ${id} not found`);
+      throw new NotFoundException(
+        this.i18n.t('common.requests.request_not_found', {
+          lang: I18nContext.current()?.lang,
+          args: { id },
+        }),
+      );
     }
 
     // Increment views
@@ -136,16 +143,27 @@ export class RequestsService {
     const request = await this.findOne(id);
 
     if (request.buyerId.toString() !== userId) {
-      throw new ForbiddenException('You can only update your own requests');
+      throw new ForbiddenException(
+        this.i18n.t('common.requests.forbidden_update_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.status === RequestStatus.CLOSED) {
-      throw new BadRequestException('Cannot update closed request');
+      throw new BadRequestException(
+        this.i18n.t('common.requests.cannot_update_closed_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Track edit history
     const editEntry = {
-      text: `Request updated at ${new Date().toISOString()}`,
+      text: this.i18n.t('common.requests.request_updated_at', {
+        lang: I18nContext.current()?.lang,
+        args: { timestamp: new Date().toISOString() },
+      }),
       timestamp: new Date(),
     };
     request.edits.push(editEntry);
@@ -160,7 +178,11 @@ export class RequestsService {
     const request = await this.findOne(id);
 
     if (request.buyerId.toString() !== userId) {
-      throw new ForbiddenException('You can only delete your own requests');
+      throw new ForbiddenException(
+        this.i18n.t('common.requests.forbidden_delete_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     await this.requestModel.deleteOne({ _id: id }).exec();

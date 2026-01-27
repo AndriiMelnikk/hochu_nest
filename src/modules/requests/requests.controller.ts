@@ -19,7 +19,6 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Requests')
 @Controller('requests')
@@ -33,11 +32,8 @@ export class RequestsController {
   @ApiOperation({ summary: 'Create a new request' })
   @ApiResponse({ status: 201, description: 'Request created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(
-    @Body() createRequestDto: CreateRequestDto,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.requestsService.create(createRequestDto, user._id.toString());
+  async create(@Body() createRequestDto: CreateRequestDto, @CurrentUser() user: { id: string }) {
+    return this.requestsService.create(createRequestDto, user.id);
   }
 
   @Get()
@@ -66,9 +62,9 @@ export class RequestsController {
   async update(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateRequestDto: UpdateRequestDto,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
-    return this.requestsService.update(id, updateRequestDto, user._id.toString());
+    return this.requestsService.update(id, updateRequestDto, user.id);
   }
 
   @Delete(':id')
@@ -78,10 +74,7 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request deleted' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async remove(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.requestsService.remove(id, user._id.toString());
+  async remove(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
+    return this.requestsService.remove(id, user.id);
   }
 }

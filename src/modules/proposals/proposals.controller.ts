@@ -7,7 +7,6 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Proposals')
 @Controller('proposals')
@@ -24,7 +23,7 @@ export class ProposalsController {
   async create(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
     @Body() createProposalDto: CreateProposalDto,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
     return this.proposalsService.create(requestId, createProposalDto, user.id);
   }
@@ -53,11 +52,8 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Accept proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal accepted' })
-  async accept(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.proposalsService.accept(id, user._id.toString());
+  async accept(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
+    return this.proposalsService.accept(id, user.id);
   }
 
   @Post(':id/reject')
@@ -67,11 +63,8 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Reject proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal rejected' })
-  async reject(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.proposalsService.reject(id, user._id.toString());
+  async reject(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
+    return this.proposalsService.reject(id, user.id);
   }
 
   @Post(':id/complete')
@@ -81,10 +74,7 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Complete deal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Deal completed' })
-  async complete(
-    @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.proposalsService.complete(id, user._id.toString());
+  async complete(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
+    return this.proposalsService.complete(id, user.id);
   }
 }

@@ -5,5 +5,13 @@
     "user_blocked": "Користувач заблокований",
     "invalid_token": "Невірний або прострочений токен оновлення",
     "user_not_found": "Користувача не знайдено або він заблокований"
+  },
+  "requests": {
+    "budget_min_max_error": "Максимальний бюджет повинен бути більшим або рівним мінімальному бюджету",
+    "request_not_found": "Запит з ID {{id}} не знайдено",
+    "forbidden_update_request": "Ви можете оновлювати тільки власні запити",
+    "cannot_update_closed_request": "Неможливо оновити закритий запит",
+    "request_updated_at": "Запит оновлено о {{timestamp}}",
+    "forbidden_delete_request": "Ви можете видаляти тільки власні запити"
   }
 }

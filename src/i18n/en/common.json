@@ -5,5 +5,13 @@
     "user_blocked": "User is blocked",
     "invalid_token": "Invalid or expired refresh token",
     "user_not_found": "User not found or blocked"
+  },
+  "requests": {
+    "budget_min_max_error": "Maximum budget must be greater than or equal to minimum budget",
+    "request_not_found": "Request with ID {{id}} not found",
+    "forbidden_update_request": "You can only update your own requests",
+    "cannot_update_closed_request": "Cannot update closed request",
+    "request_updated_at": "Request updated at {{timestamp}}",
+    "forbidden_delete_request": "You can only delete your own requests"
   }
 }

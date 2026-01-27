@@ -5,7 +5,6 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -18,11 +17,8 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Create review' })
   @ApiResponse({ status: 201, description: 'Review created' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(
-    @Body() createReviewDto: CreateReviewDto,
-    @CurrentUser() user: userSchema.UserDocument,
-  ) {
-    return this.reviewsService.create(createReviewDto, user._id.toString());
+  async create(@Body() createReviewDto: CreateReviewDto, @CurrentUser() user: { id: string }) {
+    return this.reviewsService.create(createReviewDto, user.id);
   }
 
   @Get()

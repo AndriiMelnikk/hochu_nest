@@ -4,7 +4,6 @@ import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -17,12 +16,12 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Get notifications' })
   @ApiResponse({ status: 200, description: 'List of notifications' })
   async findAll(
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
     @Query('unread') unread?: boolean,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
   ) {
-    return this.notificationsService.findAll(user._id.toString(), unread, page, pageSize);
+    return this.notificationsService.findAll(user.id, unread, page, pageSize);
   }
 
   @Patch(':id/read')
@@ -30,15 +29,15 @@ export class NotificationsController {
   @ApiResponse({ status: 200, description: 'Notification marked as read' })
   async markAsRead(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
-    return this.notificationsService.markAsRead(id, user._id.toString());
+    return this.notificationsService.markAsRead(id, user.id);
   }
 
   @Patch('read-all')
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
-  async markAllAsRead(@CurrentUser() user: userSchema.UserDocument) {
-    return this.notificationsService.markAllAsRead(user._id.toString());
+  async markAllAsRead(@CurrentUser() user: { id: string }) {
+    return this.notificationsService.markAllAsRead(user.id);
   }
 }

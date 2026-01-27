@@ -6,7 +6,6 @@ import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import * as userSchema from '@database/schemas/user.schema';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -49,10 +48,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout user' })
   @ApiResponse({ status: 200, description: 'User successfully logged out' })
-  async logout(
-    @CurrentUser() user: userSchema.UserDocument,
-    @Body() body: { refresh_token?: string },
-  ) {
-    return this.authService.logout(user._id.toString(), body.refresh_token);
+  async logout(@CurrentUser() user: { id: string }, @Body() body: { refresh_token?: string }) {
+    return this.authService.logout(user.id, body.refresh_token);
   }
 }

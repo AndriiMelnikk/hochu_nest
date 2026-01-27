@@ -5,7 +5,6 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import * as userSchema from 'src/database/schemas/user.schema';
 import { ReportTargetType } from 'src/database/schemas/report.schema';
 
 @ApiTags('Reports')
@@ -20,7 +19,7 @@ export class ReportsController {
   async reportRequest(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
     return this.reportsService.create(
       {
@@ -28,7 +27,7 @@ export class ReportsController {
         targetType: 'request' as ReportTargetType,
         targetId: id,
       },
-      user._id.toString(),
+      user.id,
     );
   }
 
@@ -39,7 +38,7 @@ export class ReportsController {
   async reportProposal(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() createReportDto: Omit<CreateReportDto, 'targetType' | 'targetId'>,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
     return this.reportsService.create(
       {
@@ -47,7 +46,7 @@ export class ReportsController {
         targetType: 'proposal' as ReportTargetType,
         targetId: id,
       },
-      user._id.toString(),
+      user.id,
     );
   }
 }

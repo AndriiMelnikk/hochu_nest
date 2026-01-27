@@ -4,7 +4,6 @@ import { DiscussionsService } from './discussions.service';
 import { CreateDiscussionDto } from './dto/create-discussion.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import * as userSchema from 'src/database/schemas/user.schema';
 
 @ApiTags('Discussions')
 @Controller()
@@ -18,13 +17,9 @@ export class DiscussionsController {
   async createForRequest(
     @Param('requestId') requestId: string,
     @Body() createDiscussionDto: CreateDiscussionDto,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
-    return this.discussionsService.createForRequest(
-      requestId,
-      createDiscussionDto,
-      user._id.toString(),
-    );
+    return this.discussionsService.createForRequest(requestId, createDiscussionDto, user.id);
   }
 
   @Get('requests/:requestId/discussions')
@@ -40,13 +35,9 @@ export class DiscussionsController {
   async createForProposal(
     @Param('proposalId') proposalId: string,
     @Body() createDiscussionDto: CreateDiscussionDto,
-    @CurrentUser() user: userSchema.UserDocument,
+    @CurrentUser() user: { id: string },
   ) {
-    return this.discussionsService.createForProposal(
-      proposalId,
-      createDiscussionDto,
-      user._id.toString(),
-    );
+    return this.discussionsService.createForProposal(proposalId, createDiscussionDto, user.id);
   }
 
   @Get('proposals/:proposalId/comments')
