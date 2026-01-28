@@ -4,7 +4,7 @@ import { Document, Types } from 'mongoose';
 export type RequestDocument = Request & Document;
 
 export enum RequestStatus {
-  PENDING = 'pending',
+  // PENDING = 'pending',
   ACTIVE = 'active',
   CLOSED = 'closed',
   REJECTED = 'rejected',
@@ -50,7 +50,7 @@ export class Request {
   @Prop({
     type: String,
     enum: Object.values(RequestStatus),
-    default: RequestStatus.PENDING,
+    default: RequestStatus.ACTIVE,
   })
   status: RequestStatus;
 

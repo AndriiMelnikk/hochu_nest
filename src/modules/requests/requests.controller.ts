@@ -19,6 +19,8 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import { Request } from 'src/database/schemas/request.schema';
+import { PaginationResult } from 'src/common/utils/pagination.util';
 
 @ApiTags('Requests')
 @Controller('requests')
@@ -32,14 +34,17 @@ export class RequestsController {
   @ApiOperation({ summary: 'Create a new request' })
   @ApiResponse({ status: 201, description: 'Request created successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async create(@Body() createRequestDto: CreateRequestDto, @CurrentUser() user: { id: string }) {
+  async create(
+    @Body() createRequestDto: CreateRequestDto,
+    @CurrentUser() user: { id: string },
+  ): Promise<Request> {
     return this.requestsService.create(createRequestDto, user.id);
   }
 
   @Get()
   @ApiOperation({ summary: 'Get all requests' })
   @ApiResponse({ status: 200, description: 'List of requests' })
-  async findAll(@Query() query: GetRequestsDto) {
+  async findAll(@Query() query: GetRequestsDto): Promise<PaginationResult<Request>> {
     return this.requestsService.findAll(query);
   }
 
@@ -48,7 +53,7 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request found' })
   @ApiResponse({ status: 404, description: 'Request not found' })
-  async findOne(@Param('id', ParseObjectIdPipe) id: string) {
+  async findOne(@Param('id', ParseObjectIdPipe) id: string): Promise<Request> {
     return this.requestsService.findOne(id);
   }
 
@@ -63,7 +68,7 @@ export class RequestsController {
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateRequestDto: UpdateRequestDto,
     @CurrentUser() user: { id: string },
-  ) {
+  ): Promise<Request> {
     return this.requestsService.update(id, updateRequestDto, user.id);
   }
 
@@ -74,7 +79,10 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request deleted' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  async remove(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
+  async remove(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string },
+  ): Promise<{ success: boolean }> {
     return this.requestsService.remove(id, user.id);
   }
 }

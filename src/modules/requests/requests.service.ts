@@ -11,7 +11,7 @@ import { Request, RequestDocument, RequestStatus } from '../../database/schemas/
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
-import { PaginationUtil } from '../../common/utils/pagination.util';
+import { PaginationResult, PaginationUtil } from '../../common/utils/pagination.util';
 import { SortUtil } from '../../common/utils/sort.util';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -35,7 +35,7 @@ export class RequestsService {
     const request = new this.requestModel({
       ...createRequestDto,
       buyerId: new Types.ObjectId(buyerId),
-      status: RequestStatus.PENDING,
+      status: RequestStatus.ACTIVE,
     });
 
     await request.save();
@@ -47,7 +47,7 @@ export class RequestsService {
     return request;
   }
 
-  async findAll(dto: GetRequestsDto) {
+  async findAll(dto: GetRequestsDto): Promise<PaginationResult<Request>> {
     const page = PaginationUtil.normalizePage(dto.page);
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
@@ -84,7 +84,7 @@ export class RequestsService {
     const sortObj = SortUtil.buildSortObject(dto.sort);
     const sort: Record<string, 1 | -1> =
       sortObj && typeof sortObj === 'object' ? sortObj : { createdAt: -1 };
-    let results: any[];
+    let results: Request[];
     let count: number = 0;
 
     try {
@@ -117,7 +117,7 @@ export class RequestsService {
     );
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<Request> {
     const request = await this.requestModel
       .findById(id)
       .populate('buyerId', 'name avatar rating location memberSince completedDeals xp')
@@ -139,7 +139,7 @@ export class RequestsService {
     return request;
   }
 
-  async update(id: string, updateRequestDto: UpdateRequestDto, userId: string) {
+  async update(id: string, updateRequestDto: UpdateRequestDto, userId: string): Promise<Request> {
     const request = await this.findOne(id);
 
     if (request.buyerId.toString() !== userId) {
@@ -169,12 +169,12 @@ export class RequestsService {
     request.edits.push(editEntry);
 
     Object.assign(request, updateRequestDto);
-    await request.save();
+    await (request as RequestDocument).save();
 
     return request;
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string): Promise<{ success: boolean }> {
     const request = await this.findOne(id);
 
     if (request.buyerId.toString() !== userId) {
