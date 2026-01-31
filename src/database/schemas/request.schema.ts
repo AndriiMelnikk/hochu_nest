@@ -20,8 +20,8 @@ export class Request {
   @Prop({ required: true, index: 'text' })
   description: string;
 
-  @Prop({ required: true })
-  category: string;
+  @Prop({ type: Types.ObjectId, ref: 'Category', nullable: true })
+  category: Types.ObjectId;
 
   @Prop({ type: Number, required: true, min: 0 })
   budgetMin: number;

@@ -3,12 +3,32 @@ import { Document, Types } from 'mongoose';
 
 export type CategoryDocument = Category & Document;
 
+@Schema({ _id: false })
+export class CategoryLanguage {
+  @Prop({ required: true, trim: true })
+  title: string;
+
+  @Prop({ required: true, trim: true })
+  description: string;
+}
+export const CategoryLanguageSchema = SchemaFactory.createForClass(CategoryLanguage);
+
+@Schema({ _id: false })
+export class CategoryTranslations {
+  @Prop({ type: CategoryLanguageSchema, required: true })
+  uk: CategoryLanguage;
+
+  @Prop({ type: CategoryLanguageSchema, required: true })
+  en: CategoryLanguage;
+}
+export const CategoryTranslationsSchema = SchemaFactory.createForClass(CategoryTranslations);
+
 @Schema({ timestamps: true })
 export class Category {
   _id: Types.ObjectId;
 
-  @Prop({ required: true, trim: true })
-  name: string;
+  @Prop({ type: CategoryTranslationsSchema, required: true })
+  translations: CategoryTranslations;
 
   @Prop({ required: true, trim: true, lowercase: true })
   slug: string;
@@ -43,4 +63,10 @@ CategorySchema.index({ parentId: 1, order: 1 });
 CategorySchema.index({ path: 1 });
 CategorySchema.index({ level: 1 });
 CategorySchema.index({ isActive: 1 });
-CategorySchema.index({ name: 'text', slug: 'text' });
+CategorySchema.index({
+  'translations.uk.title': 'text',
+  'translations.en.title': 'text',
+  'translations.uk.description': 'text',
+  'translations.en.description': 'text',
+  slug: 'text',
+});

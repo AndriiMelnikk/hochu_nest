@@ -21,11 +21,11 @@ export class AdminController {
     return this.adminService.getAnalytics();
   }
 
-  @Get('requests/pending')
-  @ApiOperation({ summary: 'Get pending requests for moderation' })
-  async getPendingRequests(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
-    return this.adminService.getPendingRequests(page, pageSize);
-  }
+  // @Get('requests/pending')
+  // @ApiOperation({ summary: 'Get pending requests for moderation' })
+  // async getPendingRequests(@Query('page') page?: number, @Query('pageSize') pageSize?: number) {
+  //   return this.adminService.getPendingRequests(page, pageSize);
+  // }
 
   @Post('requests/:id/approve')
   @ApiOperation({ summary: 'Approve request' })

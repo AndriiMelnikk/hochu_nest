@@ -4,7 +4,8 @@
     "invalid_credentials": "Invalid credentials",
     "user_blocked": "User is blocked",
     "invalid_token": "Invalid or expired refresh token",
-    "user_not_found": "User not found or blocked"
+    "user_not_found": "User not found or blocked",
+    "unauthorized": "You are not authorized"
   },
   "requests": {
     "budget_min_max_error": "Maximum budget must be greater than or equal to minimum budget",

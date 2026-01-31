@@ -67,21 +67,21 @@ export class AdminService {
     };
   }
 
-  async getPendingRequests(page?: number, pageSize?: number) {
-    const skip = ((page || 1) - 1) * (pageSize || 20);
-    const results = await this.requestModel
-      .find({ status: RequestStatus.PENDING })
-      .populate('buyerId', 'name email')
+  // async getPendingRequests(page?: number, pageSize?: number) {
+  //   const skip = ((page || 1) - 1) * (pageSize || 20);
+  //   const results = await this.requestModel
+  //     .find({ status: RequestStatus.PENDING })
+  //     .populate('buyerId', 'name email')
 
-      .sort({ createdAt: -1 } as any)
-      .skip(skip)
-      .limit(pageSize || 20)
-      .exec();
+  //     .sort({ createdAt: -1 } as any)
+  //     .skip(skip)
+  //     .limit(pageSize || 20)
+  //     .exec();
 
-    const count = await this.requestModel.countDocuments({ status: RequestStatus.PENDING }).exec();
+  //   const count = await this.requestModel.countDocuments({ status: RequestStatus.PENDING }).exec();
 
-    return { count, results };
-  }
+  //   return { count, results };
+  // }
 
   async approveRequest(id: string) {
     await this.requestModel.updateOne({ _id: id }, { status: RequestStatus.ACTIVE }).exec();
