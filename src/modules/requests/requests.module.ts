@@ -3,12 +3,16 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { RequestsController } from './requests.controller';
 import { RequestsService } from './requests.service';
 import { Request, RequestSchema } from '../../database/schemas/request.schema';
+import { Category, CategorySchema } from '../../database/schemas/category.schema';
 import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Request.name, schema: RequestSchema }]),
+    MongooseModule.forFeature([
+      { name: Request.name, schema: RequestSchema },
+      { name: Category.name, schema: CategorySchema },
+    ]),
     XpModule,
     AchievementsModule,
   ],

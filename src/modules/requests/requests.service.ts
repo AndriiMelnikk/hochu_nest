@@ -5,9 +5,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
+import { Category, CategoryDocument } from '../../database/schemas/category.schema';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
@@ -20,6 +21,7 @@ import { AchievementsService } from '../achievements/achievements.service';
 export class RequestsService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private readonly i18n: I18nService,
@@ -52,7 +54,7 @@ export class RequestsService {
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
 
-    const query: Record<string, any> = {};
+    const query: FilterQuery<RequestDocument> = {};
 
     // Default to active requests if no status specified
     if (!dto.status) {
@@ -62,7 +64,40 @@ export class RequestsService {
     }
 
     if (dto.category) {
-      query.category = dto.category;
+      // 1. Validate if category is a valid ObjectId
+      if (!Types.ObjectId.isValid(dto.category)) {
+        return PaginationUtil.createPaginationResult([], 0, page, pageSize, '/api/requests', dto);
+      }
+
+      // 2. Find root category by ID
+      const rootCategory = await this.categoryModel
+        .findById(dto.category)
+        .select('_id')
+        .lean()
+        .exec();
+
+      // 3. If category not found - return empty result
+      if (!rootCategory) {
+        return PaginationUtil.createPaginationResult([], 0, page, pageSize, '/api/requests', dto);
+      }
+
+      // 4. Get all subcategories + the category itself
+      const categoriesAndDescendants = await this.categoryModel
+        .find({
+          $or: [
+            { _id: rootCategory._id },
+            { path: { $in: [rootCategory._id] } }, // path is array of ObjectIds
+          ],
+        })
+        .select('_id')
+        .lean()
+        .exec();
+
+      // 5. Extract IDs
+      const categoryIds = categoriesAndDescendants.map((cat) => cat._id.toString());
+
+      // 6. Filter for Request
+      query.category = { $in: categoryIds };
     }
 
     if (dto.location) {
@@ -78,7 +113,10 @@ export class RequestsService {
     }
 
     if (dto.search) {
-      query.$text = { $search: dto.search };
+      query.$or = [
+        { title: { $regex: dto.search, $options: 'i' } },
+        { description: { $regex: dto.search, $options: 'i' } },
+      ];
     }
 
     const sortObj = SortUtil.buildSortObject(dto.sort);
