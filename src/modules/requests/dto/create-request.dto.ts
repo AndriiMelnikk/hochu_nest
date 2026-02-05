@@ -9,7 +9,9 @@ import {
   MinLength,
   MaxLength,
   ArrayMaxSize,
+  IsEnum,
 } from 'class-validator';
+import { ItemCondition } from 'src/database/schemas/request.schema';
 
 export class CreateRequestDto {
   @ApiProperty({ example: 'Need website design', description: 'Request title' })
@@ -56,6 +58,15 @@ export class CreateRequestDto {
   @IsString()
   @IsNotEmpty()
   urgency: string;
+
+  @ApiProperty({
+    example: 'new',
+    description: 'Item condition',
+    enum: ItemCondition,
+  })
+  @IsEnum(ItemCondition)
+  @IsNotEmpty()
+  itemCondition: ItemCondition;
 
   @ApiProperty({
     example: ['https://example.com/image1.jpg'],

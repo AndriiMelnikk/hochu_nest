@@ -10,6 +10,11 @@ export enum RequestStatus {
   REJECTED = 'rejected',
 }
 
+export enum ItemCondition {
+  NEW = 'new',
+  USED = 'used',
+}
+
 @Schema({ timestamps: true })
 export class Request {
   _id: Types.ObjectId;
@@ -34,6 +39,13 @@ export class Request {
 
   @Prop({ required: true })
   urgency: string;
+
+  @Prop({
+    type: String,
+    enum: Object.values(ItemCondition),
+    required: true,
+  })
+  itemCondition: ItemCondition;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   buyerId: Types.ObjectId;

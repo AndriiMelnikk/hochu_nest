@@ -8,7 +8,9 @@ import {
   MinLength,
   MaxLength,
   ArrayMaxSize,
+  IsEnum,
 } from 'class-validator';
+import { ItemCondition } from 'src/database/schemas/request.schema';
 
 export class UpdateRequestDto {
   @ApiProperty({ required: false })
@@ -50,6 +52,16 @@ export class UpdateRequestDto {
   @IsString()
   @IsOptional()
   urgency?: string;
+
+  @ApiProperty({
+    example: 'new',
+    description: 'Item condition',
+    enum: ItemCondition,
+    required: false,
+  })
+  @IsEnum(ItemCondition)
+  @IsOptional()
+  itemCondition?: ItemCondition;
 
   @ApiProperty({ required: false })
   @IsArray()
