@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { RequestsService } from './requests.service';
+import { RequestsService, FormattedRequest } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
@@ -44,7 +44,7 @@ export class RequestsController {
   @Get()
   @ApiOperation({ summary: 'Get all requests' })
   @ApiResponse({ status: 200, description: 'List of requests' })
-  async findAll(@Query() query: GetRequestsDto): Promise<PaginationResult<Request>> {
+  async findAll(@Query() query: GetRequestsDto): Promise<PaginationResult<FormattedRequest>> {
     return this.requestsService.findAll(query);
   }
 
@@ -53,8 +53,8 @@ export class RequestsController {
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request found' })
   @ApiResponse({ status: 404, description: 'Request not found' })
-  async findOne(@Param('id', ParseObjectIdPipe) id: string): Promise<Request> {
-    return this.requestsService.findOne(id);
+  async findOne(@Param('id', ParseObjectIdPipe) id: string): Promise<FormattedRequest> {
+    return await this.requestsService.getById(id);
   }
 
   @Patch(':id')

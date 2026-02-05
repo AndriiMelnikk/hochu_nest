@@ -43,9 +43,9 @@ export class Request {
   @Prop({
     type: String,
     enum: Object.values(ItemCondition),
-    required: true,
+    required: false,
   })
-  itemCondition: ItemCondition;
+  itemCondition?: ItemCondition;
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   buyerId: Types.ObjectId;

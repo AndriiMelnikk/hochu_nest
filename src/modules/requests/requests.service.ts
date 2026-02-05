@@ -7,8 +7,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { User } from 'src/database/schemas/user.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
-import { Category, CategoryDocument } from '../../database/schemas/category.schema';
+import {
+  Category,
+  CategoryDocument,
+  CategoryTranslations,
+} from '../../database/schemas/category.schema';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
@@ -16,6 +21,29 @@ import { PaginationResult, PaginationUtil } from '../../common/utils/pagination.
 import { SortUtil } from '../../common/utils/sort.util';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
+
+type LeanRequest = Omit<Request, 'buyerId' | 'category'> & {
+  buyerId?: {
+    _id: Types.ObjectId;
+    name: string;
+    avatar?: string;
+    rating?: number;
+    location?: string;
+    memberSince?: Date;
+    completedDeals?: number;
+    xp?: number;
+  };
+  category?: Category & { _id: Types.ObjectId };
+};
+
+export type FormattedRequest = Omit<LeanRequest, 'category'> & {
+  category?: { id: string; name: string };
+};
+
+export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'category'> & {
+  buyerId: User;
+  category: Category;
+};
 
 @Injectable()
 export class RequestsService {
@@ -49,7 +77,7 @@ export class RequestsService {
     return request;
   }
 
-  async findAll(dto: GetRequestsDto): Promise<PaginationResult<Request>> {
+  async findAll(dto: GetRequestsDto): Promise<PaginationResult<FormattedRequest>> {
     const page = PaginationUtil.normalizePage(dto.page);
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
@@ -120,33 +148,25 @@ export class RequestsService {
     }
 
     const sortObj = SortUtil.buildSortObject(dto.sort);
-    const sort: Record<string, 1 | -1> =
-      sortObj && typeof sortObj === 'object' ? sortObj : { createdAt: -1 };
-    let results: Request[];
-    let count: number = 0;
+    const sort = (sortObj && typeof sortObj === 'object'
+      ? sortObj
+      : { createdAt: -1 }) as unknown as Record<string, 1 | -1>;
 
-    try {
-      results = await this.requestModel
-        .find(query)
-        .populate('buyerId', 'name avatar rating')
-        .sort(sort)
-        .skip(skip)
-        .limit(pageSize)
-        .exec();
-    } catch {
-      // fallback: ignore sort if it causes a complex union type error
-      results = await this.requestModel
-        .find(query)
-        .populate('buyerId', 'name avatar rating')
-        .skip(skip)
-        .limit(pageSize)
-        .exec();
-    }
+    const results = (await this.requestModel
+      .find(query)
+      .populate([{ path: 'buyerId', select: 'name avatar rating' }, { path: 'category' }])
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec()) as unknown as LeanRequest[];
 
-    count = await this.requestModel.countDocuments(query).exec();
+    const count = await this.requestModel.countDocuments(query).exec();
+
+    const formattedResults = results.map((request) => this.formatLeanRequest(request));
 
     return PaginationUtil.createPaginationResult(
-      results,
+      formattedResults,
       count,
       page,
       pageSize,
@@ -155,10 +175,16 @@ export class RequestsService {
     );
   }
 
-  async findOne(id: string): Promise<Request> {
+  async findOne(id: string): Promise<PopulatedRequestDocument> {
     const request = await this.requestModel
-      .findById(id)
-      .populate('buyerId', 'name avatar rating location memberSince completedDeals xp')
+      .findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true })
+      .populate([
+        {
+          path: 'buyerId',
+          select: 'name avatar rating location memberSince completedDeals xp',
+        },
+        { path: 'category' },
+      ])
       .exec();
 
     if (!request) {
@@ -171,16 +197,41 @@ export class RequestsService {
     }
 
     // Increment views
-    request.views += 1;
-    await request.save();
+    // request.views += 1;
+    // await request.save();
 
-    return request;
+    return request as unknown as PopulatedRequestDocument;
+  }
+
+  async getById(id: string): Promise<FormattedRequest> {
+    const request = await this.findOne(id);
+    return this.formatLeanRequest(request.toObject() as unknown as LeanRequest);
+  }
+
+  private formatLeanRequest(request: LeanRequest): FormattedRequest {
+    const lang = (I18nContext.current()?.lang || 'uk') as keyof CategoryTranslations;
+
+    const formatted: FormattedRequest = {
+      ...request,
+      category: undefined,
+    };
+
+    if (request.category && request.category.translations) {
+      const category = request.category;
+      const translations = category.translations;
+      formatted.category = {
+        id: category._id.toString(),
+        name: translations[lang]?.title || translations['uk']?.title || '',
+      };
+    }
+
+    return formatted;
   }
 
   async update(id: string, updateRequestDto: UpdateRequestDto, userId: string): Promise<Request> {
     const request = await this.findOne(id);
 
-    if (request.buyerId.toString() !== userId) {
+    if (request.buyerId._id.toString() !== userId) {
       throw new ForbiddenException(
         this.i18n.t('common.requests.forbidden_update_request', {
           lang: I18nContext.current()?.lang,
@@ -207,15 +258,15 @@ export class RequestsService {
     request.edits.push(editEntry);
 
     Object.assign(request, updateRequestDto);
-    await (request as RequestDocument).save();
+    await request.save();
 
-    return request;
+    return request as unknown as Request;
   }
 
   async remove(id: string, userId: string): Promise<{ success: boolean }> {
     const request = await this.findOne(id);
 
-    if (request.buyerId.toString() !== userId) {
+    if (request.buyerId._id.toString() !== userId) {
       throw new ForbiddenException(
         this.i18n.t('common.requests.forbidden_delete_request', {
           lang: I18nContext.current()?.lang,
