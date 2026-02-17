@@ -14,5 +14,22 @@
     "cannot_update_closed_request": "Неможливо оновити закритий запит",
     "request_updated_at": "Запит оновлено о {{timestamp}}",
     "forbidden_delete_request": "Ви можете видаляти тільки власні запити"
+  },
+  "proposals": {
+    "request_not_found": "Запит з ID {{id}} не знайдено",
+    "request_not_active": "Запит не активний",
+    "cannot_propose_own_request": "Не можна створити пропозицію на власний запит",
+    "already_proposed": "Ви вже створили пропозицію на цей запит",
+    "proposal_not_found": "Пропозицію з ID {{id}} не знайдено",
+    "request_not_found_short": "Запит не знайдено",
+    "only_owner_accept": "Приймати пропозиції може лише власник запиту",
+    "request_already_closed": "Запит вже закрито",
+    "proposal_not_pending": "Пропозиція не в статусі очікування",
+    "accepted_success": "Пропозицію успішно прийнято",
+    "only_owner_reject": "Відхиляти пропозиції може лише власник запиту",
+    "rejected_success": "Пропозицію успішно відхилено",
+    "only_owner_complete": "Завершувати угоди може лише власник запиту",
+    "must_be_accepted_to_complete": "Пропозицію спочатку потрібно прийняти",
+    "completed_success": "Угоду успішно завершено"
   }
 }

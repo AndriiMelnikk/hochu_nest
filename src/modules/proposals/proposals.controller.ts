@@ -15,7 +15,7 @@ export class ProposalsController {
 
   @Post('requests/:requestId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('seller', 'admin')
+  @Roles('seller', 'admin', 'buyer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create proposal for request' })
   @ApiParam({ name: 'requestId', description: 'Request ID' })

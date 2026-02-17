@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { ItemCondition } from './request.schema';
 
 export type ProposalDocument = Proposal & Document;
 
@@ -34,6 +35,13 @@ export class Proposal {
 
   @Prop({ default: null })
   warranty: string;
+
+  @Prop({
+    type: String,
+    enum: Object.values(ItemCondition),
+    required: false,
+  })
+  itemCondition?: ItemCondition;
 
   @Prop({ type: [String], default: [] })
   images: string[];

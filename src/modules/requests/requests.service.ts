@@ -196,10 +196,6 @@ export class RequestsService {
       );
     }
 
-    // Increment views
-    // request.views += 1;
-    // await request.save();
-
     return request as unknown as PopulatedRequestDocument;
   }
 

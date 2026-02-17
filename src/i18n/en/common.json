@@ -14,5 +14,22 @@
     "cannot_update_closed_request": "Cannot update closed request",
     "request_updated_at": "Request updated at {{timestamp}}",
     "forbidden_delete_request": "You can only delete your own requests"
+  },
+  "proposals": {
+    "request_not_found": "Request with ID {{id}} not found",
+    "request_not_active": "Request is not active",
+    "cannot_propose_own_request": "You cannot create proposal on your own request",
+    "already_proposed": "You have already created a proposal for this request",
+    "proposal_not_found": "Proposal with ID {{id}} not found",
+    "request_not_found_short": "Request not found",
+    "only_owner_accept": "Only request owner can accept proposals",
+    "request_already_closed": "Request is already closed",
+    "proposal_not_pending": "Proposal is not pending",
+    "accepted_success": "Proposal accepted successfully",
+    "only_owner_reject": "Only request owner can reject proposals",
+    "rejected_success": "Proposal rejected successfully",
+    "only_owner_complete": "Only request owner can complete deals",
+    "must_be_accepted_to_complete": "Proposal must be accepted to complete",
+    "completed_success": "Deal completed successfully"
   }
 }

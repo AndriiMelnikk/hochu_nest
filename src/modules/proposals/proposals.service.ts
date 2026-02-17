@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { User, UserDocument } from '../../database/schemas/user.schema';
@@ -24,20 +25,34 @@ export class ProposalsService {
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private notificationsService: NotificationsService,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(requestId: string, createProposalDto: CreateProposalDto, sellerId: string) {
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
-      throw new NotFoundException(`Request with ID ${requestId} not found`);
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found', {
+          lang: I18nContext.current()?.lang,
+          args: { id: requestId },
+        }),
+      );
     }
 
     if (request.status !== RequestStatus.ACTIVE) {
-      throw new BadRequestException('Request is not active');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.request_not_active', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.buyerId.toString() === sellerId) {
-      throw new ForbiddenException('You cannot create proposal on your own request');
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.cannot_propose_own_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Check if seller already has a proposal for this request
@@ -49,7 +64,11 @@ export class ProposalsService {
       .exec();
 
     if (existingProposal) {
-      throw new BadRequestException('You have already created a proposal for this request');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.already_proposed', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     const proposal = new this.proposalModel({
@@ -101,7 +120,12 @@ export class ProposalsService {
       .exec();
 
     if (!proposal) {
-      throw new NotFoundException(`Proposal with ID ${id} not found`);
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.proposal_not_found', {
+          lang: I18nContext.current()?.lang,
+          args: { id },
+        }),
+      );
     }
 
     return proposal;
@@ -112,19 +136,35 @@ export class ProposalsService {
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
-      throw new NotFoundException('Request not found');
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found_short', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.buyerId.toString() !== buyerId) {
-      throw new ForbiddenException('Only request owner can accept proposals');
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.only_owner_accept', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.status === RequestStatus.CLOSED) {
-      throw new BadRequestException('Request is already closed');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.request_already_closed', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (proposal.status !== ProposalStatus.PENDING) {
-      throw new BadRequestException('Proposal is not pending');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.proposal_not_pending', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     // Transaction-like operation: accept proposal and reject others
@@ -165,7 +205,12 @@ export class ProposalsService {
       link: `/proposal/${id}`,
     });
 
-    return { success: true, message: 'Proposal accepted successfully' };
+    return {
+      success: true,
+      message: this.i18n.t('common.proposals.accepted_success', {
+        lang: I18nContext.current()?.lang,
+      }),
+    };
   }
 
   async reject(id: string, buyerId: string) {
@@ -173,15 +218,27 @@ export class ProposalsService {
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
-      throw new NotFoundException('Request not found');
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found_short', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.buyerId.toString() !== buyerId) {
-      throw new ForbiddenException('Only request owner can reject proposals');
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.only_owner_reject', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (proposal.status !== ProposalStatus.PENDING) {
-      throw new BadRequestException('Proposal is not pending');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.proposal_not_pending', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.REJECTED });
@@ -195,7 +252,12 @@ export class ProposalsService {
       link: `/request/${request._id.toString()}`,
     });
 
-    return { success: true, message: 'Proposal rejected successfully' };
+    return {
+      success: true,
+      message: this.i18n.t('common.proposals.rejected_success', {
+        lang: I18nContext.current()?.lang,
+      }),
+    };
   }
 
   async complete(id: string, buyerId: string) {
@@ -203,15 +265,27 @@ export class ProposalsService {
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
     if (!request) {
-      throw new NotFoundException('Request not found');
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found_short', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (request.buyerId.toString() !== buyerId) {
-      throw new ForbiddenException('Only request owner can complete deals');
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.only_owner_complete', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     if (proposal.status !== ProposalStatus.ACCEPTED) {
-      throw new BadRequestException('Proposal must be accepted to complete');
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.must_be_accepted_to_complete', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
     }
 
     await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.COMPLETED });
@@ -234,6 +308,11 @@ export class ProposalsService {
       this.achievementsService.checkAndUnlockAchievements(proposal.sellerId.toString()),
     ]);
 
-    return { success: true, message: 'Deal completed successfully' };
+    return {
+      success: true,
+      message: this.i18n.t('common.proposals.completed_success', {
+        lang: I18nContext.current()?.lang,
+      }),
+    };
   }
 }

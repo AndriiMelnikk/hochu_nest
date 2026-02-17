@@ -1,3 +1,4 @@
+import { ItemCondition } from '@database/schemas/request.schema';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
@@ -7,6 +8,7 @@ import {
   IsArray,
   IsOptional,
   ArrayMaxSize,
+  IsEnum,
 } from 'class-validator';
 
 export class CreateProposalDto {
@@ -37,6 +39,11 @@ export class CreateProposalDto {
   @IsString()
   @IsOptional()
   warranty?: string;
+
+  @ApiProperty({ example: 'new', description: 'Item condition', enum: ItemCondition })
+  @IsEnum(ItemCondition)
+  @IsNotEmpty()
+  itemCondition: ItemCondition;
 
   @ApiProperty({
     example: ['https://example.com/portfolio1.jpg'],
