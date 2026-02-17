@@ -7,6 +7,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import { Proposal } from '@database/schemas/proposal.schema';
 
 @ApiTags('Proposals')
 @Controller('proposals')
@@ -32,8 +33,23 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Get proposals for request' })
   @ApiParam({ name: 'requestId', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'List of proposals' })
-  async findAllByRequest(@Param('requestId', ParseObjectIdPipe) requestId: string) {
+  async findAllByRequest(
+    @Param('requestId', ParseObjectIdPipe) requestId: string,
+  ): Promise<Proposal[]> {
     return this.proposalsService.findAllByRequest(requestId);
+  }
+
+  @Get('can-propose/:requestId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Check if user can propose to request' })
+  @ApiParam({ name: 'requestId', description: 'Request ID' })
+  @ApiResponse({ status: 200, description: 'Eligibility status' })
+  async canPropose(
+    @Param('requestId', ParseObjectIdPipe) requestId: string,
+    @CurrentUser() user: { id: string },
+  ): Promise<{ canPropose: boolean; reason?: string }> {
+    return await this.proposalsService.canPropose(requestId, user.id);
   }
 
   @Get(':id')

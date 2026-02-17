@@ -112,6 +112,57 @@ export class ProposalsService {
     return proposals;
   }
 
+  async canPropose(
+    requestId: string,
+    userId: string,
+  ): Promise<{ canPropose: boolean; reason?: string }> {
+    const user = await this.userModel.findById(userId).exec();
+    if (!user || user.isBlocked) {
+      return {
+        canPropose: false,
+        reason: 'USER_BLOCKED',
+      };
+    }
+
+    const request = await this.requestModel.findById(requestId).exec();
+    if (!request) {
+      return {
+        canPropose: false,
+        reason: 'REQUEST_NOT_FOUND',
+      };
+    }
+
+    if (request.status !== RequestStatus.ACTIVE) {
+      return {
+        canPropose: false,
+        reason: 'REQUEST_NOT_ACTIVE',
+      };
+    }
+
+    if (request.buyerId.toString() === userId) {
+      return {
+        canPropose: false,
+        reason: 'OWN_REQUEST',
+      };
+    }
+
+    const existingProposal = await this.proposalModel
+      .findOne({
+        requestId: new Types.ObjectId(requestId),
+        sellerId: new Types.ObjectId(userId),
+      })
+      .exec();
+
+    if (existingProposal) {
+      return {
+        canPropose: false,
+        reason: 'ALREADY_PROPOSED',
+      };
+    }
+
+    return { canPropose: true };
+  }
+
   async findOne(id: string) {
     const proposal = await this.proposalModel
       .findById(id)
