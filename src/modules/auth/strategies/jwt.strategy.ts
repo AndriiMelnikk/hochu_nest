@@ -39,8 +39,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: JwtPayload): Promise<RequestUser> {
     const account = await this.accountModel.findById(payload.sub).exec();
-    if (!account || account.isBlocked) {
-      throw new UnauthorizedException('Account not found or blocked');
+    if (!account) {
+      throw new UnauthorizedException('Account not found');
     }
 
     let profileId: Types.ObjectId | undefined;
@@ -67,8 +67,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const profile = await this.profileModel
       .findOne({ _id: profileId, accountId: account._id })
       .exec();
+
     if (!profile) {
       throw new UnauthorizedException('Profile not found or does not belong to account');
+    }
+
+    if (profile.isBlocked && (!profile.blockedUntil || profile.blockedUntil > new Date())) {
+      throw new UnauthorizedException('Profile is blocked');
     }
 
     return {

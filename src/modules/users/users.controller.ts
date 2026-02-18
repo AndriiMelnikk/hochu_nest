@@ -24,8 +24,11 @@ export class UsersController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update current account (name, avatar, location)' })
   @ApiResponse({ status: 200, description: 'Account updated' })
-  async updateMe(@CurrentUser() user: { id: string }, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.updateMe(user.id, updateUserDto);
+  async updateMe(
+    @CurrentUser() user: { id: string; profileId: string },
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.updateMe(user.id, user.profileId, updateUserDto);
   }
 
   @Get(':id')

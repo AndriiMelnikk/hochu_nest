@@ -4,15 +4,15 @@
 
 ```mermaid
 erDiagram
-    users ||--o{ requests : "creates"
-    users ||--o{ proposals : "sends"
-    users ||--o{ reviews_given : "gives"
-    users ||--o{ reviews_received : "receives"
-    users ||--o{ messages_sent : "sends"
-    users ||--o{ messages_received : "receives"
-    users ||--o{ discussions : "writes"
-    users ||--o{ reports : "submits"
-    users ||--o{ user_achievements : "has"
+    accounts ||--o{ profiles : "has"
+    profiles ||--o{ requests : "creates as buyer"
+    profiles ||--o{ proposals : "sends as seller"
+    accounts ||--o{ reviews_author : "writes"
+    profiles ||--o{ reviews_received : "receives"
+    accounts ||--o{ messages : "sends or receives"
+    accounts ||--o{ discussions : "writes"
+    accounts ||--o{ reports : "submits"
+    profiles ||--o{ user_achievements : "has"
 
     requests ||--o{ proposals : "receives"
     requests ||--o{ discussions : "has"
@@ -29,35 +29,45 @@ erDiagram
     discussions ||--o{ discussions : "replies to"
 ```
 
-## Таблиці
+## Таблиці (MongoDB колекції / Mongoose)
 
-### users
+Реалізація на MongoDB (Mongoose). Нижче — логічні поля та зв'язки.
 
-| Поле            | Тип                              | Обмеження                                             | Опис                       |
-| --------------- | -------------------------------- | ----------------------------------------------------- | -------------------------- |
-| id              | INT                              | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор   |
-| name            | VARCHAR(255)                     | NOT NULL                                              | Ім'я користувача           |
-| email           | VARCHAR(255)                     | NOT NULL, UNIQUE                                      | Email адреса               |
-| password        | VARCHAR(255)                     | NOT NULL                                              | Хеш пароля                 |
-| avatar          | VARCHAR(500)                     | NULL                                                  | URL аватара                |
-| role            | ENUM('buyer', 'seller', 'admin') | NOT NULL, DEFAULT 'buyer'                             | Роль користувача           |
-| rating          | DECIMAL(3,2)                     | DEFAULT 0.00                                          | Середній рейтинг (0-5)     |
-| reviews_count   | INT                              | DEFAULT 0                                             | Кількість відгуків         |
-| is_verified     | BOOLEAN                          | DEFAULT FALSE                                         | Чи верифікований           |
-| member_since    | DATE                             | NOT NULL                                              | Дата реєстрації            |
-| completed_deals | INT                              | DEFAULT 0                                             | Кількість завершених угод  |
-| location        | VARCHAR(255)                     | NULL                                                  | Локація                    |
-| xp              | INT                              | DEFAULT 0                                             | Досвід (experience points) |
-| is_blocked      | BOOLEAN                          | DEFAULT FALSE                                         | Чи заблокований            |
-| blocked_until   | DATETIME                         | NULL                                                  | Дата до якої заблокований  |
-| created_at      | TIMESTAMP                        | DEFAULT CURRENT_TIMESTAMP                             | Дата створення             |
-| updated_at      | TIMESTAMP                        | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення             |
+### accounts
 
-**Індекси:**
+| Поле         | Тип      | Обмеження        | Опис                      |
+| ------------ | -------- | ---------------- | ------------------------- |
+| \_id         | ObjectId | PRIMARY KEY      | Унікальний ідентифікатор  |
+| name         | String   | required         | Ім'я                      |
+| email        | String   | required, unique | Email                     |
+| password     | String   | required         | Хеш пароля                |
+| avatar       | String   | optional         | URL аватара               |
+| isAdmin      | Boolean  | default false    | Чи адміністратор          |
+| isBlocked    | Boolean  | default false    | Чи заблокований           |
+| blockedUntil | Date     | optional         | До якої дати заблокований |
+| createdAt    | Date     |                  | Дата створення            |
+| updatedAt    | Date     |                  | Дата оновлення            |
 
-- `idx_email` на `email`
-- `idx_role` на `role`
-- `idx_rating` на `rating`
+**Індекси:** email (unique).
+
+### profiles
+
+| Поле           | Тип      | Обмеження           | Опис                      |
+| -------------- | -------- | ------------------- | ------------------------- |
+| \_id           | ObjectId | PRIMARY KEY         | Унікальний ідентифікатор  |
+| accountId      | ObjectId | ref: Account        | ID акаунта                |
+| type           | String   | enum: buyer, seller | Тип профілю               |
+| rating         | Number   | default 0           | Середній рейтинг (0-5)    |
+| reviewsCount   | Number   | default 0           | Кількість відгуків        |
+| completedDeals | Number   | default 0           | Кількість завершених угод |
+| xp             | Number   | default 0           | Досвід (XP)               |
+| location       | String   | optional            | Локація                   |
+| memberSince    | Date     |                     | Дата реєстрації профілю   |
+| isVerified     | Boolean  | default false       | Чи верифікований          |
+| createdAt      | Date     |                     | Дата створення            |
+| updatedAt      | Date     |                     | Дата оновлення            |
+
+**Індекси:** (accountId, type) unique; type; rating; xp.
 
 ### requests
 
@@ -71,7 +81,7 @@ erDiagram
 | budget_max      | DECIMAL(10,2)                                   | NOT NULL                                              | Максимальний бюджет      |
 | location        | VARCHAR(255)                                    | NOT NULL                                              | Локація                  |
 | urgency         | VARCHAR(50)                                     | NOT NULL                                              | Терміновість             |
-| buyer_id        | INT                                             | NOT NULL, FOREIGN KEY                                 | ID покупця               |
+| buyerId         | ObjectId                                        | NOT NULL, ref: Profile (type=buyer)                   | ID профілю покупця       |
 | images          | JSON                                            | NULL                                                  | Масив URL зображень      |
 | views           | INT                                             | DEFAULT 0                                             | Кількість переглядів     |
 | proposals_count | INT                                             | DEFAULT 0                                             | Кількість пропозицій     |
@@ -82,7 +92,7 @@ erDiagram
 
 **Індекси:**
 
-- `idx_buyer_id` на `buyer_id`
+- `idx_buyerId` на `buyerId`
 - `idx_category` на `category`
 - `idx_status` на `status`
 - `idx_created_at` на `created_at`
@@ -94,7 +104,7 @@ erDiagram
 | -------------- | ---------------------------------------------------- | ----------------------------------------------------- | ------------------------ |
 | id             | INT                                                  | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор |
 | request_id     | INT                                                  | NOT NULL, FOREIGN KEY                                 | ID запиту                |
-| seller_id      | INT                                                  | NOT NULL, FOREIGN KEY                                 | ID продавця              |
+| sellerId       | ObjectId                                             | NOT NULL, ref: Profile (type=seller)                  | ID профілю продавця      |
 | price          | DECIMAL(10,2)                                        | NOT NULL                                              | Запропонована ціна       |
 | title          | VARCHAR(255)                                         | NOT NULL                                              | Заголовок пропозиції     |
 | description    | TEXT                                                 | NOT NULL                                              | Детальний опис           |
@@ -108,38 +118,38 @@ erDiagram
 **Індекси:**
 
 - `idx_request_id` на `request_id`
-- `idx_seller_id` на `seller_id`
+- `idx_sellerId` на `sellerId`
 - `idx_status` на `status`
 - `idx_created_at` на `created_at`
 
 ### reviews
 
-| Поле           | Тип       | Обмеження                                             | Опис                                |
-| -------------- | --------- | ----------------------------------------------------- | ----------------------------------- |
-| id             | INT       | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор            |
-| user_id        | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача, який залишив відгук |
-| target_user_id | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача, про якого відгук    |
-| request_id     | INT       | NULL, FOREIGN KEY                                     | ID запиту                           |
-| proposal_id    | INT       | NULL, FOREIGN KEY                                     | ID пропозиції                       |
-| rating         | TINYINT   | NOT NULL, CHECK (rating >= 1 AND rating <= 5)         | Оцінка (1-5)                        |
-| comment        | TEXT      | NULL                                                  | Текст відгуку                       |
-| created_at     | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                      |
-| updated_at     | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                      |
+| Поле            | Тип       | Обмеження                                             | Опис                        |
+| --------------- | --------- | ----------------------------------------------------- | --------------------------- |
+| id              | INT       | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор    |
+| authorAccountId | ObjectId  | NOT NULL, ref: Account                                | ID акаунта автора відгуку   |
+| targetProfileId | ObjectId  | NOT NULL, ref: Profile                                | ID профілю, про який відгук |
+| request_id      | INT       | NULL, FOREIGN KEY                                     | ID запиту                   |
+| proposal_id     | INT       | NULL, FOREIGN KEY                                     | ID пропозиції               |
+| rating          | TINYINT   | NOT NULL, CHECK (rating >= 1 AND rating <= 5)         | Оцінка (1-5)                |
+| comment         | TEXT      | NULL                                                  | Текст відгуку               |
+| created_at      | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP                             | Дата створення              |
+| updated_at      | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення              |
 
 **Індекси:**
 
-- `idx_user_id` на `user_id`
-- `idx_target_user_id` на `target_user_id`
-- `idx_request_id` на `request_id`
-- `idx_proposal_id` на `proposal_id`
+- `idx_authorAccountId` на `authorAccountId`
+- `idx_targetProfileId` на `targetProfileId`
+- `idx_requestId` на `requestId`
+- `idx_proposalId` на `proposalId`
 
 ### messages
 
 | Поле        | Тип       | Обмеження                   | Опис                     |
 | ----------- | --------- | --------------------------- | ------------------------ |
 | id          | INT       | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| sender_id   | INT       | NOT NULL, FOREIGN KEY       | ID відправника           |
-| receiver_id | INT       | NOT NULL, FOREIGN KEY       | ID отримувача            |
+| senderId    | ObjectId  | NOT NULL, ref: Account      | ID акаунта відправника   |
+| receiverId  | ObjectId  | NOT NULL, ref: Account      | ID акаунта отримувача    |
 | request_id  | INT       | NULL, FOREIGN KEY           | ID запиту                |
 | proposal_id | INT       | NULL, FOREIGN KEY           | ID пропозиції            |
 | content     | TEXT      | NOT NULL                    | Текст повідомлення       |
@@ -148,10 +158,10 @@ erDiagram
 
 **Індекси:**
 
-- `idx_sender_id` на `sender_id`
-- `idx_receiver_id` на `receiver_id`
-- `idx_request_id` на `request_id`
-- `idx_proposal_id` на `proposal_id`
+- `idx_senderId` на `senderId`
+- `idx_receiverId` на `receiverId`
+- `idx_requestId` на `requestId`
+- `idx_proposalId` на `proposalId`
 - `idx_created_at` на `created_at`
 
 ### discussions
@@ -161,7 +171,7 @@ erDiagram
 | id          | INT       | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор           |
 | request_id  | INT       | NULL, FOREIGN KEY                                     | ID запиту                          |
 | proposal_id | INT       | NULL, FOREIGN KEY                                     | ID пропозиції                      |
-| user_id     | INT       | NOT NULL, FOREIGN KEY                                 | ID користувача                     |
+| accountId   | ObjectId  | NOT NULL, ref: Account                                | ID акаунта                         |
 | reply_to_id | INT       | NULL, FOREIGN KEY                                     | ID коментаря, на який відповідають |
 | content     | TEXT      | NOT NULL                                              | Текст коментаря                    |
 | created_at  | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                     |
@@ -169,28 +179,28 @@ erDiagram
 
 **Індекси:**
 
-- `idx_request_id` на `request_id`
-- `idx_proposal_id` на `proposal_id`
-- `idx_user_id` на `user_id`
-- `idx_reply_to_id` на `reply_to_id`
+- `idx_requestId` на `requestId`
+- `idx_proposalId` на `proposalId`
+- `idx_accountId` на `accountId`
+- `idx_replyToId` на `replyToId`
 
 ### reports
 
-| Поле        | Тип                                                                      | Обмеження                                             | Опис                              |
-| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------- | --------------------------------- |
-| id          | INT                                                                      | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор          |
-| reporter_id | INT                                                                      | NOT NULL, FOREIGN KEY                                 | ID користувача, який подал скаргу |
-| target_type | ENUM('request', 'proposal', 'user', 'discussion')                        | NOT NULL                                              | Тип об'єкта                       |
-| target_id   | INT                                                                      | NOT NULL                                              | ID об'єкта                        |
-| reason      | ENUM('low-price', 'scam', 'inappropriate', 'spam', 'duplicate', 'other') | NOT NULL                                              | Причина скарги                    |
-| details     | TEXT                                                                     | NULL                                                  | Додаткові деталі                  |
-| status      | ENUM('pending', 'reviewed', 'resolved', 'rejected')                      | DEFAULT 'pending'                                     | Статус                            |
-| created_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                    |
-| updated_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                    |
+| Поле        | Тип                                                                      | Обмеження                                             | Опис                          |
+| ----------- | ------------------------------------------------------------------------ | ----------------------------------------------------- | ----------------------------- |
+| id          | INT                                                                      | PRIMARY KEY, AUTO_INCREMENT                           | Унікальний ідентифікатор      |
+| reporterId  | ObjectId                                                                 | NOT NULL, ref: Account                                | ID акаунта, який подав скаргу |
+| target_type | ENUM('request', 'proposal', 'user', 'discussion')                        | NOT NULL                                              | Тип об'єкта                   |
+| target_id   | INT                                                                      | NOT NULL                                              | ID об'єкта                    |
+| reason      | ENUM('low-price', 'scam', 'inappropriate', 'spam', 'duplicate', 'other') | NOT NULL                                              | Причина скарги                |
+| details     | TEXT                                                                     | NULL                                                  | Додаткові деталі              |
+| status      | ENUM('pending', 'reviewed', 'resolved', 'rejected')                      | DEFAULT 'pending'                                     | Статус                        |
+| created_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP                             | Дата створення                |
+| updated_at  | TIMESTAMP                                                                | DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP | Дата оновлення                |
 
 **Індекси:**
 
-- `idx_reporter_id` на `reporter_id`
+- `idx_reporterId` на `reporterId`
 - `idx_target` на `target_type`, `target_id`
 - `idx_status` на `status`
 
@@ -233,15 +243,15 @@ erDiagram
 | Поле           | Тип         | Обмеження                   | Опис                     |
 | -------------- | ----------- | --------------------------- | ------------------------ |
 | id             | INT         | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| user_id        | INT         | NOT NULL, FOREIGN KEY       | ID користувача           |
+| profileId      | ObjectId    | NOT NULL, ref: Profile      | ID профілю               |
 | achievement_id | VARCHAR(50) | NOT NULL, FOREIGN KEY       | ID досягнення            |
 | unlocked_at    | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP   | Дата отримання           |
 
 **Індекси:**
 
-- `idx_user_id` на `user_id`
-- `idx_achievement_id` на `achievement_id`
-- `UNIQUE idx_user_achievement` на `user_id`, `achievement_id`
+- `idx_profileId` на `profileId`
+- `idx_achievementId` на `achievement_id`
+- `UNIQUE idx_profile_achievement` на `profileId`, `achievement_id`
 
 ### categories
 

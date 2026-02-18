@@ -5,11 +5,13 @@
 **Опис:** Лендінг сторінка з Hero секцією, Features, HowItWorks та Footer.
 
 **Дані з бекенду:**
+
 - Статистика платформи (опціонально, для динамічного відображення)
 
 **API Endpoints:**
+
 - `GET /api/stats` - статистика платформи
-  - Response: `{ totalUsers: number, totalRequests: number, totalDeals: number, averageRating: number }`
+  - Response: `{ totalUsers: number (або totalAccounts), totalRequests: number, totalDeals: number, averageRating: number }`
 
 ---
 
@@ -18,10 +20,12 @@
 **Опис:** Сторінка зі списком запитів, фільтрацією за категорією, локацією, бюджетом та пошуком.
 
 **Дані з бекенду:**
+
 - Список активних запитів з пагінацією
 - Фільтри: категорія, локація, бюджет, пошук
 
 **API Endpoints:**
+
 - `GET /api/requests` - список запитів
   - Query параметри:
     - `category` (string, опціонально) - категорія
@@ -40,9 +44,11 @@
 **Опис:** Форма для створення нового запиту на послугу.
 
 **Дані з бекенду:**
+
 - Список категорій (може бути статичним на фронтенді)
 
 **API Endpoints:**
+
 - `POST /api/requests` - створення запиту
   - Headers: `Authorization: Bearer <access_token>`
   - Request Body:
@@ -65,6 +71,7 @@
 ## 4. Деталі запиту (`/request/[id]`)
 
 **Опис:** Детальна сторінка запиту з:
+
 - Інформацією про запит
 - Списком пропозицій від продавців
 - Публічними обговореннями
@@ -73,6 +80,7 @@
 - Можливістю скарги
 
 **Дані з бекенду:**
+
 - Деталі запиту
 - Інформація про покупця
 - Список пропозицій до запиту
@@ -82,6 +90,7 @@
 - Можливість скарги
 
 **API Endpoints:**
+
 - `GET /api/requests/:id` - деталі запиту
   - Response: `RequestWithBuyer` (запит з інформацією про покупця)
 
@@ -136,6 +145,7 @@
 ## 5. Деталі пропозиції (`/proposal/[id]`)
 
 **Опис:** Детальна сторінка пропозиції з:
+
 - Інформацією про пропозицію
 - Інформацією про продавця
 - Інформацією про покупця (оригінальний запит)
@@ -144,6 +154,7 @@
 - Можливістю прийняття/відхилення пропозиції
 
 **Дані з бекенду:**
+
 - Деталі пропозиції
 - Інформація про продавця
 - Інформація про покупця та оригінальний запит
@@ -151,6 +162,7 @@
 - Відгуки про продавця
 
 **API Endpoints:**
+
 - `GET /api/proposals/:id` - деталі пропозиції
   - Response: `ProposalWithSeller` (пропозиція з інформацією про продавця та запит)
 
@@ -181,6 +193,7 @@
 ## 6. Профіль користувача (`/profile`)
 
 **Опис:** Профіль користувача з вкладками:
+
 - Огляд (overview) - активні запити, останні угоди
 - Досягнення (gamification) - XP, рівні, досягнення
 - Аналітика (analytics) - статистика користувача
@@ -189,6 +202,7 @@
 - Налаштування (settings) - редагування профілю
 
 **Дані з бекенду:**
+
 - Дані поточного користувача
 - Запити користувача
 - Пропозиції користувача
@@ -197,18 +211,19 @@
 - Досягнення користувача
 
 **API Endpoints:**
-- `GET /api/users/me` - дані поточного користувача
-  - Headers: `Authorization: Bearer <access_token>`
-  - Response: `User`
 
-- `GET /api/users/:id/requests` - запити користувача
+- `GET /api/users/me` - дані поточного акаунта та профілю (у JWT: accountId, profileId)
+  - Headers: `Authorization: Bearer <access_token>`
+  - Response: `{ account: Account, profile: Profile }`
+
+- `GET /api/users/:id/requests` - запити профілю (id = profileId, type=buyer)
   - Query параметри:
     - `status` (string, опціонально) - статус запитів
     - `page` (number, опціонально)
     - `pageSize` (number, опціонально)
   - Response: `{ count: number, results: Request[] }`
 
-- `GET /api/users/:id/proposals` - пропозиції користувача
+- `GET /api/users/:id/proposals` - пропозиції профілю (id = profileId, type=seller)
   - Query параметри:
     - `status` (string, опціонально) - статус пропозицій
     - `page` (number, опціонально)
@@ -221,7 +236,7 @@
     - `pageSize` (number, опціонально)
   - Response: `{ count: number, results: Review[] }`
 
-- `GET /api/users/:id/stats` - статистика користувача
+- `GET /api/users/:id/stats` - статистика профілю (id = profileId)
   - Response:
     ```json
     {
@@ -235,33 +250,34 @@
     }
     ```
 
-- `GET /api/users/:id/achievements` - досягнення користувача
+- `GET /api/users/:id/achievements` - досягнення профілю (id = profileId)
   - Response: `UserAchievement[]`
 
-- `PATCH /api/users/me` - оновлення профілю
+- `PATCH /api/users/me` - оновлення акаунта (ім'я, аватар)
   - Headers: `Authorization: Bearer <access_token>`
   - Request Body:
     ```json
     {
       "name": "string (optional)",
-      "avatar": "string (optional)",
-      "location": "string (optional)"
+      "avatar": "string (optional)"
     }
     ```
-  - Response: `User`
+  - Response: оновлений Account (без password)
 
 ---
 
 ## 7. Авторизація (`/login`, `/register`)
 
-**Опис:** Сторінки входу та реєстрації.
+**Опис:** Сторінки входу та реєстрації. При реєстрації створюються Account та два Profile (buyer, seller).
 
 **Дані з бекенду:**
-- Вхід користувача
-- Реєстрація нового користувача
-- Оновлення токенів
+
+- Вхід по Account (email/пароль)
+- Реєстрація: Account + два Profile
+- Оновлення токенів; перемикання профілю (switch-profile)
 
 **API Endpoints:**
+
 - `POST /api/auth/register` - реєстрація
   - Request Body:
     ```json
@@ -271,7 +287,7 @@
       "name": "string (required, min 2)"
     }
     ```
-  - Response: `AuthResponse` (access_token, refresh_token, user)
+  - Response: `AuthResponse` (access_token, refresh_token, account, profiles, currentProfileId)
 
 - `POST /api/auth/login` - вхід
   - Request Body:
@@ -281,9 +297,13 @@
       "password": "string (required)"
     }
     ```
-  - Response: `AuthResponse`
+  - Response: `AuthResponse` (access_token, refresh_token, account, profiles, currentProfileId)
 
-- `POST /api/auth/refresh` - оновлення токену
+- `POST /api/auth/switch-profile` - перемикання поточного профілю
+  - Request Body: `{ "profileId": "string" }`
+  - Response: нова пара access_token, refresh_token
+
+- `POST /api/auth/refresh` - оновлення токенів
   - Request Body:
     ```json
     {
@@ -303,10 +323,12 @@
 **Опис:** Список статей блогу та детальна сторінка статті.
 
 **Дані з бекенду:**
+
 - Список опублікованих статей
 - Деталі статті
 
 **API Endpoints:**
+
 - `GET /api/blog/posts` - список статей
   - Query параметри:
     - `category` (string, опціонально) - категорія
@@ -324,6 +346,7 @@
 **Опис:** Адміністративна панель для модерації контенту та управління платформою.
 
 **Дані з бекенду:**
+
 - Статистика платформи
 - Запити на модерацію
 - Пропозиції на модерацію
@@ -332,17 +355,18 @@
 - Можливість блокування користувачів
 
 **API Endpoints:**
+
 - `GET /api/admin/analytics` - статистика платформи
   - Headers: `Authorization: Bearer <access_token>` (тільки для admin)
   - Response:
     ```json
     {
-      "totalUsers": "number",
+      "totalAccounts": "number (або totalUsers)",
       "activeRequests": "number",
       "totalProposals": "number",
       "revenue": "number",
       "growth": "string",
-      "usersByRole": {
+      "profilesByType": {
         "buyers": "number",
         "sellers": "number"
       },
@@ -393,14 +417,14 @@
     ```
   - Response: `{ success: boolean, message: string }`
 
-- `GET /api/admin/users/reported` - користувачі зі скаргами
+- `GET /api/admin/users/reported` - акаунти зі скаргами
   - Headers: `Authorization: Bearer <access_token>` (тільки для admin)
   - Query параметри:
     - `page` (number, опціонально)
     - `pageSize` (number, опціонально)
-  - Response: `{ count: number, results: User[] }`
+  - Response: `{ count: number, results: Account[] }`
 
-- `POST /api/admin/users/:id/block` - блокування користувача
+- `POST /api/admin/users/:id/block` - блокування акаунта
   - Headers: `Authorization: Bearer <access_token>` (тільки для admin)
   - Request Body:
     ```json
@@ -411,7 +435,7 @@
     ```
   - Response: `{ success: boolean, message: string }`
 
-- `POST /api/admin/users/:id/unblock` - розблокування користувача
+- `POST /api/admin/users/:id/unblock` - розблокування акаунта
   - Headers: `Authorization: Bearer <access_token>` (тільки для admin)
   - Response: `{ success: boolean, message: string }`
 
@@ -424,6 +448,7 @@
 **Опис:** Статичні інформаційні сторінки. Можуть бути статичними або з невеликою кількістю даних з бекенду.
 
 **API Endpoints (опціонально):**
+
 - `POST /api/contact` - відправка форми зворотного зв'язку
   - Request Body:
     ```json

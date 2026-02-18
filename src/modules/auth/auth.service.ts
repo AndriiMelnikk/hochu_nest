@@ -46,7 +46,6 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const account = await this.accountModel.create({
-      name,
       email,
       password: hashedPassword,
     });
@@ -56,6 +55,7 @@ export class AuthService {
 
     const profile = await this.profileModel.create({
       accountId: account._id,
+      name,
       type: profileType,
       rating: 0,
       reviewsCount: 0,
@@ -69,7 +69,10 @@ export class AuthService {
 
     const tokens = await this.generateTokens(account._id.toString(), defaultProfileId.toString());
 
-    const profiles = await this.profileModel.find({ accountId: account._id }).lean().exec();
+    const profiles = await this.profileModel
+      .find({ accountId: account._id })
+      .lean<Profile[]>()
+      .exec();
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
@@ -92,14 +95,6 @@ export class AuthService {
     if (!account) {
       throw new UnauthorizedException(
         this.i18n.t('common.auth.invalid_credentials', {
-          lang: I18nContext.current()?.lang,
-        }),
-      );
-    }
-
-    if (account.isBlocked) {
-      throw new UnauthorizedException(
-        this.i18n.t('common.auth.user_blocked', {
           lang: I18nContext.current()?.lang,
         }),
       );
@@ -130,11 +125,30 @@ export class AuthService {
       );
     }
 
+    if (profile.isBlocked && (!profile.blockedUntil || profile.blockedUntil > new Date())) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_blocked', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (profile.isBlocked && (!profile.blockedUntil || profile.blockedUntil > new Date())) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_blocked', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
     const defaultProfileId = profile._id;
 
     const tokens = await this.generateTokens(account._id.toString(), defaultProfileId.toString());
 
-    const profiles = await this.profileModel.find({ accountId: account._id }).lean().exec();
+    const profiles = await this.profileModel
+      .find({ accountId: account._id })
+      .lean<Profile[]>()
+      .exec();
     return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
@@ -180,7 +194,7 @@ export class AuthService {
 
     const accountId = (tokenDoc as { accountId: Types.ObjectId }).accountId?.toString();
     const account = await this.accountModel.findById(accountId).exec();
-    if (!account || account.isBlocked) {
+    if (!account) {
       throw new UnauthorizedException(
         this.i18n.t('common.auth.user_not_found', {
           lang: I18nContext.current()?.lang,
@@ -210,7 +224,37 @@ export class AuthService {
       }
     }
 
+    if (profileId) {
+      const profile = await this.profileModel.findById(profileId).exec();
+      if (
+        profile &&
+        profile.isBlocked &&
+        (!profile.blockedUntil || profile.blockedUntil > new Date())
+      ) {
+        throw new UnauthorizedException(
+          this.i18n.t('common.auth.user_blocked', {
+            lang: I18nContext.current()?.lang,
+          }),
+        );
+      }
+    }
+
     const tokens = await this.generateTokens(accountId, profileId ?? undefined);
+
+    if (profileId) {
+      const profile = await this.profileModel.findById(profileId).exec();
+      if (
+        profile &&
+        profile.isBlocked &&
+        (!profile.blockedUntil || profile.blockedUntil > new Date())
+      ) {
+        throw new UnauthorizedException(
+          this.i18n.t('common.auth.user_blocked', {
+            lang: I18nContext.current()?.lang,
+          }),
+        );
+      }
+    }
 
     return {
       access_token: tokens.accessToken,

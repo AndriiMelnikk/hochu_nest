@@ -118,7 +118,7 @@
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request, опціонально)
 - `proposalId` - ID пропозиції (foreign key до Proposal, опціонально)
-- `userId` - ID користувача, який залишив коментар (foreign key до User)
+- `accountId` - ID акаунта, який залишив коментар (foreign key до Account)
 - `replyToId` - ID коментаря, на який відповідають (foreign key до Discussion, опціонально)
 - `content` - текст коментаря
 - `createdAt` - дата створення
@@ -149,7 +149,7 @@
 **Поля:**
 
 - `id` - унікальний ідентифікатор
-- `reporterId` - ID користувача, який подал скаргу (foreign key до User)
+- `reporterId` - ID акаунта, який подав скаргу (foreign key до Account)
 - `targetType` - тип об'єкта (request, proposal, user, discussion)
 - `targetId` - ID об'єкта, на який скарга
 - `reason` - причина скарги (low-price, scam, inappropriate, spam, duplicate, other)
@@ -172,14 +172,14 @@
 - `role` - для якої ролі (buyer, seller, both)
 - `condition` - умова отримання (JSON)
 
-### 10. UserAchievement (Досягнення користувача)
+### 10. UserAchievement (Досягнення профілю)
 
-Зв'язок між користувачем та досягненням.
+Зв'язок між профілем (buyer або seller) та досягненням.
 
 **Поля:**
 
 - `id` - унікальний ідентифікатор
-- `userId` - ID користувача (foreign key до User)
+- `profileId` - ID профілю (foreign key до Profile)
 - `achievementId` - ID досягнення (foreign key до Achievement)
 - `unlockedAt` - дата отримання
 
@@ -205,13 +205,15 @@
 
 ```mermaid
 erDiagram
-    User ||--o{ Request : creates
-    User ||--o{ Proposal : sends
-    User ||--o{ Review : "gives/receives"
-    User ||--o{ Message : "sends/receives"
-    User ||--o{ Discussion : writes
-    User ||--o{ Report : submits
-    User ||--o{ UserAchievement : has
+    Account ||--o{ Profile : has
+    Profile ||--o{ Request : "creates as buyer"
+    Profile ||--o{ Proposal : "sends as seller"
+    Account ||--o{ Review_author : "writes"
+    Profile ||--o{ Review_received : "receives"
+    Account ||--o{ Message : "sends or receives"
+    Account ||--o{ Discussion : writes
+    Account ||--o{ Report : submits
+    Profile ||--o{ UserAchievement : has
 
     Request ||--o{ Proposal : receives
     Request ||--o{ Discussion : has
@@ -223,104 +225,72 @@ erDiagram
 
     Achievement ||--o{ UserAchievement : "unlocked by"
 
-    Request {
-        int id PK
-        string title
-        string description
-        string category
-        int budgetMin
-        int budgetMax
+    Account {
+        ObjectId id PK
+        string name
+        string email
+        string avatar
+        boolean isAdmin
+        boolean isBlocked
+    }
+
+    Profile {
+        ObjectId id PK
+        ObjectId accountId FK
+        enum type "buyer|seller"
+        decimal rating
+        int reviewsCount
+        int completedDeals
+        int xp
         string location
-        string urgency
-        int buyerId FK
-        array images
-        int views
-        int proposalsCount
+        boolean isVerified
+    }
+
+    Request {
+        ObjectId id PK
+        ObjectId buyerId FK
+        string title
         string status
     }
 
     Proposal {
-        int id PK
-        int requestId FK
-        int sellerId FK
-        int price
-        string title
-        string description
-        string estimatedTime
-        string warranty
-        array images
+        ObjectId id PK
+        ObjectId requestId FK
+        ObjectId sellerId FK
         string status
-    }
-
-    User {
-        int id PK
-        string name
-        string email
-        string password
-        string avatar
-        string role
-        float rating
-        int reviewsCount
-        boolean isVerified
-        int completedDeals
-        string location
-        int xp
-        boolean isBlocked
     }
 
     Review {
-        int id PK
-        int userId FK
-        int targetUserId FK
-        int requestId FK
-        int proposalId FK
+        ObjectId id PK
+        ObjectId authorAccountId FK
+        ObjectId targetProfileId FK
         int rating
-        string comment
     }
 
     Message {
-        int id PK
-        int senderId FK
-        int receiverId FK
-        int requestId FK
-        int proposalId FK
-        string content
-        boolean read
+        ObjectId id PK
+        ObjectId senderId FK
+        ObjectId receiverId FK
     }
 
     Discussion {
-        int id PK
-        int requestId FK
-        int proposalId FK
-        int userId FK
-        int replyToId FK
-        string content
+        ObjectId id PK
+        ObjectId accountId FK
     }
 
     Report {
-        int id PK
-        int reporterId FK
-        string targetType
-        int targetId
-        string reason
-        string details
-        string status
+        ObjectId id PK
+        ObjectId reporterId FK
     }
 
     Achievement {
         string id PK
-        string name
-        string description
-        string icon
-        string rarity
         string role
-        json condition
     }
 
     UserAchievement {
-        int id PK
-        int userId FK
+        ObjectId id PK
+        ObjectId profileId FK
         string achievementId FK
-        datetime unlockedAt
     }
 ```

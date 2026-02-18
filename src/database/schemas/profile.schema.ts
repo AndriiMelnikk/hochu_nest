@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-export type ProfileDocument = Profile & Document;
+export type ProfileDocument = HydratedDocument<Profile>;
 
 export enum ProfileType {
   BUYER = 'buyer',
@@ -40,6 +40,18 @@ export class Profile {
   @Prop({ default: null })
   location: string;
 
+  @Prop({ required: true, trim: true })
+  name: string;
+
+  @Prop({ default: null })
+  avatar: string;
+
+  @Prop({ type: Boolean, default: false })
+  isBlocked: boolean;
+
+  @Prop({ default: null })
+  blockedUntil: Date;
+
   @Prop({ type: Number, default: 0, index: true })
   xp: number;
 
@@ -51,5 +63,6 @@ export const ProfileSchema = SchemaFactory.createForClass(Profile);
 
 ProfileSchema.index({ accountId: 1, type: 1 }, { unique: true });
 ProfileSchema.index({ type: 1 });
+ProfileSchema.index({ isBlocked: 1 });
 ProfileSchema.index({ rating: -1 });
 ProfileSchema.index({ xp: -1 });

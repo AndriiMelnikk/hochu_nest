@@ -82,6 +82,7 @@ export class ReviewsService {
 
     const review = new this.reviewModel({
       authorAccountId: new Types.ObjectId(authorAccountId),
+      authorProfileId: new Types.ObjectId(authorProfileId),
       targetProfileId: new Types.ObjectId(targetProfileId),
       proposalId: new Types.ObjectId(proposalId),
       rating,
@@ -123,11 +124,10 @@ export class ReviewsService {
 
     const results = await this.reviewModel
       .find(query)
-      .populate({ path: 'authorAccountId', select: 'name avatar' })
+      .populate({ path: 'authorProfileId', select: 'avatar name' })
       .populate({
         path: 'targetProfileId',
-        select: 'rating type',
-        populate: { path: 'accountId', select: 'name avatar' },
+        select: 'rating type avatar name',
       })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -150,11 +150,10 @@ export class ReviewsService {
   async findOne(id: string) {
     const review = await this.reviewModel
       .findById(id)
-      .populate({ path: 'authorAccountId', select: 'name avatar' })
+      .populate({ path: 'authorProfileId', select: 'avatar name' })
       .populate({
         path: 'targetProfileId',
-        select: 'rating type',
-        populate: { path: 'accountId', select: 'name avatar' },
+        select: 'rating type avatar name',
       })
       .exec();
 
@@ -174,7 +173,10 @@ export class ReviewsService {
       return;
     }
 
-    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
+    let totalRating = 0;
+    for (const r of reviews) {
+      totalRating += r.rating;
+    }
     const averageRating = Math.round((totalRating / reviews.length) * 100) / 100;
 
     await this.profileModel

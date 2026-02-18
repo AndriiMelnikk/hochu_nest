@@ -43,3 +43,12 @@ http://localhost:8080/api
   }
 }
 ```
+
+## Аутентифікація
+
+- JWT у заголовку `Authorization: Bearer <access_token>`.
+- Payload: `sub` — accountId, `profileId` — поточний профіль (buyer або seller). Права визначаються типом профілю та `isAdmin` на акаунті.
+- **Auth endpoints:**  
+  `POST /api/auth/register`, `POST /api/auth/login` — тіло як раніше; відповідь: `access_token`, `refresh_token`, `account`, `profiles`, `currentProfileId`.  
+  `POST /api/auth/switch-profile` — тіло `{ "profileId": "<ObjectId>" }`; у відповіді нова пара токенів з іншим поточним профілем.  
+  `POST /api/auth/refresh`, `POST /api/auth/logout` — без змін.

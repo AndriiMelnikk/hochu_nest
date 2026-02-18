@@ -11,6 +11,9 @@ export class Review {
   authorAccountId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
+  authorProfileId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
   targetProfileId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Request', default: null })
@@ -33,6 +36,7 @@ export const ReviewSchema = SchemaFactory.createForClass(Review);
 
 // Indexes
 ReviewSchema.index({ authorAccountId: 1 });
+ReviewSchema.index({ authorProfileId: 1 });
 ReviewSchema.index({ targetProfileId: 1 });
 ReviewSchema.index({ requestId: 1 });
 ReviewSchema.index({ proposalId: 1 });

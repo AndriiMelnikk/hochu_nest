@@ -30,6 +30,8 @@ type PopulatedBuyer = {
   memberSince?: Date;
   completedDeals?: number;
   xp?: number;
+  name: string;
+  avatar?: string;
 };
 
 type LeanRequest = Omit<Request, 'buyerId' | 'category'> & {
@@ -227,12 +229,9 @@ export class RequestsService {
       ...request,
       category: undefined,
     };
+
     if (request.buyerId && 'accountId' in request.buyerId && request.buyerId.accountId) {
-      formatted.buyerId = {
-        ...request.buyerId,
-        name: (request.buyerId.accountId as { name?: string }).name,
-        avatar: (request.buyerId.accountId as { avatar?: string }).avatar,
-      };
+      formatted.buyerId = request.buyerId;
     }
 
     if (request.category && request.category.translations) {

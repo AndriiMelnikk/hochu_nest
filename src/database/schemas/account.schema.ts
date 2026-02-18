@@ -1,14 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
-export type AccountDocument = Account & Document;
+export type AccountDocument = HydratedDocument<Account>;
 
 @Schema({ timestamps: true })
 export class Account {
   _id: Types.ObjectId;
-
-  @Prop({ required: true, trim: true })
-  name: string;
 
   @Prop({ required: true, lowercase: true, trim: true })
   email: string;
@@ -16,17 +13,8 @@ export class Account {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ default: null })
-  avatar: string;
-
   @Prop({ type: Boolean, default: false })
   isAdmin: boolean;
-
-  @Prop({ type: Boolean, default: false })
-  isBlocked: boolean;
-
-  @Prop({ default: null })
-  blockedUntil: Date;
 
   createdAt: Date;
   updatedAt: Date;
@@ -35,4 +23,3 @@ export class Account {
 export const AccountSchema = SchemaFactory.createForClass(Account);
 
 AccountSchema.index({ email: 1 }, { unique: true });
-AccountSchema.index({ isBlocked: 1 });

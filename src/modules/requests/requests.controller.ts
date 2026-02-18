@@ -54,7 +54,8 @@ export class RequestsController {
   @ApiResponse({ status: 200, description: 'Request found' })
   @ApiResponse({ status: 404, description: 'Request not found' })
   async findOne(@Param('id', ParseObjectIdPipe) id: string): Promise<FormattedRequest> {
-    return await this.requestsService.getById(id);
+    const request = await this.requestsService.getById(id);
+    return request;
   }
 
   @Patch(':id')

@@ -3,11 +3,13 @@
 ## Пошук та фільтрація
 
 **Пошук:**
+
 - Full-text search по заголовку та опису запитів
 - Використовується FULLTEXT індекс в MySQL/MariaDB
 - Або Elasticsearch для більш складних випадків
 
 **Фільтрація:**
+
 - За категорією
 - За локацією
 - За бюджетом (budgetMin, budgetMax)
@@ -22,6 +24,7 @@
 - `pageSize` - розмір сторінки (за замовчуванням 20, максимум 100)
 
 **Response формат:**
+
 ```json
 {
   "count": 150,
@@ -45,6 +48,7 @@
 ## Нотифікації
 
 Система нотифікацій для інформування користувачів про:
+
 - Нові пропозиції на їх запити
 - Прийняття/відхилення їх пропозицій
 - Нові повідомлення
@@ -52,6 +56,7 @@
 - Розблоковування досягнень
 
 **API Endpoints:**
+
 - `GET /api/notifications` - отримати нотифікації
   - Headers: `Authorization: Bearer <access_token>`
   - Query параметри:
@@ -70,13 +75,13 @@
 
 **Таблиця notifications:**
 
-| Поле | Тип | Обмеження | Опис |
-|------|-----|-----------|------|
-| id | INT | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| user_id | INT | NOT NULL, FOREIGN KEY | ID користувача |
-| type | VARCHAR(50) | NOT NULL | Тип нотифікації |
-| title | VARCHAR(255) | NOT NULL | Заголовок |
-| message | TEXT | NOT NULL | Текст нотифікації |
-| link | VARCHAR(500) | NULL | Посилання |
-| read | BOOLEAN | DEFAULT FALSE | Чи прочитано |
-| created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Дата створення |
+| Поле       | Тип          | Обмеження                   | Опис                     |
+| ---------- | ------------ | --------------------------- | ------------------------ |
+| id         | INT          | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
+| accountId  | ObjectId     | NOT NULL, ref: Account      | ID акаунта               |
+| type       | VARCHAR(50)  | NOT NULL                    | Тип нотифікації          |
+| title      | VARCHAR(255) | NOT NULL                    | Заголовок                |
+| message    | TEXT         | NOT NULL                    | Текст нотифікації        |
+| link       | VARCHAR(500) | NULL                        | Посилання                |
+| read       | BOOLEAN      | DEFAULT FALSE               | Чи прочитано             |
+| created_at | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP   | Дата створення           |

@@ -105,8 +105,7 @@ export class ProposalsService {
 
     return proposal.populate({
       path: 'sellerId',
-      select: 'rating location completedDeals xp',
-      populate: { path: 'accountId', select: 'name avatar' },
+      select: 'name avatar rating location memberSince completedDeals xp',
     });
   }
 
@@ -115,8 +114,7 @@ export class ProposalsService {
       .find({ requestId: new Types.ObjectId(requestId) })
       .populate({
         path: 'sellerId',
-        select: 'rating location completedDeals xp',
-        populate: { path: 'accountId', select: 'name avatar' },
+        select: 'name avatar rating location memberSince completedDeals xp',
       })
       .sort({ createdAt: -1 })
       .exec();
@@ -167,8 +165,7 @@ export class ProposalsService {
       .findById(id)
       .populate({
         path: 'sellerId',
-        select: 'rating location memberSince completedDeals xp',
-        populate: { path: 'accountId', select: 'name avatar' },
+        select: 'name avatar rating location memberSince completedDeals xp',
       })
       .populate('requestId')
       .exec();
