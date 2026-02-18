@@ -9,7 +9,7 @@ import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
-import { User, UserDocument } from '../../database/schemas/user.schema';
+import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { CreateProposalDto } from './dto/create-proposal.dto';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -21,14 +21,14 @@ export class ProposalsService {
   constructor(
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private notificationsService: NotificationsService,
     private readonly i18n: I18nService,
   ) {}
 
-  async create(requestId: string, createProposalDto: CreateProposalDto, sellerId: string) {
+  async create(requestId: string, createProposalDto: CreateProposalDto, sellerProfileId: string) {
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException(
@@ -47,7 +47,15 @@ export class ProposalsService {
       );
     }
 
-    if (request.buyerId.toString() === sellerId) {
+    const sellerProfile = await this.profileModel.findById(sellerProfileId).exec();
+    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER) {
+      throw new ForbiddenException(
+        this.i18n.t('common.auth.unauthorized', { lang: I18nContext.current()?.lang }),
+      );
+    }
+
+    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
+    if (buyerProfile && buyerProfile.accountId.equals(sellerProfile.accountId)) {
       throw new ForbiddenException(
         this.i18n.t('common.proposals.cannot_propose_own_request', {
           lang: I18nContext.current()?.lang,
@@ -55,11 +63,10 @@ export class ProposalsService {
       );
     }
 
-    // Check if seller already has a proposal for this request
     const existingProposal = await this.proposalModel
       .findOne({
         requestId: new Types.ObjectId(requestId),
-        sellerId: new Types.ObjectId(sellerId),
+        sellerId: new Types.ObjectId(sellerProfileId),
       })
       .exec();
 
@@ -74,24 +81,21 @@ export class ProposalsService {
     const proposal = new this.proposalModel({
       ...createProposalDto,
       requestId: new Types.ObjectId(requestId),
-      sellerId: new Types.ObjectId(sellerId),
+      sellerId: new Types.ObjectId(sellerProfileId),
       status: ProposalStatus.PENDING,
     });
 
     await proposal.save();
 
-    // Increment proposals count
     await this.requestModel.updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } }).exec();
 
-    // Award XP to seller
-    await this.xpService.awardXp(sellerId, 5);
-    await this.achievementsService.checkAndUnlockAchievements(sellerId);
+    await this.xpService.awardXp(sellerProfileId, 5);
+    await this.achievementsService.checkAndUnlockAchievements(sellerProfileId);
 
-    // Notify buyer
-    const buyer = await this.userModel.findById(request.buyerId).exec();
-    if (buyer) {
+    const buyerProfileDoc = await this.profileModel.findById(request.buyerId).exec();
+    if (buyerProfileDoc) {
       await this.notificationsService.create({
-        userId: buyer._id.toString(),
+        accountId: buyerProfileDoc.accountId.toString(),
         type: NotificationType.NEW_PROPOSAL,
         title: 'Нова пропозиція',
         message: `На ваш запит "${request.title}" надійшла нова пропозиція`,
@@ -99,65 +103,60 @@ export class ProposalsService {
       });
     }
 
-    return proposal.populate('sellerId', 'name avatar rating');
+    return proposal.populate({
+      path: 'sellerId',
+      select: 'rating location completedDeals xp',
+      populate: { path: 'accountId', select: 'name avatar' },
+    });
   }
 
   async findAllByRequest(requestId: string) {
-    const proposals = await this.proposalModel
+    return this.proposalModel
       .find({ requestId: new Types.ObjectId(requestId) })
-      .populate('sellerId', 'name avatar rating location completedDeals xp')
+      .populate({
+        path: 'sellerId',
+        select: 'rating location completedDeals xp',
+        populate: { path: 'accountId', select: 'name avatar' },
+      })
       .sort({ createdAt: -1 })
       .exec();
-
-    return proposals;
   }
 
   async canPropose(
     requestId: string,
-    userId: string,
+    accountId: string,
+    sellerProfileId: string,
   ): Promise<{ canPropose: boolean; reason?: string }> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user || user.isBlocked) {
-      return {
-        canPropose: false,
-        reason: 'USER_BLOCKED',
-      };
+    const sellerProfile = await this.profileModel
+      .findOne({ _id: sellerProfileId, accountId: new Types.ObjectId(accountId) })
+      .exec();
+    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER) {
+      return { canPropose: false, reason: 'USER_BLOCKED' };
     }
 
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
-      return {
-        canPropose: false,
-        reason: 'REQUEST_NOT_FOUND',
-      };
+      return { canPropose: false, reason: 'REQUEST_NOT_FOUND' };
     }
 
     if (request.status !== RequestStatus.ACTIVE) {
-      return {
-        canPropose: false,
-        reason: 'REQUEST_NOT_ACTIVE',
-      };
+      return { canPropose: false, reason: 'REQUEST_NOT_ACTIVE' };
     }
 
-    if (request.buyerId.toString() === userId) {
-      return {
-        canPropose: false,
-        reason: 'OWN_REQUEST',
-      };
+    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
+    if (buyerProfile && buyerProfile.accountId.toString() === accountId) {
+      return { canPropose: false, reason: 'OWN_REQUEST' };
     }
 
     const existingProposal = await this.proposalModel
       .findOne({
         requestId: new Types.ObjectId(requestId),
-        sellerId: new Types.ObjectId(userId),
+        sellerId: new Types.ObjectId(sellerProfileId),
       })
       .exec();
 
     if (existingProposal) {
-      return {
-        canPropose: false,
-        reason: 'ALREADY_PROPOSED',
-      };
+      return { canPropose: false, reason: 'ALREADY_PROPOSED' };
     }
 
     return { canPropose: true };
@@ -166,7 +165,11 @@ export class ProposalsService {
   async findOne(id: string) {
     const proposal = await this.proposalModel
       .findById(id)
-      .populate('sellerId', 'name avatar rating location memberSince completedDeals xp')
+      .populate({
+        path: 'sellerId',
+        select: 'rating location memberSince completedDeals xp',
+        populate: { path: 'accountId', select: 'name avatar' },
+      })
       .populate('requestId')
       .exec();
 
@@ -182,7 +185,7 @@ export class ProposalsService {
     return proposal;
   }
 
-  async accept(id: string, buyerId: string) {
+  async accept(id: string, buyerProfileId: string) {
     const proposal = await this.findOne(id);
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
@@ -194,7 +197,7 @@ export class ProposalsService {
       );
     }
 
-    if (request.buyerId.toString() !== buyerId) {
+    if (request.buyerId.toString() !== buyerProfileId) {
       throw new ForbiddenException(
         this.i18n.t('common.proposals.only_owner_accept', {
           lang: I18nContext.current()?.lang,
@@ -218,11 +221,8 @@ export class ProposalsService {
       );
     }
 
-    // Transaction-like operation: accept proposal and reject others
     await Promise.all([
-      // Accept this proposal
       this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.ACCEPTED }),
-      // Reject all other proposals
       this.proposalModel.updateMany(
         {
           requestId: proposal.requestId,
@@ -231,30 +231,34 @@ export class ProposalsService {
         },
         { status: ProposalStatus.REJECTED },
       ),
-      // Close request
       this.requestModel.updateOne({ _id: request._id }, { status: RequestStatus.CLOSED }),
     ]);
 
-    // Award XP
+    const sellerProfileIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+
     await Promise.all([
-      this.xpService.awardXp(buyerId, 20),
-      this.xpService.awardXp(proposal.sellerId.toString(), 25),
+      this.xpService.awardXp(buyerProfileId, 20),
+      this.xpService.awardXp(sellerProfileIdStr, 25),
     ]);
 
-    // Check achievements
     await Promise.all([
-      this.achievementsService.checkAndUnlockAchievements(buyerId),
-      this.achievementsService.checkAndUnlockAchievements(proposal.sellerId.toString()),
+      this.achievementsService.checkAndUnlockAchievements(buyerProfileId),
+      this.achievementsService.checkAndUnlockAchievements(sellerProfileIdStr),
     ]);
 
-    // Notify seller
-    await this.notificationsService.create({
-      userId: proposal.sellerId.toString(),
-      type: NotificationType.PROPOSAL_ACCEPTED,
-      title: 'Пропозицію прийнято',
-      message: `Вашу пропозицію на запит "${request.title}" прийнято`,
-      link: `/proposal/${id}`,
-    });
+    const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
+    if (sellerProfile) {
+      await this.notificationsService.create({
+        accountId: sellerProfile.accountId.toString(),
+        type: NotificationType.PROPOSAL_ACCEPTED,
+        title: 'Пропозицію прийнято',
+        message: `Вашу пропозицію на запит "${request.title}" прийнято`,
+        link: `/proposal/${id}`,
+      });
+    }
 
     return {
       success: true,
@@ -264,7 +268,7 @@ export class ProposalsService {
     };
   }
 
-  async reject(id: string, buyerId: string) {
+  async reject(id: string, buyerProfileId: string) {
     const proposal = await this.findOne(id);
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
@@ -276,7 +280,7 @@ export class ProposalsService {
       );
     }
 
-    if (request.buyerId.toString() !== buyerId) {
+    if (request.buyerId.toString() !== buyerProfileId) {
       throw new ForbiddenException(
         this.i18n.t('common.proposals.only_owner_reject', {
           lang: I18nContext.current()?.lang,
@@ -294,14 +298,20 @@ export class ProposalsService {
 
     await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.REJECTED });
 
-    // Notify seller
-    await this.notificationsService.create({
-      userId: proposal.sellerId.toString(),
-      type: NotificationType.PROPOSAL_REJECTED,
-      title: 'Пропозицію відхилено',
-      message: `Вашу пропозицію на запит "${request.title}" відхилено`,
-      link: `/request/${request._id.toString()}`,
-    });
+    const sellerProfileIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+    const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
+    if (sellerProfile) {
+      await this.notificationsService.create({
+        accountId: sellerProfile.accountId.toString(),
+        type: NotificationType.PROPOSAL_REJECTED,
+        title: 'Пропозицію відхилено',
+        message: `Вашу пропозицію на запит "${request.title}" відхилено`,
+        link: `/request/${request._id.toString()}`,
+      });
+    }
 
     return {
       success: true,
@@ -311,7 +321,7 @@ export class ProposalsService {
     };
   }
 
-  async complete(id: string, buyerId: string) {
+  async complete(id: string, buyerProfileId: string) {
     const proposal = await this.findOne(id);
     const request = await this.requestModel.findById(proposal.requestId).exec();
 
@@ -323,7 +333,7 @@ export class ProposalsService {
       );
     }
 
-    if (request.buyerId.toString() !== buyerId) {
+    if (request.buyerId.toString() !== buyerProfileId) {
       throw new ForbiddenException(
         this.i18n.t('common.proposals.only_owner_complete', {
           lang: I18nContext.current()?.lang,
@@ -341,22 +351,25 @@ export class ProposalsService {
 
     await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.COMPLETED });
 
-    // Update completed deals for both users
+    const sellerProfileIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+
+    const ProfileModel = this.profileModel;
     await Promise.all([
-      this.userModel.updateOne({ _id: buyerId }, { $inc: { completedDeals: 1 } }),
-      this.userModel.updateOne({ _id: proposal.sellerId }, { $inc: { completedDeals: 1 } }),
+      ProfileModel.updateOne({ _id: buyerProfileId }, { $inc: { completedDeals: 1 } }),
+      ProfileModel.updateOne({ _id: sellerProfileIdStr }, { $inc: { completedDeals: 1 } }),
     ]);
 
-    // Award XP
     await Promise.all([
-      this.xpService.awardXp(buyerId, 30),
-      this.xpService.awardXp(proposal.sellerId.toString(), 50),
+      this.xpService.awardXp(buyerProfileId, 30),
+      this.xpService.awardXp(sellerProfileIdStr, 50),
     ]);
 
-    // Check achievements
     await Promise.all([
-      this.achievementsService.checkAndUnlockAchievements(buyerId),
-      this.achievementsService.checkAndUnlockAchievements(proposal.sellerId.toString()),
+      this.achievementsService.checkAndUnlockAchievements(buyerProfileId),
+      this.achievementsService.checkAndUnlockAchievements(sellerProfileIdStr),
     ]);
 
     return {

@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Review, ReviewDocument } from '../../database/schemas/review.schema';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
-import { User, UserDocument } from '../../database/schemas/user.schema';
+import { Request, RequestDocument } from '../../database/schemas/request.schema';
+import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -16,98 +22,113 @@ export class ReviewsService {
   constructor(
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private notificationsService: NotificationsService,
   ) {}
 
-  async create(createReviewDto: CreateReviewDto, userId: string) {
-    const { targetUserId, proposalId, rating, comment } = createReviewDto;
+  async create(createReviewDto: CreateReviewDto, authorAccountId: string) {
+    const { targetProfileId, proposalId, rating, comment } = createReviewDto;
 
-    // Check if proposal exists and is completed
-    if (proposalId) {
-      const proposal = await this.proposalModel.findById(proposalId).exec();
-      if (!proposal) {
-        throw new NotFoundException(`Proposal with ID ${proposalId} not found`);
-      }
-
-      if (proposal.status !== ProposalStatus.COMPLETED) {
-        throw new BadRequestException('Can only review completed proposals');
-      }
-
-      // Check if user is the buyer of the request
-      // This will be checked when we have request populated
+    if (!proposalId) {
+      throw new BadRequestException('Proposal ID is required for review');
     }
 
-    // Check if review already exists for this proposal
-    if (proposalId) {
-      const existingReview = await this.reviewModel
-        .findOne({
-          userId: new Types.ObjectId(userId),
-          proposalId: new Types.ObjectId(proposalId),
-        })
-        .exec();
-
-      if (existingReview) {
-        throw new BadRequestException('Review already exists for this proposal');
-      }
+    const proposal = await this.proposalModel.findById(proposalId).exec();
+    if (!proposal) {
+      throw new NotFoundException(`Proposal with ID ${proposalId} not found`);
     }
 
-    // Create review
+    if (proposal.status !== ProposalStatus.COMPLETED) {
+      throw new BadRequestException('Can only review completed proposals');
+    }
+
+    const request = await this.requestModel.findById(proposal.requestId).exec();
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    const buyerProfileId = request.buyerId.toString();
+    const sellerProfileId = proposal.sellerId.toString();
+
+    const targetProfile = await this.profileModel.findById(targetProfileId).exec();
+    if (!targetProfile) {
+      throw new NotFoundException('Target profile not found');
+    }
+
+    if (targetProfileId !== buyerProfileId && targetProfileId !== sellerProfileId) {
+      throw new BadRequestException('Target profile must be buyer or seller of this proposal');
+    }
+
+    const authorProfileId = targetProfileId === sellerProfileId ? buyerProfileId : sellerProfileId;
+    const authorProfile = await this.profileModel
+      .findOne({ _id: authorProfileId, accountId: new Types.ObjectId(authorAccountId) })
+      .exec();
+    if (!authorProfile) {
+      throw new ForbiddenException('You can only review as the buyer or seller of this deal');
+    }
+
+    const existingReview = await this.reviewModel
+      .findOne({
+        authorAccountId: new Types.ObjectId(authorAccountId),
+        proposalId: new Types.ObjectId(proposalId),
+      })
+      .exec();
+    if (existingReview) {
+      throw new BadRequestException('Review already exists for this proposal');
+    }
+
     const review = new this.reviewModel({
-      userId: new Types.ObjectId(userId),
-      targetUserId: new Types.ObjectId(targetUserId),
-      proposalId: proposalId ? new Types.ObjectId(proposalId) : null,
+      authorAccountId: new Types.ObjectId(authorAccountId),
+      targetProfileId: new Types.ObjectId(targetProfileId),
+      proposalId: new Types.ObjectId(proposalId),
       rating,
       comment: comment || null,
     });
 
     await review.save();
 
-    // Update target user's rating
-    await this.updateUserRating(targetUserId);
+    await this.updateProfileRating(targetProfileId);
 
-    // Award XP
-    await this.xpService.awardXp(userId, 5);
+    await this.xpService.awardXp(authorProfileId, 5);
 
-    // Award bonus XP to seller if 5★
     if (rating === 5) {
-      await this.xpService.awardXp(targetUserId, 15);
+      await this.xpService.awardXp(targetProfileId, 15);
     }
 
-    // Check achievements
-    await this.achievementsService.checkAndUnlockAchievements(userId);
+    await this.achievementsService.checkAndUnlockAchievements(authorProfileId);
 
-    // Notify target user
-    const targetUser = await this.userModel.findById(targetUserId).exec();
-    if (targetUser) {
-      await this.notificationsService.create({
-        userId: targetUserId,
-        type: NotificationType.REVIEW_RECEIVED,
-        title: 'Новий відгук',
-        message: `Ви отримали новий відгук з рейтингом ${rating}★`,
-        link: `/users/${targetUserId}/reviews`,
-      });
-    }
+    await this.notificationsService.create({
+      accountId: targetProfile.accountId.toString(),
+      type: NotificationType.REVIEW_RECEIVED,
+      title: 'Новий відгук',
+      message: `Ви отримали новий відгук з рейтингом ${rating}★`,
+      link: `/profiles/${targetProfileId}/reviews`,
+    });
 
     return review;
   }
 
-  async findAll(targetUserId?: string, page?: number, pageSize?: number) {
+  async findAll(targetProfileId?: string, page?: number, pageSize?: number) {
     const normalizedPage = PaginationUtil.normalizePage(page);
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: Record<string, any> = {};
-    if (targetUserId) {
-      query.targetUserId = new Types.ObjectId(targetUserId);
+    const query: Record<string, unknown> = {};
+    if (targetProfileId) {
+      query.targetProfileId = new Types.ObjectId(targetProfileId);
     }
 
     const results = await this.reviewModel
       .find(query)
-      .populate('userId', 'name avatar')
-      .populate('targetUserId', 'name avatar')
+      .populate({ path: 'authorAccountId', select: 'name avatar' })
+      .populate({
+        path: 'targetProfileId',
+        select: 'rating type',
+        populate: { path: 'accountId', select: 'name avatar' },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(normalizedPageSize)
@@ -122,15 +143,19 @@ export class ReviewsService {
       normalizedPage,
       normalizedPageSize,
       '/api/reviews',
-      { targetUserId },
+      { targetProfileId },
     );
   }
 
   async findOne(id: string) {
     const review = await this.reviewModel
       .findById(id)
-      .populate('userId', 'name avatar')
-      .populate('targetUserId', 'name avatar')
+      .populate({ path: 'authorAccountId', select: 'name avatar' })
+      .populate({
+        path: 'targetProfileId',
+        select: 'rating type',
+        populate: { path: 'accountId', select: 'name avatar' },
+      })
       .exec();
 
     if (!review) {
@@ -140,29 +165,20 @@ export class ReviewsService {
     return review;
   }
 
-  private async updateUserRating(userId: string) {
+  private async updateProfileRating(profileId: string) {
     const reviews = await this.reviewModel
-      .find({ targetUserId: new Types.ObjectId(userId) })
+      .find({ targetProfileId: new Types.ObjectId(profileId) })
       .exec();
 
     if (reviews.length === 0) {
       return;
     }
 
-    let totalRating = 0;
-    for (const review of reviews) {
-      totalRating += review.rating;
-    }
+    const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
     const averageRating = Math.round((totalRating / reviews.length) * 100) / 100;
 
-    await this.userModel
-      .updateOne(
-        { _id: userId },
-        {
-          rating: averageRating,
-          reviewsCount: reviews.length,
-        },
-      )
+    await this.profileModel
+      .updateOne({ _id: profileId }, { rating: averageRating, reviewsCount: reviews.length })
       .exec();
   }
 }

@@ -14,11 +14,11 @@ export class DiscussionsService {
   async createForRequest(
     requestId: string,
     createDiscussionDto: CreateDiscussionDto,
-    userId: string,
+    accountId: string,
   ) {
     const discussion = new this.discussionModel({
       requestId: new Types.ObjectId(requestId),
-      userId: new Types.ObjectId(userId),
+      accountId: new Types.ObjectId(accountId),
       content: createDiscussionDto.content,
       replyToId: createDiscussionDto.replyToId
         ? new Types.ObjectId(createDiscussionDto.replyToId)
@@ -26,18 +26,18 @@ export class DiscussionsService {
     });
 
     await discussion.save();
-    await discussion.populate('userId', 'name avatar');
+    await discussion.populate('accountId', 'name avatar');
     return await discussion.populate('replyToId');
   }
 
   async createForProposal(
     proposalId: string,
     createDiscussionDto: CreateDiscussionDto,
-    userId: string,
+    accountId: string,
   ) {
     const discussion = new this.discussionModel({
       proposalId: new Types.ObjectId(proposalId),
-      userId: new Types.ObjectId(userId),
+      accountId: new Types.ObjectId(accountId),
       content: createDiscussionDto.content,
       replyToId: createDiscussionDto.replyToId
         ? new Types.ObjectId(createDiscussionDto.replyToId)
@@ -45,14 +45,14 @@ export class DiscussionsService {
     });
 
     await discussion.save();
-    await discussion.populate('userId', 'name avatar');
+    await discussion.populate('accountId', 'name avatar');
     return await discussion.populate('replyToId');
   }
 
   async findAllForRequest(requestId: string) {
     return this.discussionModel
       .find({ requestId: new Types.ObjectId(requestId) })
-      .populate('userId', 'name avatar')
+      .populate('accountId', 'name avatar')
       .populate('replyToId')
       .sort({ createdAt: 1 })
       .exec();
@@ -61,7 +61,7 @@ export class DiscussionsService {
   async findAllForProposal(proposalId: string) {
     return this.discussionModel
       .find({ proposalId: new Types.ObjectId(proposalId) })
-      .populate('userId', 'name avatar')
+      .populate('accountId', 'name avatar')
       .populate('replyToId')
       .sort({ createdAt: 1 })
       .exec();

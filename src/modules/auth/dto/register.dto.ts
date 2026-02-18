@@ -1,5 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsNotEmpty, MinLength, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsEmail,
+  IsNotEmpty,
+  MinLength,
+  MaxLength,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
+import { ProfileType } from '../../../database/schemas/profile.schema';
 
 export class RegisterDto {
   @ApiProperty({ example: 'John Doe', description: 'User name' })
@@ -19,4 +28,13 @@ export class RegisterDto {
   @IsNotEmpty()
   @MinLength(6)
   password: string;
+
+  @ApiPropertyOptional({
+    enum: ProfileType,
+    description: 'Profile type to create (defaults to buyer)',
+    default: ProfileType.BUYER,
+  })
+  @IsOptional()
+  @IsEnum(ProfileType)
+  type?: ProfileType;
 }

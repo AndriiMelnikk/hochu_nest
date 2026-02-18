@@ -7,11 +7,11 @@ export type ReviewDocument = Review & Document;
 export class Review {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  authorAccountId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  targetUserId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
+  targetProfileId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Request', default: null })
   requestId: Types.ObjectId;
@@ -32,7 +32,7 @@ export class Review {
 export const ReviewSchema = SchemaFactory.createForClass(Review);
 
 // Indexes
-ReviewSchema.index({ userId: 1 });
-ReviewSchema.index({ targetUserId: 1 });
+ReviewSchema.index({ authorAccountId: 1 });
+ReviewSchema.index({ targetProfileId: 1 });
 ReviewSchema.index({ requestId: 1 });
 ReviewSchema.index({ proposalId: 1 });

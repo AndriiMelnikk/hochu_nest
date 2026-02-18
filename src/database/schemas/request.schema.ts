@@ -47,7 +47,7 @@ export class Request {
   })
   itemCondition?: ItemCondition;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
   buyerId: Types.ObjectId;
 
   @Prop({ type: [String], default: [] })

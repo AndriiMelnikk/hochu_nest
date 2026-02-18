@@ -3,9 +3,12 @@ import { IsString, IsNumber, Min, Max, IsOptional, MaxLength } from 'class-valid
 import { Type } from 'class-transformer';
 
 export class CreateReviewDto {
-  @ApiProperty({ example: '507f1f77bcf86cd799439011', description: 'Target user ID' })
+  @ApiProperty({
+    example: '507f1f77bcf86cd799439011',
+    description: 'Target profile ID (being reviewed)',
+  })
   @IsString()
-  targetUserId: string;
+  targetProfileId: string;
 
   @ApiProperty({ example: '507f1f77bcf86cd799439012', description: 'Request ID', required: false })
   @IsString()

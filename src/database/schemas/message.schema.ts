@@ -7,10 +7,10 @@ export type MessageDocument = Message & Document;
 export class Message {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   senderId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   receiverId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Request', default: null })

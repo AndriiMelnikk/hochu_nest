@@ -7,8 +7,8 @@ export type UserAchievementDocument = UserAchievement & Document;
 export class UserAchievement {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
+  profileId: Types.ObjectId;
 
   @Prop({ type: String, required: true })
   achievementId: string;
@@ -20,6 +20,6 @@ export class UserAchievement {
 export const UserAchievementSchema = SchemaFactory.createForClass(UserAchievement);
 
 // Indexes
-UserAchievementSchema.index({ userId: 1 });
+UserAchievementSchema.index({ profileId: 1 });
 UserAchievementSchema.index({ achievementId: 1 });
-UserAchievementSchema.index({ userId: 1, achievementId: 1 }, { unique: true });
+UserAchievementSchema.index({ profileId: 1, achievementId: 1 }, { unique: true });

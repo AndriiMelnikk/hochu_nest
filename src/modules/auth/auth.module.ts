@@ -6,7 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Account, AccountSchema } from '../../database/schemas/account.schema';
+import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { RefreshToken, RefreshTokenSchema } from '../../database/schemas/refresh-token.schema';
 import jwtConfig from '../../config/jwt.config';
 
@@ -21,24 +22,32 @@ import jwtConfig from '../../config/jwt.config';
         if (!secret) {
           throw new Error('JWT secret is not configured');
         }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           secret,
           signOptions: {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             expiresIn: (expiresIn || '1h') as any,
           },
-        } as any;
+        };
       },
       inject: [ConfigService],
     }),
     MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
+      { name: Account.name, schema: AccountSchema },
+      { name: Profile.name, schema: ProfileSchema },
       { name: RefreshToken.name, schema: RefreshTokenSchema },
     ]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService, JwtStrategy, PassportModule],
+  exports: [
+    AuthService,
+    JwtStrategy,
+    PassportModule,
+    MongooseModule.forFeature([
+      { name: Account.name, schema: AccountSchema },
+      { name: Profile.name, schema: ProfileSchema },
+    ]),
+  ],
 })
 export class AuthModule {}

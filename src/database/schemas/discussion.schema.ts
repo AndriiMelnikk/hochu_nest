@@ -13,8 +13,8 @@ export class Discussion {
   @Prop({ type: Types.ObjectId, ref: 'Proposal', default: null })
   proposalId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  accountId: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Discussion', default: null })
   replyToId: Types.ObjectId;
@@ -31,5 +31,5 @@ export const DiscussionSchema = SchemaFactory.createForClass(Discussion);
 // Indexes
 DiscussionSchema.index({ requestId: 1 });
 DiscussionSchema.index({ proposalId: 1 });
-DiscussionSchema.index({ userId: 1 });
+DiscussionSchema.index({ accountId: 1 });
 DiscussionSchema.index({ replyToId: 1 });

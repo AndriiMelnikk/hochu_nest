@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument, UserRole } from '../../database/schemas/user.schema';
+import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 
 export interface LevelInfo {
   level: number;
@@ -12,32 +12,26 @@ export interface LevelInfo {
 
 @Injectable()
 export class XpService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(Profile.name) private profileModel: Model<ProfileDocument>) {}
 
-  async awardXp(userId: string, amount: number): Promise<UserDocument> {
-    const user = await this.userModel.findById(userId).exec();
-    if (!user) {
-      throw new Error(`User with ID ${userId} not found`);
+  async awardXp(profileId: string, amount: number): Promise<ProfileDocument> {
+    const profile = await this.profileModel.findById(profileId).exec();
+    if (!profile) {
+      throw new Error(`Profile with ID ${profileId} not found`);
     }
 
-    const oldLevel = this.calculateLevel(user.xp, user.role);
-    user.xp += amount;
-    const newLevel = this.calculateLevel(user.xp, user.role);
+    profile.xp += amount;
 
-    await user.save();
+    await profile.save();
 
-    // Return level info if level increased
-    if (newLevel.level > oldLevel.level) {
-      return user;
-    }
-
-    return user;
+    return profile;
   }
 
-  calculateLevel(xp: number, role: UserRole): LevelInfo {
-    if (role === UserRole.BUYER) {
+  calculateLevel(xp: number, profileType: ProfileType): LevelInfo {
+    if (profileType === ProfileType.BUYER) {
       return this.calculateBuyerLevel(xp);
-    } else if (role === UserRole.SELLER) {
+    }
+    if (profileType === ProfileType.SELLER) {
       return this.calculateSellerLevel(xp);
     }
     return { level: 1, name: 'Beginner', xpRequired: 0, xpNext: 50 };
@@ -71,7 +65,7 @@ export class XpService {
     }
   }
 
-  getLevelInfo(xp: number, role: UserRole): LevelInfo {
-    return this.calculateLevel(xp, role);
+  getLevelInfo(xp: number, profileType: ProfileType): LevelInfo {
+    return this.calculateLevel(xp, profileType);
   }
 }

@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsEnum, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UserRole } from '../../../database/schemas/user.schema';
+import { ProfileType } from '../../../database/schemas/profile.schema';
 
 export class GetUsersDto {
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, enum: ProfileType })
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsEnum(ProfileType)
+  role?: ProfileType;
 
   @ApiProperty({ required: false })
   @IsOptional()

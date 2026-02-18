@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
-import { User, UserRole } from '../../database/schemas/user.schema';
+import { Account } from '../../database/schemas/account.schema';
+import { Profile } from '../../database/schemas/profile.schema';
 import { RefreshToken } from '../../database/schemas/refresh-token.schema';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -11,109 +12,98 @@ import { Types } from 'mongoose';
 describe('AuthService', () => {
   let service: AuthService;
 
-  const mockUserInstance = {
+  const mockAccountInstance = {
     _id: new Types.ObjectId(),
     name: 'name',
     email: 'test@test.com',
     password: 'hashedPassword',
-    memberSince: new Date(),
-    role: UserRole.BUYER as UserRole,
-    rating: 0,
-    reviewsCount: 0,
-    isVerified: false,
-    toObject: () => ({ name: 'name', email: 'test@test.com', role: UserRole.BUYER }),
-    save: jest
-      .fn()
-      .mockResolvedValue({ name: 'name', email: 'test@test.com', role: UserRole.BUYER }),
+    toObject: () => ({ name: 'name', email: 'test@test.com' }),
+    save: jest.fn().mockResolvedValue({}),
   };
 
-  const mockUserModel = jest.fn().mockImplementation(() => mockUserInstance);
-
-  (mockUserModel as any).findOne = jest.fn().mockReturnValue({
+  const mockAccountFindOne = jest.fn().mockReturnValue({
     exec: jest.fn().mockResolvedValue(null),
   });
-  (mockUserModel as any).create = jest.fn().mockResolvedValue(mockUserInstance);
+  const mockAccountCreate = jest.fn().mockResolvedValue(mockAccountInstance);
+  const mockAccountModel = Object.assign(jest.fn(), {
+    findOne: mockAccountFindOne,
+    create: mockAccountCreate,
+  });
+
+  const buyerProfileId = new Types.ObjectId();
+  const mockProfileModel = {
+    insertMany: jest
+      .fn()
+      .mockResolvedValue([{ _id: buyerProfileId }, { _id: new Types.ObjectId() }]),
+    findOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({ _id: buyerProfileId }),
+    }),
+    find: jest.fn().mockReturnValue({
+      lean: jest.fn().mockReturnValue({
+        exec: jest.fn().mockResolvedValue([
+          { _id: buyerProfileId, type: 'buyer', rating: 0, xp: 0, completedDeals: 0 },
+          { _id: new Types.ObjectId(), type: 'seller', rating: 0, xp: 0, completedDeals: 0 },
+        ]),
+      }),
+    }),
+  };
 
   const mockRefreshTokenInstance = {
     save: jest.fn().mockResolvedValue({}),
   };
-
   const mockRefreshTokenModel = jest.fn().mockImplementation(() => mockRefreshTokenInstance);
-
-  (mockRefreshTokenModel as any).deleteOne = jest.fn().mockResolvedValue({});
-  (mockRefreshTokenModel as any).findOne = jest.fn().mockReturnValue({
+  (mockRefreshTokenModel as unknown as { deleteOne: jest.Mock }).deleteOne = jest
+    .fn()
+    .mockResolvedValue({});
+  (mockRefreshTokenModel as unknown as { findOne: jest.Mock }).findOne = jest.fn().mockReturnValue({
     exec: jest.fn().mockResolvedValue(null),
   });
 
-  const mockJwtService = {
-    sign: jest.fn(),
-  };
+  const mockJwtService = { sign: jest.fn().mockReturnValue('token') };
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
       if (key === 'jwt.expiresIn') return '1h';
       if (key === 'jwt.refreshExpiresIn') return '7d';
-      if (key === 'jwt.refreshSecret') {
-        return 'your-test-refresh-secret'; // Може бути будь-який рядок
-      }
+      if (key === 'jwt.refreshSecret') return 'your-test-refresh-secret';
       return null;
     }),
   };
 
-  const mockI18nServise = {
-    t: jest.fn().mockImplementation((key: string) => key),
-  };
+  const mockI18nService = { t: jest.fn().mockImplementation((key: string) => key) };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        {
-          provide: getModelToken(User.name),
-          useValue: mockUserModel,
-        },
-        {
-          provide: getModelToken(RefreshToken.name),
-          useValue: mockRefreshTokenModel,
-        },
-        {
-          provide: JwtService,
-          useValue: mockJwtService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
-        {
-          provide: I18nService,
-          useValue: mockI18nServise,
-        },
+        { provide: getModelToken(Account.name), useValue: mockAccountModel },
+        { provide: getModelToken(Profile.name), useValue: mockProfileModel },
+        { provide: getModelToken(RefreshToken.name), useValue: mockRefreshTokenModel },
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: mockConfigService },
+        { provide: I18nService, useValue: mockI18nService },
       ],
     }).compile();
     service = module.get<AuthService>(AuthService);
   });
 
-  it('користувача з таким email НЕ існує', async () => {
-    (mockUserModel as any).findOne.mockReturnValue({
+  it('реєстрація створює account та два профілі', async () => {
+    mockAccountFindOne.mockReturnValue({
       exec: jest.fn().mockResolvedValue(null),
     });
 
-    mockUserInstance.save.mockResolvedValue({ ...mockUserInstance, _id: new Types.ObjectId() });
-
-    mockRefreshTokenInstance.save.mockResolvedValue({
-      userId: mockUserInstance._id,
-      token: 'mocked_refresh_token',
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    });
-
     const result = await service.register({
-      name: mockUserInstance.name,
-      email: mockUserInstance.email,
-      password: mockUserInstance.password,
+      name: mockAccountInstance.name,
+      email: mockAccountInstance.email,
+      password: 'password123',
     });
 
     expect(result).toBeDefined();
-    expect(mockUserModel).toHaveBeenCalled();
-    expect(mockUserInstance.save).toHaveBeenCalled();
+    expect(result.account).toBeDefined();
+    expect(result.profiles).toHaveLength(2);
+    expect(result.currentProfileId).toBe(buyerProfileId.toString());
+    expect(mockAccountFindOne).toHaveBeenCalled();
+    expect(mockAccountCreate).toHaveBeenCalled();
+    expect(mockProfileModel.insertMany).toHaveBeenCalled();
   });
 });

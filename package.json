@@ -21,6 +21,7 @@
     "test:unit": "jest --testPathIgnorePatterns=e2e",
     "test:staged": "jest --onlyChanged",
     "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
+    "migrate:account-profile": "ts-node -r tsconfig-paths/register src/scripts/migrate-user-to-account-profile.ts",
     "prepare": "husky || true",
     "commit": "git-cz",
     "commit:retry": "git-cz --retry"

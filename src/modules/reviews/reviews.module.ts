@@ -4,7 +4,8 @@ import { ReviewsController } from './reviews.controller';
 import { ReviewsService } from './reviews.service';
 import { Review, ReviewSchema } from '../../database/schemas/review.schema';
 import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Request, RequestSchema } from '../../database/schemas/request.schema';
+import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -14,7 +15,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
     MongooseModule.forFeature([
       { name: Review.name, schema: ReviewSchema },
       { name: Proposal.name, schema: ProposalSchema },
-      { name: User.name, schema: UserSchema },
+      { name: Request.name, schema: RequestSchema },
+      { name: Profile.name, schema: ProfileSchema },
     ]),
     XpModule,
     AchievementsModule,

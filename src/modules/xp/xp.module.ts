@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { XpService } from './xp.service';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  imports: [MongooseModule.forFeature([{ name: Profile.name, schema: ProfileSchema }])],
   providers: [XpService],
   exports: [XpService],
 })

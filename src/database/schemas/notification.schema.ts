@@ -18,8 +18,8 @@ export enum NotificationType {
 export class Notification {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  accountId: Types.ObjectId;
 
   @Prop({
     type: String,
@@ -46,6 +46,6 @@ export class Notification {
 export const NotificationSchema = SchemaFactory.createForClass(Notification);
 
 // Indexes
-NotificationSchema.index({ userId: 1 });
+NotificationSchema.index({ accountId: 1 });
 NotificationSchema.index({ read: 1 });
 NotificationSchema.index({ createdAt: -1 });

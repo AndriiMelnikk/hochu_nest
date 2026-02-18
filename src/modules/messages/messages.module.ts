@@ -6,14 +6,14 @@ import { MessagesController } from './messages.controller';
 import { MessagesService } from './messages.service';
 import { MessagesGateway } from './gateways/messages.gateway';
 import { Message, MessageSchema } from '../../database/schemas/message.schema';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Account, AccountSchema } from '../../database/schemas/account.schema';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Message.name, schema: MessageSchema },
-      { name: User.name, schema: UserSchema },
+      { name: Account.name, schema: AccountSchema },
     ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

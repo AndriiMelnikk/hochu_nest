@@ -6,7 +6,7 @@ import {
   UserAchievement,
   UserAchievementDocument,
 } from '../../database/schemas/user-achievement.schema';
-import { User, UserDocument } from '../../database/schemas/user.schema';
+import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
 
 @Injectable()
 export class AchievementsService {
@@ -15,7 +15,7 @@ export class AchievementsService {
     private achievementModel: Model<AchievementDocument>,
     @InjectModel(UserAchievement.name)
     private userAchievementModel: Model<UserAchievementDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
   ) {}
 
   async findAll() {
@@ -26,9 +26,9 @@ export class AchievementsService {
     return this.achievementModel.findOne({ id }).exec();
   }
 
-  async getUserAchievements(userId: string) {
+  async getUserAchievements(profileId: string) {
     const userAchievements = await this.userAchievementModel
-      .find({ userId: new Types.ObjectId(userId) })
+      .find({ profileId: new Types.ObjectId(profileId) })
       .lean()
       .exec();
 
@@ -47,65 +47,66 @@ export class AchievementsService {
     });
   }
 
-  async checkAndUnlockAchievements(userId: string) {
-    const user = await this.userModel.findById(userId).lean().exec();
-    if (!user) return;
+  async checkAndUnlockAchievements(profileId: string) {
+    const profile = await this.profileModel.findById(profileId).lean().exec();
+    if (!profile) return;
 
     const achievements = await this.achievementModel
       .find({
-        role: { $in: [user.role, 'both'] },
+        role: { $in: [(profile as { type: string }).type, 'both'] },
       })
       .lean()
       .exec();
 
     for (const achievement of achievements) {
-      // Check if already unlocked
       const existing = await this.userAchievementModel
         .findOne({
-          userId: new Types.ObjectId(userId),
+          profileId: new Types.ObjectId(profileId),
           achievementId: achievement.id,
         })
         .exec();
 
       if (existing) continue;
 
-      // Check condition
-      if (this.checkCondition(achievement, user)) {
-        await this.unlockAchievement(userId, achievement.id as string);
+      if (this.checkCondition(achievement, profile as Profile & { _id: Types.ObjectId })) {
+        await this.unlockAchievement(profileId, achievement.id as string);
       }
     }
   }
 
-  private async unlockAchievement(userId: string, achievementId: string) {
+  private async unlockAchievement(profileId: string, achievementId: string) {
     const userAchievement = new this.userAchievementModel({
-      userId: new Types.ObjectId(userId),
+      profileId: new Types.ObjectId(profileId),
       achievementId,
       unlockedAt: new Date(),
     });
     await userAchievement.save();
   }
 
-  private checkCondition(achievement: Achievement, user: User): boolean {
+  private checkCondition(
+    achievement: Achievement,
+    profile: Profile & { _id: Types.ObjectId },
+  ): boolean {
     const condition = achievement.condition;
 
     switch (achievement.id) {
       case 'first_request':
-        return condition.type === 'first_request' && user.xp >= 10;
+        return condition.type === 'first_request' && profile.xp >= 10;
       case 'first_sale':
-        return condition.type === 'first_sale' && user.completedDeals >= 1;
+        return condition.type === 'first_sale' && profile.completedDeals >= 1;
       case 'deal_maker':
-        return condition.type === 'deal_maker' && user.completedDeals >= condition.count;
+        return condition.type === 'deal_maker' && profile.completedDeals >= condition.count;
       case 'reviewer':
-        return condition.type === 'reviewer' && user.reviewsCount >= condition.count;
+        return condition.type === 'reviewer' && profile.reviewsCount >= condition.count;
       case 'loyal_customer':
-        return condition.type === 'loyal_customer' && user.completedDeals >= condition.count;
+        return condition.type === 'loyal_customer' && profile.completedDeals >= condition.count;
       case 'trusted_seller':
-        return condition.type === 'trusted_seller' && user.completedDeals >= condition.count;
+        return condition.type === 'trusted_seller' && profile.completedDeals >= condition.count;
       case 'perfect_rating':
         return (
           condition.type === 'perfect_rating' &&
-          user.rating >= 4.9 &&
-          user.reviewsCount >= condition.count
+          profile.rating >= 4.9 &&
+          profile.reviewsCount >= condition.count
         );
       default:
         return false;

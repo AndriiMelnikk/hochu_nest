@@ -36,9 +36,9 @@ export class RequestsController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @Body() createRequestDto: CreateRequestDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; profileId: string; profileType: string },
   ): Promise<Request> {
-    return this.requestsService.create(createRequestDto, user.id);
+    return this.requestsService.create(createRequestDto, user.profileId);
   }
 
   @Get()
@@ -67,9 +67,9 @@ export class RequestsController {
   async update(
     @Param('id', ParseObjectIdPipe) id: string,
     @Body() updateRequestDto: UpdateRequestDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; profileId: string },
   ): Promise<Request> {
-    return this.requestsService.update(id, updateRequestDto, user.id);
+    return this.requestsService.update(id, updateRequestDto, user.profileId);
   }
 
   @Delete(':id')
@@ -81,8 +81,8 @@ export class RequestsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   async remove(
     @Param('id', ParseObjectIdPipe) id: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; profileId: string },
   ): Promise<{ success: boolean }> {
-    return this.requestsService.remove(id, user.id);
+    return this.requestsService.remove(id, user.profileId);
   }
 }

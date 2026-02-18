@@ -14,16 +14,16 @@ export class UsersController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'User profile' })
-  async getMe(@CurrentUser() user: { id: string }) {
-    return this.usersService.findMe(user.id);
+  @ApiOperation({ summary: 'Get current account and active profile' })
+  @ApiResponse({ status: 200, description: 'Account and profile' })
+  async getMe(@CurrentUser() user: { id: string; profileId: string }) {
+    return this.usersService.findMe(user.id, user.profileId);
   }
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: 200, description: 'User profile updated' })
+  @ApiOperation({ summary: 'Update current account (name, avatar, location)' })
+  @ApiResponse({ status: 200, description: 'Account updated' })
   async updateMe(@CurrentUser() user: { id: string }, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.updateMe(user.id, updateUserDto);
   }
@@ -38,42 +38,42 @@ export class UsersController {
   }
 
   @Get(':id/stats')
-  @ApiOperation({ summary: 'Get user statistics' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User statistics' })
+  @ApiOperation({ summary: 'Get profile statistics' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile statistics' })
   async getStats(@Param('id', ParseObjectIdPipe) id: string) {
-    return this.usersService.getUserStats(id);
+    return this.usersService.getProfileStats(id);
   }
 
   @Get(':id/achievements')
-  @ApiOperation({ summary: 'Get user achievements' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User achievements' })
+  @ApiOperation({ summary: 'Get profile achievements' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile achievements' })
   async getAchievements(@Param('id', ParseObjectIdPipe) id: string) {
-    return this.usersService.getUserAchievements(id);
+    return this.usersService.getProfileAchievements(id);
   }
 
   @Get(':id/requests')
-  @ApiOperation({ summary: 'Get user requests' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User requests' })
+  @ApiOperation({ summary: 'Get profile requests (buyer)' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile requests' })
   async getRequests(@Param('id', ParseObjectIdPipe) id: string, @Query('status') status?: string) {
-    return this.usersService.getUserRequests(id, status);
+    return this.usersService.getProfileRequests(id, status);
   }
 
   @Get(':id/proposals')
-  @ApiOperation({ summary: 'Get user proposals' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User proposals' })
+  @ApiOperation({ summary: 'Get profile proposals (seller)' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile proposals' })
   async getProposals(@Param('id', ParseObjectIdPipe) id: string, @Query('status') status?: string) {
-    return this.usersService.getUserProposals(id, status);
+    return this.usersService.getProfileProposals(id, status);
   }
 
   @Get(':id/reviews')
-  @ApiOperation({ summary: 'Get reviews about user' })
-  @ApiParam({ name: 'id', description: 'User ID' })
-  @ApiResponse({ status: 200, description: 'User reviews' })
+  @ApiOperation({ summary: 'Get reviews about profile' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile reviews' })
   async getReviews(@Param('id', ParseObjectIdPipe) id: string) {
-    return this.usersService.getUserReviews(id);
+    return this.usersService.getProfileReviews(id);
   }
 }

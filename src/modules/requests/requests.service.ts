@@ -7,13 +7,13 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
-import { User } from 'src/database/schemas/user.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import {
   Category,
   CategoryDocument,
   CategoryTranslations,
 } from '../../database/schemas/category.schema';
+import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { GetRequestsDto } from './dto/get-requests.dto';
@@ -22,26 +22,28 @@ import { SortUtil } from '../../common/utils/sort.util';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 
+type PopulatedBuyer = {
+  _id: Types.ObjectId;
+  accountId: { _id: Types.ObjectId; name: string; avatar?: string };
+  rating?: number;
+  location?: string;
+  memberSince?: Date;
+  completedDeals?: number;
+  xp?: number;
+};
+
 type LeanRequest = Omit<Request, 'buyerId' | 'category'> & {
-  buyerId?: {
-    _id: Types.ObjectId;
-    name: string;
-    avatar?: string;
-    rating?: number;
-    location?: string;
-    memberSince?: Date;
-    completedDeals?: number;
-    xp?: number;
-  };
+  buyerId?: PopulatedBuyer;
   category?: Category & { _id: Types.ObjectId };
 };
 
 export type FormattedRequest = Omit<LeanRequest, 'category'> & {
   category?: { id: string; name: string };
+  buyerId?: PopulatedBuyer & { name?: string; avatar?: string };
 };
 
 export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'category'> & {
-  buyerId: User;
+  buyerId: PopulatedBuyer;
   category: Category;
 };
 
@@ -50,12 +52,19 @@ export class RequestsService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private readonly i18n: I18nService,
   ) {}
 
-  async create(createRequestDto: CreateRequestDto, buyerId: string) {
+  async create(createRequestDto: CreateRequestDto, buyerProfileId: string) {
+    const profile = await this.profileModel.findById(buyerProfileId).exec();
+    if (!profile || profile.type !== ProfileType.BUYER) {
+      throw new ForbiddenException(
+        this.i18n.t('common.auth.unauthorized', { lang: I18nContext.current()?.lang }),
+      );
+    }
     if (createRequestDto.budgetMax < createRequestDto.budgetMin) {
       throw new BadRequestException(
         this.i18n.t('common.requests.budget_min_max_error', { lang: I18nContext.current()?.lang }),
@@ -64,15 +73,14 @@ export class RequestsService {
 
     const request = new this.requestModel({
       ...createRequestDto,
-      buyerId: new Types.ObjectId(buyerId),
+      buyerId: new Types.ObjectId(buyerProfileId),
       status: RequestStatus.ACTIVE,
     });
 
     await request.save();
 
-    // Award XP to buyer
-    await this.xpService.awardXp(buyerId, 10);
-    await this.achievementsService.checkAndUnlockAchievements(buyerId);
+    await this.xpService.awardXp(buyerProfileId, 10);
+    await this.achievementsService.checkAndUnlockAchievements(buyerProfileId);
 
     return request;
   }
@@ -154,7 +162,14 @@ export class RequestsService {
 
     const results = (await this.requestModel
       .find(query)
-      .populate([{ path: 'buyerId', select: 'name avatar rating' }, { path: 'category' }])
+      .populate([
+        {
+          path: 'buyerId',
+          select: 'rating location memberSince completedDeals xp',
+          populate: { path: 'accountId', select: 'name avatar' },
+        },
+        { path: 'category' },
+      ])
       .sort(sort)
       .skip(skip)
       .limit(pageSize)
@@ -181,7 +196,8 @@ export class RequestsService {
       .populate([
         {
           path: 'buyerId',
-          select: 'name avatar rating location memberSince completedDeals xp',
+          select: 'rating location memberSince completedDeals xp',
+          populate: { path: 'accountId', select: 'name avatar' },
         },
         { path: 'category' },
       ])
@@ -211,6 +227,13 @@ export class RequestsService {
       ...request,
       category: undefined,
     };
+    if (request.buyerId && 'accountId' in request.buyerId && request.buyerId.accountId) {
+      formatted.buyerId = {
+        ...request.buyerId,
+        name: (request.buyerId.accountId as { name?: string }).name,
+        avatar: (request.buyerId.accountId as { avatar?: string }).avatar,
+      };
+    }
 
     if (request.category && request.category.translations) {
       const category = request.category;
@@ -224,10 +247,17 @@ export class RequestsService {
     return formatted;
   }
 
-  async update(id: string, updateRequestDto: UpdateRequestDto, userId: string): Promise<Request> {
+  async update(
+    id: string,
+    updateRequestDto: UpdateRequestDto,
+    buyerProfileId: string,
+  ): Promise<Request> {
     const request = await this.findOne(id);
-
-    if (request.buyerId._id.toString() !== userId) {
+    const buyerIdStr =
+      typeof request.buyerId === 'object' && request.buyerId && '_id' in request.buyerId
+        ? (request.buyerId as { _id: Types.ObjectId })._id.toString()
+        : String(request.buyerId);
+    if (buyerIdStr !== buyerProfileId) {
       throw new ForbiddenException(
         this.i18n.t('common.requests.forbidden_update_request', {
           lang: I18nContext.current()?.lang,
@@ -259,10 +289,13 @@ export class RequestsService {
     return request as unknown as Request;
   }
 
-  async remove(id: string, userId: string): Promise<{ success: boolean }> {
+  async remove(id: string, buyerProfileId: string): Promise<{ success: boolean }> {
     const request = await this.findOne(id);
-
-    if (request.buyerId._id.toString() !== userId) {
+    const buyerIdStr =
+      typeof request.buyerId === 'object' && request.buyerId && '_id' in request.buyerId
+        ? (request.buyerId as { _id: Types.ObjectId })._id.toString()
+        : String(request.buyerId);
+    if (buyerIdStr !== buyerProfileId) {
       throw new ForbiddenException(
         this.i18n.t('common.requests.forbidden_delete_request', {
           lang: I18nContext.current()?.lang,

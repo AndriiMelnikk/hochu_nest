@@ -8,13 +8,13 @@
 
 - **Тривалість:** 15 хвилин
 - **Використання:** Відправляється в заголовку `Authorization: Bearer <access_token>`
-- **Містить:** user_id, email, role
+- **Містить:** `sub` (accountId), `profileId` (поточний профіль: buyer або seller)
 
 ### Refresh Token
 
 - **Тривалість:** 7 днів
-- **Зберігання:** В базі даних (таблиця `refresh_tokens`)
-- **Використання:** Для отримання нового access token
+- **Зберігання:** В базі даних (таблиця `refresh_tokens`, поля `accountId`, `profileId`)
+- **Використання:** Для отримання нової пари access + refresh токенів
 
 ## Механізм оновлення токенів
 
@@ -27,6 +27,7 @@
 ## Захищені routes
 
 Деякі endpoints вимагають авторизації:
+
 - Створення/редагування/видалення запитів
 - Створення пропозицій
 - Оновлення профілю
@@ -34,11 +35,13 @@
 - Залишення відгуків
 - Адмін функції
 
-## Ролі користувачів
+## Профілі та права
 
-- **buyer** - може створювати запити, приймати пропозиції
-- **seller** - може надсилати пропозиції
-- **admin** - має доступ до адмін панелі та модерації
+- **buyer** (поточний профіль типу buyer) - створювати запити, приймати/відхиляти/завершувати пропозиції
+- **seller** (поточний профіль типу seller) - надсилати пропозиції
+- **admin** (поле `isAdmin` на Account) - доступ до адмін панелі та модерації
+
+Перемикання профілю: `POST /api/auth/switch-profile` з тілом `{ "profileId": "..." }` повертає нову пару токенів з іншим поточним профілем.
 
 ## Діаграма flow авторизації
 
@@ -47,35 +50,35 @@ sequenceDiagram
     participant Client
     participant API
     participant DB
-    
+
     Client->>API: POST /api/auth/register
-    API->>DB: Створити користувача
-    DB-->>API: User created
-    API->>API: Генерувати JWT токени
-    API-->>Client: { access_token, refresh_token, user }
-    
+    API->>DB: Створити Account та два Profile (buyer, seller)
+    DB-->>API: Account + Profiles created
+    API->>API: Генерувати JWT (sub=accountId, profileId)
+    API-->>Client: { access_token, refresh_token, account, profiles, currentProfileId }
+
     Client->>API: POST /api/auth/login
-    API->>DB: Перевірити credentials
-    DB-->>API: User found
+    API->>DB: Перевірити credentials (Account)
+    DB-->>API: Account found
     API->>API: Генерувати JWT токени
-    API-->>Client: { access_token, refresh_token, user }
-    
+    API-->>Client: { access_token, refresh_token, account, profiles, currentProfileId }
+
     Client->>API: GET /api/requests (з access_token)
     API->>API: Валідувати токен
     API->>DB: Отримати запити
     DB-->>API: Requests
     API-->>Client: { results: [...] }
-    
+
     Note over Client,API: Access token прострочений
     Client->>API: GET /api/requests (з простроченим токеном)
     API-->>Client: 401 Unauthorized
-    
+
     Client->>API: POST /api/auth/refresh (з refresh_token)
     API->>DB: Перевірити refresh_token
     DB-->>API: Token valid
     API->>API: Генерувати нові токени
     API-->>Client: { access_token, refresh_token }
-    
+
     Client->>API: GET /api/requests (з новим access_token)
     API->>DB: Отримати запити
     DB-->>API: Requests

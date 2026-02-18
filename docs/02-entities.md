@@ -2,37 +2,41 @@
 
 ## Основні сутності
 
-### 1. User (Користувач)
+### 1. Account (Обліковий запис)
 
-Користувачі платформи можуть бути:
-
-- **Buyer** (покупець/замовник) - створює запити на послуги
-- **Seller** (продавець/виконавець) - надсилає пропозиції на запити
-- **Admin** (адміністратор) - модерує контент та управляє платформою
+Один обліковий запис на користувача (один вхід: email + password). Не містить ролі чи рейтингу.
 
 **Поля:**
 
 - `id` - унікальний ідентифікатор
-- `name` - ім'я користувача
-- `email` - email адреса (унікальна)
+- `name` - ім'я
+- `email` - email (унікальний)
 - `password` - хеш пароля
 - `avatar` - URL аватара
-- `role` - роль (buyer, seller, admin)
+- `isAdmin` - чи адміністратор
+- `isBlocked` - чи заблокований
+- `blockedUntil` - до якої дати заблокований
+- `createdAt`, `updatedAt`
+
+### 2. Profile (Профіль)
+
+У одного акаунта два профілі: **buyer** та **seller**. Кожен профіль має власний рейтинг, XP та досягнення.
+
+**Поля:**
+
+- `id` - унікальний ідентифікатор
+- `accountId` - ID акаунта (foreign key до Account)
+- `type` - тип профілю (buyer | seller)
 - `rating` - середній рейтинг (0-5)
 - `reviewsCount` - кількість відгуків
-- `isVerified` - чи верифікований користувач
-- `memberSince` - дата реєстрації
+- `isVerified` - чи верифікований
+- `memberSince` - дата створення профілю
 - `completedDeals` - кількість завершених угод
-- `location` - локація користувача
-- `xp` - досвід (experience points) для гейміфікації
-- `unlockedAchievements` - масив ID розблокованих досягнень
-- `topAchievements` - масив ID топ досягнень для відображення
-- `isBlocked` - чи заблокований користувач
-- `blockedUntil` - дата до якої заблокований (якщо тимчасово)
-- `createdAt` - дата створення
-- `updatedAt` - дата оновлення
+- `location` - локація
+- `xp` - досвід (XP) для гейміфікації
+- `createdAt`, `updatedAt`
 
-### 2. Request (Запит)
+### 3. Request (Запит)
 
 Запит на послугу від покупця.
 
@@ -46,7 +50,7 @@
 - `budgetMax` - максимальний бюджет (грн)
 - `location` - локація (місто або "Віддалено")
 - `urgency` - терміновість (Гнучко, Протягом тижня, 2-3 дні, Терміново)
-- `buyerId` - ID покупця (foreign key до User)
+- `buyerId` - ID профілю покупця (foreign key до Profile, type=buyer)
 - `images` - масив URL зображень
 - `views` - кількість переглядів
 - `proposalsCount` - кількість пропозицій
@@ -55,7 +59,7 @@
 - `createdAt` - дата створення
 - `updatedAt` - дата оновлення
 
-### 3. Proposal (Пропозиція)
+### 4. Proposal (Пропозиція)
 
 Пропозиція від продавця на запит покупця.
 
@@ -63,7 +67,7 @@
 
 - `id` - унікальний ідентифікатор
 - `requestId` - ID запиту (foreign key до Request)
-- `sellerId` - ID продавця (foreign key до User)
+- `sellerId` - ID профілю продавця (foreign key до Profile, type=seller)
 - `price` - запропонована ціна (грн)
 - `title` - заголовок пропозиції
 - `description` - детальний опис послуги
@@ -74,15 +78,15 @@
 - `createdAt` - дата створення
 - `updatedAt` - дата оновлення
 
-### 4. Review (Відгук)
+### 5. Review (Відгук)
 
 Відгук між користувачами після завершення угоди.
 
 **Поля:**
 
 - `id` - унікальний ідентифікатор
-- `userId` - ID користувача, який залишив відгук (foreign key до User)
-- `targetUserId` - ID користувача, про якого відгук (foreign key до User)
+- `authorAccountId` - ID акаунта автора відгуку (foreign key до Account)
+- `targetProfileId` - ID профілю, про який відгук (foreign key до Profile)
 - `requestId` - ID запиту (foreign key до Request, опціонально)
 - `proposalId` - ID пропозиції (foreign key до Proposal, опціонально)
 - `rating` - оцінка (1-5)
@@ -90,15 +94,15 @@
 - `createdAt` - дата створення
 - `updatedAt` - дата оновлення
 
-### 5. Message (Повідомлення)
+### 6. Message (Повідомлення)
 
 Повідомлення в чаті між користувачами.
 
 **Поля:**
 
 - `id` - унікальний ідентифікатор
-- `senderId` - ID відправника (foreign key до User)
-- `receiverId` - ID отримувача (foreign key до User)
+- `senderId` - ID акаунта відправника (foreign key до Account)
+- `receiverId` - ID акаунта отримувача (foreign key до Account)
 - `requestId` - ID запиту, пов'язаного з чатом (foreign key до Request, опціонально)
 - `proposalId` - ID пропозиції, пов'язаної з чатом (foreign key до Proposal, опціонально)
 - `content` - текст повідомлення

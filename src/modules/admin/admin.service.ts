@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
-import { User, UserDocument, UserRole } from '../../database/schemas/user.schema';
+import { Account, AccountDocument } from '../../database/schemas/account.schema';
+import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Report, ReportDocument, ReportStatus } from '../../database/schemas/report.schema';
@@ -9,53 +10,37 @@ import { Report, ReportDocument, ReportStatus } from '../../database/schemas/rep
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
+    @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
   ) {}
 
   async getAnalytics() {
-    const [totalUsers, activeRequests, totalProposals, usersByRole, requestsByCategory] =
+    const [totalAccounts, activeRequests, totalProposals, profilesByType, requestsByCategory] =
       await Promise.all([
-        this.userModel.countDocuments().exec(),
+        this.accountModel.countDocuments().exec(),
         this.requestModel.countDocuments({ status: RequestStatus.ACTIVE }).exec(),
         this.proposalModel.countDocuments().exec(),
-        this.userModel
-          .aggregate([
-            {
-              $group: {
-                _id: '$role',
-                count: { $sum: 1 },
-              },
-            },
-          ])
+        this.profileModel
+          .aggregate([{ $group: { _id: '$type', count: { $sum: 1 } } }])
           .exec() as Promise<{ _id: string; count: number }[]>,
         this.requestModel
-          .aggregate([
-            {
-              $group: {
-                _id: '$category',
-                count: { $sum: 1 },
-              },
-            },
-          ])
+          .aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }])
           .exec() as Promise<{ _id: string; count: number }[]>,
       ]);
 
-    const buyers = usersByRole.find((u) => u._id === (UserRole.BUYER as string))?.count || 0;
-    const sellers = usersByRole.find((u) => u._id === (UserRole.SELLER as string))?.count || 0;
+    const buyers = profilesByType.find((p) => p._id === 'buyer')?.count ?? 0;
+    const sellers = profilesByType.find((p) => p._id === 'seller')?.count ?? 0;
 
     return {
-      totalUsers,
+      totalUsers: totalAccounts,
       activeRequests,
       totalProposals,
-      revenue: 0, // Will be calculated from completed deals
+      revenue: 0,
       growth: '0%',
-      usersByRole: {
-        buyers,
-        sellers,
-      },
+      usersByRole: { buyers, sellers },
       requestsByCategory: requestsByCategory.reduce(
         (acc, item) => {
           acc[item._id] = item.count;
@@ -63,25 +48,9 @@ export class AdminService {
         },
         {} as Record<string, number>,
       ),
-      activityChart: [], // Will be implemented with date-based aggregation
+      activityChart: [],
     };
   }
-
-  // async getPendingRequests(page?: number, pageSize?: number) {
-  //   const skip = ((page || 1) - 1) * (pageSize || 20);
-  //   const results = await this.requestModel
-  //     .find({ status: RequestStatus.PENDING })
-  //     .populate('buyerId', 'name email')
-
-  //     .sort({ createdAt: -1 } as any)
-  //     .skip(skip)
-  //     .limit(pageSize || 20)
-  //     .exec();
-
-  //   const count = await this.requestModel.countDocuments({ status: RequestStatus.PENDING }).exec();
-
-  //   return { count, results };
-  // }
 
   async approveRequest(id: string) {
     await this.requestModel.updateOne({ _id: id }, { status: RequestStatus.ACTIVE }).exec();
@@ -92,12 +61,8 @@ export class AdminService {
     await this.requestModel
       .updateOne(
         { _id: id },
-        {
-          status: RequestStatus.REJECTED,
-          // We might want to store the rejection reason
-          rejectionReason: reason,
-        },
-        { strict: false }, // Allow saving extra fields if schema doesn't have it
+        { status: RequestStatus.REJECTED, rejectionReason: reason },
+        { strict: false },
       )
       .exec();
     return { success: true, message: 'Request rejected' };
@@ -107,10 +72,9 @@ export class AdminService {
     const skip = ((page || 1) - 1) * (pageSize || 20);
     const results = await this.proposalModel
       .find({ status: ProposalStatus.PENDING })
-      .populate('sellerId', 'name email')
+      .populate({ path: 'sellerId', populate: { path: 'accountId', select: 'name email' } })
       .populate('requestId', 'title')
-
-      .sort({ createdAt: -1 } as any)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize || 20)
       .exec();
@@ -123,8 +87,7 @@ export class AdminService {
   }
 
   async approveProposal(id: string) {
-    // Proposals are auto-approved, but we can add moderation logic here
-    await Promise.resolve(); // Simulate async operation
+    await Promise.resolve();
     return { success: true, message: `Proposal ${id} approved` };
   }
 
@@ -132,10 +95,7 @@ export class AdminService {
     await this.proposalModel
       .updateOne(
         { _id: id },
-        {
-          status: ProposalStatus.REJECTED,
-          rejectionReason: reason,
-        },
+        { status: ProposalStatus.REJECTED, rejectionReason: reason },
         { strict: false },
       )
       .exec();
@@ -146,43 +106,40 @@ export class AdminService {
     const skip = ((page || 1) - 1) * (pageSize || 20);
     const reports = await this.reportModel
       .find({ targetType: 'user', status: ReportStatus.PENDING })
-
-      .sort({ createdAt: -1 } as any)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize || 20)
       .exec();
 
-    const rawIds = (reports as unknown[]).map((r) => {
-      const report = r as { targetId?: { toString(): string } };
-      return report.targetId ? report.targetId.toString() : null;
-    });
-    const userIds = Array.from(new Set(rawIds.filter((id): id is string => !!id)));
-    const users = await this.userModel
-      .find({ _id: { $in: userIds } })
+    const accountIds = Array.from(
+      new Set(
+        (reports as unknown[])
+          .map((r) => (r as { targetId?: { toString(): string } }).targetId?.toString())
+          .filter(Boolean),
+      ),
+    ) as string[];
+    const accounts = await this.accountModel
+      .find({ _id: { $in: accountIds } })
       .select('-password')
       .exec();
 
-    return { count: users.length, results: users };
+    return { count: accounts.length, results: accounts };
   }
 
   async getReports(status?: ReportStatus, page?: number, pageSize?: number) {
     const skip = ((page || 1) - 1) * (pageSize || 20);
     const query: FilterQuery<ReportDocument> = {};
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
 
     const results = await this.reportModel
       .find(query)
       .populate('reporterId', 'name email')
-
-      .sort({ createdAt: -1 } as any)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize || 20)
       .exec();
 
     const count = await this.reportModel.countDocuments(query).exec();
-
     return { count, results };
   }
 
@@ -193,28 +150,12 @@ export class AdminService {
 
   async blockUser(id: string, reason: string, duration: string) {
     const blockedUntil = this.calculateBlockedUntil(duration);
-    await this.userModel
-      .updateOne(
-        { _id: id },
-        {
-          isBlocked: true,
-          blockedUntil,
-        },
-      )
-      .exec();
+    await this.accountModel.updateOne({ _id: id }, { isBlocked: true, blockedUntil }).exec();
     return { success: true, message: 'User blocked' };
   }
 
   async unblockUser(id: string) {
-    await this.userModel
-      .updateOne(
-        { _id: id },
-        {
-          isBlocked: false,
-          blockedUntil: null,
-        },
-      )
-      .exec();
+    await this.accountModel.updateOne({ _id: id }, { isBlocked: false, blockedUntil: null }).exec();
     return { success: true, message: 'User unblocked' };
   }
 

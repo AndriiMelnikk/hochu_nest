@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Message, MessageDocument } from '../../database/schemas/message.schema';
-import { User, UserDocument } from '../../database/schemas/user.schema';
+import { Account, AccountDocument } from '../../database/schemas/account.schema';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -12,17 +12,16 @@ import { NotificationType } from '../../database/schemas/notification.schema';
 export class MessagesService {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<MessageDocument>,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
     private notificationsService: NotificationsService,
   ) {}
 
   async create(createMessageDto: CreateMessageDto, senderId: string) {
     const { receiverId, content, requestId, proposalId } = createMessageDto;
 
-    // Check if receiver exists
-    const receiver = await this.userModel.findById(receiverId).exec();
+    const receiver = await this.accountModel.findById(receiverId).exec();
     if (!receiver) {
-      throw new NotFoundException(`User with ID ${receiverId} not found`);
+      throw new NotFoundException(`Account with ID ${receiverId} not found`);
     }
 
     const message = new this.messageModel({
@@ -38,7 +37,7 @@ export class MessagesService {
 
     // Create notification if receiver is offline (will be sent via WebSocket if online)
     await this.notificationsService.create({
-      userId: receiverId,
+      accountId: receiverId,
       type: NotificationType.NEW_MESSAGE,
       title: 'Нове повідомлення',
       message: `Ви отримали нове повідомлення`,

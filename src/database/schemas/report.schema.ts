@@ -30,7 +30,7 @@ export enum ReportStatus {
 export class Report {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
   reporterId: Types.ObjectId;
 
   @Prop({

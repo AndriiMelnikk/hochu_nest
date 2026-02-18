@@ -6,14 +6,14 @@ import {
   UserAchievement,
   UserAchievementSchema,
 } from '../../database/schemas/user-achievement.schema';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Achievement.name, schema: AchievementSchema },
       { name: UserAchievement.name, schema: UserAchievementSchema },
-      { name: User.name, schema: UserSchema },
+      { name: Profile.name, schema: ProfileSchema },
     ]),
   ],
   providers: [AchievementsService],

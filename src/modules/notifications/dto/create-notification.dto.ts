@@ -1,7 +1,7 @@
 import { NotificationType } from '../../../database/schemas/notification.schema';
 
 export class CreateNotificationDto {
-  userId: string;
+  accountId: string;
   type: NotificationType;
   title: string;
   message: string;

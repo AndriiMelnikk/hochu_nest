@@ -5,6 +5,7 @@
     "user_blocked": "User is blocked",
     "invalid_token": "Invalid or expired refresh token",
     "user_not_found": "User not found or blocked",
+    "profile_not_found": "Profile not found or does not belong to your account",
     "unauthorized": "You are not authorized"
   },
   "requests": {

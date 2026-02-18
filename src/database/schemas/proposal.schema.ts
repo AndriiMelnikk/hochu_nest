@@ -18,7 +18,7 @@ export class Proposal {
   @Prop({ type: Types.ObjectId, ref: 'Request', required: true })
   requestId: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
   sellerId: Types.ObjectId;
 
   @Prop({ type: Number, required: true, min: 0 })

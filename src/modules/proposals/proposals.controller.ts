@@ -24,9 +24,9 @@ export class ProposalsController {
   async create(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
     @Body() createProposalDto: CreateProposalDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; profileId: string },
   ) {
-    return this.proposalsService.create(requestId, createProposalDto, user.id);
+    return this.proposalsService.create(requestId, createProposalDto, user.profileId);
   }
 
   @Get('requests/:requestId')
@@ -47,9 +47,9 @@ export class ProposalsController {
   @ApiResponse({ status: 200, description: 'Eligibility status' })
   async canPropose(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string; profileId: string },
   ): Promise<{ canPropose: boolean; reason?: string }> {
-    return await this.proposalsService.canPropose(requestId, user.id);
+    return await this.proposalsService.canPropose(requestId, user.id, user.profileId);
   }
 
   @Get(':id')
@@ -68,8 +68,11 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Accept proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal accepted' })
-  async accept(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
-    return this.proposalsService.accept(id, user.id);
+  async accept(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return this.proposalsService.accept(id, user.profileId);
   }
 
   @Post(':id/reject')
@@ -79,8 +82,11 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Reject proposal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Proposal rejected' })
-  async reject(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
-    return this.proposalsService.reject(id, user.id);
+  async reject(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return this.proposalsService.reject(id, user.profileId);
   }
 
   @Post(':id/complete')
@@ -90,7 +96,10 @@ export class ProposalsController {
   @ApiOperation({ summary: 'Complete deal' })
   @ApiParam({ name: 'id', description: 'Proposal ID' })
   @ApiResponse({ status: 200, description: 'Deal completed' })
-  async complete(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: { id: string }) {
-    return this.proposalsService.complete(id, user.id);
+  async complete(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return this.proposalsService.complete(id, user.profileId);
   }
 }

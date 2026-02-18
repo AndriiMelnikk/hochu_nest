@@ -14,7 +14,7 @@ export class NotificationsService {
 
   async create(dto: CreateNotificationDto) {
     const notification = new this.notificationModel({
-      userId: new Types.ObjectId(dto.userId),
+      accountId: new Types.ObjectId(dto.accountId),
       type: dto.type,
       title: dto.title,
       message: dto.message,
@@ -30,7 +30,7 @@ export class NotificationsService {
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
 
-    const query: any = { userId: new Types.ObjectId(userId) };
+    const query: Record<string, unknown> = { accountId: new Types.ObjectId(userId) };
     if (unread !== undefined) {
       query.read = !unread;
     }
@@ -53,24 +53,24 @@ export class NotificationsService {
     );
   }
 
-  async markAsRead(id: string, userId: string) {
+  async markAsRead(id: string, accountId: string) {
     await this.notificationModel
-      .updateOne({ _id: id, userId: new Types.ObjectId(userId) }, { read: true })
+      .updateOne({ _id: id, accountId: new Types.ObjectId(accountId) }, { read: true })
       .exec();
     return { success: true };
   }
 
-  async markAllAsRead(userId: string) {
+  async markAllAsRead(accountId: string) {
     await this.notificationModel
-      .updateMany({ userId: new Types.ObjectId(userId), read: false }, { read: true })
+      .updateMany({ accountId: new Types.ObjectId(accountId), read: false }, { read: true })
       .exec();
     return { success: true };
   }
 
-  async getUnreadCount(userId: string) {
+  async getUnreadCount(accountId: string) {
     return this.notificationModel
       .countDocuments({
-        userId: new Types.ObjectId(userId),
+        accountId: new Types.ObjectId(accountId),
         read: false,
       })
       .exec();

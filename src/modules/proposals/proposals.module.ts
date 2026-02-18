@@ -4,7 +4,7 @@ import { ProposalsController } from './proposals.controller';
 import { ProposalsService } from './proposals.service';
 import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { Request, RequestSchema } from '../../database/schemas/request.schema';
-import { User, UserSchema } from '../../database/schemas/user.schema';
+import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -15,7 +15,7 @@ import { RequestsModule } from '../requests/requests.module';
     MongooseModule.forFeature([
       { name: Proposal.name, schema: ProposalSchema },
       { name: Request.name, schema: RequestSchema },
-      { name: User.name, schema: UserSchema },
+      { name: Profile.name, schema: ProfileSchema },
     ]),
     XpModule,
     AchievementsModule,

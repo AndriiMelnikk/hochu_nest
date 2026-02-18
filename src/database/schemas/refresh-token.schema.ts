@@ -7,8 +7,11 @@ export type RefreshTokenDocument = RefreshToken & Document;
 export class RefreshToken {
   _id: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
-  userId: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Account', required: true })
+  accountId: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'Profile', default: null })
+  profileId: Types.ObjectId | null;
 
   @Prop({ required: true })
   token: string;
@@ -22,6 +25,6 @@ export class RefreshToken {
 
 export const RefreshTokenSchema = SchemaFactory.createForClass(RefreshToken);
 
-RefreshTokenSchema.index({ userId: 1 });
+RefreshTokenSchema.index({ accountId: 1 });
 RefreshTokenSchema.index({ token: 1 }, { unique: true });
 RefreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
