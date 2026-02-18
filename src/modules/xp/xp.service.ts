@@ -15,16 +15,11 @@ export class XpService {
   constructor(@InjectModel(Profile.name) private profileModel: Model<ProfileDocument>) {}
 
   async awardXp(profileId: string, amount: number): Promise<ProfileDocument> {
-    const profile = await this.profileModel.findById(profileId).exec();
-    if (!profile) {
-      throw new Error(`Profile with ID ${profileId} not found`);
-    }
+    const updatedProfile = await this.profileModel
+      .findByIdAndUpdate(profileId, { $inc: { xp: amount } }, { new: true })
+      .exec();
 
-    profile.xp += amount;
-
-    await profile.save();
-
-    return profile;
+    return updatedProfile as unknown as ProfileDocument;
   }
 
   calculateLevel(xp: number, profileType: ProfileType): LevelInfo {
