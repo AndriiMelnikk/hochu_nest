@@ -24,7 +24,6 @@ import { AchievementsService } from '../achievements/achievements.service';
 
 type PopulatedBuyer = {
   _id: Types.ObjectId;
-  accountId: { _id: Types.ObjectId; name: string; avatar?: string };
   rating?: number;
   location?: string;
   memberSince?: Date;
@@ -41,7 +40,6 @@ type LeanRequest = Omit<Request, 'buyerId' | 'category'> & {
 
 export type FormattedRequest = Omit<LeanRequest, 'category'> & {
   category?: { id: string; name: string };
-  buyerId?: PopulatedBuyer & { name?: string; avatar?: string };
 };
 
 export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'category'> & {
@@ -167,8 +165,7 @@ export class RequestsService {
       .populate([
         {
           path: 'buyerId',
-          select: 'rating location memberSince completedDeals xp',
-          populate: { path: 'accountId', select: 'name avatar' },
+          select: 'rating location memberSince completedDeals xp name avatar',
         },
         { path: 'category' },
       ])
@@ -198,8 +195,7 @@ export class RequestsService {
       .populate([
         {
           path: 'buyerId',
-          select: 'rating location memberSince completedDeals xp',
-          populate: { path: 'accountId', select: 'name avatar' },
+          select: 'rating location memberSince completedDeals xp name avatar',
         },
         { path: 'category' },
       ])
@@ -230,7 +226,7 @@ export class RequestsService {
       category: undefined,
     };
 
-    if (request.buyerId && 'accountId' in request.buyerId && request.buyerId.accountId) {
+    if (request.buyerId && '_id' in request.buyerId) {
       formatted.buyerId = request.buyerId;
     }
 
