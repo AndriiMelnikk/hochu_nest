@@ -62,8 +62,10 @@ export class CreateRequestDto {
   @IsNotEmpty()
   location: string;
 
-  @IsEnum(['Гнучко', 'Протягом тижня', '2-3 дні', 'Терміново'])
-  urgency: string;
+  @IsNumber()
+  @Min(1)
+  @IsNotEmpty()
+  urgency: number;
 
   @IsArray()
   @IsString({ each: true })

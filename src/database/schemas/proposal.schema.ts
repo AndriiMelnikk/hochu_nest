@@ -30,11 +30,11 @@ export class Proposal {
   @Prop({ required: true })
   description: string;
 
-  @Prop({ required: true })
-  estimatedTime: string;
+  @Prop({ type: Number, required: true })
+  estimatedTime: number;
 
-  @Prop({ default: null })
-  warranty: string;
+  @Prop({ type: Number, default: null })
+  warranty: number;
 
   @Prop({
     type: String,

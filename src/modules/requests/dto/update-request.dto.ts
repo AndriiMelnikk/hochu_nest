@@ -48,10 +48,10 @@ export class UpdateRequestDto {
   @IsOptional()
   location?: string;
 
-  @ApiProperty({ required: false })
-  @IsString()
+  @ApiProperty({ required: false, example: 1, description: 'Urgency level' })
+  @IsNumber()
   @IsOptional()
-  urgency?: string;
+  urgency?: number;
 
   @ApiProperty({
     example: 'new',

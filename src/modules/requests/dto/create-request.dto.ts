@@ -51,13 +51,13 @@ export class CreateRequestDto {
   location: string;
 
   @ApiProperty({
-    example: 'Гнучко',
-    description: 'Urgency',
-    enum: ['Гнучко', 'Протягом тижня', '2-3 дні', 'Терміново'],
+    example: 1,
+    description: 'Urgency level (1-4)',
   })
-  @IsString()
+  @IsNumber()
+  @Min(1)
   @IsNotEmpty()
-  urgency: string;
+  urgency: number;
 
   @ApiProperty({
     example: 'new',

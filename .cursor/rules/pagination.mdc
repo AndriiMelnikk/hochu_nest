@@ -15,99 +15,125 @@ All list endpoints must support pagination:
 
 ## Pagination DTO
 
-```typescript
-export class PaginationDto {
-  @IsOptional()
-  @Type(() => Number)
-  @Min(1)
-  page?: number = 1;
+Extend DTO with pagination fields (use `ApiProperty` for Swagger when applicable):
 
-  @IsOptional()
-  @Type(() => Number)
-  @Min(1)
-  @Max(100)
-  pageSize?: number = 20;
-}
+```typescript
+@ApiProperty({ required: false, default: 1, minimum: 1 })
+@IsOptional()
+@Type(() => Number)
+@IsNumber()
+@Min(1)
+page?: number = 1;
+
+@ApiProperty({ required: false, default: 20, minimum: 1, maximum: 100 })
+@IsOptional()
+@Type(() => Number)
+@IsNumber()
+@Min(1)
+@Max(100)
+pageSize?: number = 20;
 ```
+
+For endpoints with only pagination (no filters): create a DTO that extends or includes these fields, e.g. `GetProposalsByRequestDto`.
 
 ## Response Format
 
+`PaginationResult<T>` from `src/common/utils/pagination.util`:
+
 ```typescript
 {
-  count: 150,
-  next: "https://api.hochu.com/api/requests?page=2",
-  previous: null,
-  results: [...]
+  count: number;
+  next: string | null;      // relative URL, e.g. "/api/requests?page=2&pageSize=20"
+  previous: string | null;  // relative URL or null
+  results: T[];
 }
 ```
+
+## PaginationUtil
+
+Use static methods from `PaginationUtil`:
+- `PaginationUtil.normalizePage(dto.page)` — returns 1 if invalid
+- `PaginationUtil.normalizePageSize(dto.pageSize)` — clamps to 1–100, default 20
+- `PaginationUtil.getSkip(page, pageSize)` — `(page - 1) * pageSize`
+- `PaginationUtil.createPaginationResult(results, count, page, pageSize, baseUrl, queryParams?)` — builds response with `next`/`previous` URLs
+
+`baseUrl` — full relative path (e.g. `/api/requests` or `/api/proposals/requests/:requestId`).
+`queryParams` — object to include in next/previous URLs (e.g. `dto` or `{ page, pageSize }`).
 
 ## Filtering
 
 - Filter through query parameters in DTO
 - Support multiple filters simultaneously
-- Use Mongoose query methods for filtering
+- Use Mongoose query methods (`FilterQuery<T>` when possible)
+- Use `$regex` with `$options: 'i'` for case-insensitive text search on `title` and `description`
 
 ## Sorting
 
-Sorting through `sort` query parameter:
-- `sort=createdAt` - Sort by creation date (ASC)
-- `sort=-createdAt` - Sort by creation date (DESC)
-- `sort=price` - Sort by price (ASC)
-- `sort=-price` - Sort by price (DESC)
-- `sort=rating` - Sort by rating (ASC)
-- `sort=-rating` - Sort by rating (DESC)
+Use `SortUtil.buildSortObject(dto.sort)` from `src/common/utils/sort.util`:
+- `sort=createdAt` — ASC
+- `sort=-createdAt` — DESC (prefix `-` for descending)
+- Fallback: `{ createdAt: -1 }` when no sort or invalid
 
 ## Search
 
-- Text search on `title` and `description` fields using MongoDB text indexes
-- Use `$text` operator for text search
-- Create text indexes: `Schema.index({ title: 'text', description: 'text' })`
-- For complex cases, consider Elasticsearch or Atlas Search
-
-## Implementation
+Current implementation uses `$regex` (not `$text`):
 
 ```typescript
-async findAll(dto: GetRequestsDto) {
+if (dto.search) {
+  query.$or = [
+    { title: { $regex: dto.search, $options: 'i' } },
+    { description: { $regex: dto.search, $options: 'i' } },
+  ];
+}
+```
+
+For full-text search, consider MongoDB text indexes or Atlas Search.
+
+## Implementation Pattern
+
+```typescript
+async findAll(dto: GetXxxDto): Promise<PaginationResult<FormattedXxx>> {
   const page = PaginationUtil.normalizePage(dto.page);
   const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
   const skip = PaginationUtil.getSkip(page, pageSize);
 
-  const query: any = {};
-  
-  // Apply filters
-  if (dto.category) {
-    query.category = dto.category;
-  }
-  
-  if (dto.search) {
-    query.$text = { $search: dto.search };
-  }
-  
-  // Build sort object
-  let sort: any = { createdAt: -1 };
-  if (dto.sort) {
-    const order = dto.sort.startsWith('-') ? -1 : 1;
-    const field = dto.sort.replace('-', '');
-    sort = { [field]: order };
-  }
-  
-  const [results, count] = await Promise.all([
-    this.requestModel
-      .find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(pageSize)
-      .exec(),
-    this.requestModel.countDocuments(query).exec(),
-  ]);
-  
+  const query: FilterQuery<XxxDocument> = { /* build from dto */ };
+
+  const sortObj = SortUtil.buildSortObject(dto.sort);
+  const sort = (sortObj ?? { createdAt: -1 }) as Record<string, 1 | -1>;
+
+  const results = await this.xxxModel
+    .find(query)
+    .populate(/* ... */)
+    .sort(sort)
+    .skip(skip)
+    .limit(pageSize)
+    .lean()
+    .exec();
+
+  const count = await this.xxxModel.countDocuments(query).exec();
+
   return PaginationUtil.createPaginationResult(
     results,
     count,
     page,
     pageSize,
-    '/api/requests',
+    '/api/xxx',
     dto,
   );
 }
+```
+
+For nested resources (e.g. proposals by request):
+
+```typescript
+const baseUrl = `/api/proposals/requests/${requestId}`;
+return PaginationUtil.createPaginationResult(
+  results,
+  count,
+  page,
+  pageSize,
+  baseUrl,
+  { page, pageSize },
+);
 ```

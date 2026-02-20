@@ -37,8 +37,8 @@ export class Request {
   @Prop({ required: true })
   location: string;
 
-  @Prop({ required: true })
-  urgency: string;
+  @Prop({ type: Number, required: true })
+  urgency: number;
 
   @Prop({
     type: String,

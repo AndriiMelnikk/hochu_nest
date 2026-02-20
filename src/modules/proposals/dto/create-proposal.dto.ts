@@ -30,15 +30,15 @@ export class CreateProposalDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({ example: '1-2 тижні', description: 'Estimated time' })
-  @IsString()
+  @ApiProperty({ example: 1, description: 'Estimated time level' })
+  @IsNumber()
   @IsNotEmpty()
-  estimatedTime: string;
+  estimatedTime: number;
 
-  @ApiProperty({ example: '3 місяці', description: 'Warranty', required: false })
-  @IsString()
+  @ApiProperty({ example: 1, description: 'Warranty level', required: false })
+  @IsNumber()
   @IsOptional()
-  warranty?: string;
+  warranty?: number;
 
   @ApiProperty({ example: 'new', description: 'Item condition', enum: ItemCondition })
   @IsEnum(ItemCondition)

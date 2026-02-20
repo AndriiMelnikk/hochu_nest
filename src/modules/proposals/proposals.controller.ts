@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
@@ -8,6 +8,9 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 import { Proposal } from '@database/schemas/proposal.schema';
+import { ProposalRejectionReason } from './proposals.constants';
+import { GetProposalsByRequestDto } from './dto/get-proposals-by-request.dto';
+import { PaginationResult } from 'src/common/utils/pagination.util';
 
 @ApiTags('Proposals')
 @Controller('proposals')
@@ -35,8 +38,9 @@ export class ProposalsController {
   @ApiResponse({ status: 200, description: 'List of proposals' })
   async findAllByRequest(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
-  ): Promise<Proposal[]> {
-    return this.proposalsService.findAllByRequest(requestId);
+    @Query() query: GetProposalsByRequestDto,
+  ): Promise<PaginationResult<Proposal>> {
+    return this.proposalsService.findAllByRequest(requestId, query);
   }
 
   @Get('can-propose/:requestId')
@@ -48,7 +52,7 @@ export class ProposalsController {
   async canPropose(
     @Param('requestId', ParseObjectIdPipe) requestId: string,
     @CurrentUser() user: { id: string; profileId: string },
-  ): Promise<{ canPropose: boolean; reason?: string }> {
+  ): Promise<{ canPropose: boolean; reason?: ProposalRejectionReason }> {
     return await this.proposalsService.canPropose(requestId, user.id, user.profileId);
   }
 

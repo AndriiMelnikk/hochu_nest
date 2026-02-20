@@ -15,6 +15,9 @@ import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../../database/schemas/notification.schema';
+import { ProposalRejectionReason } from './proposals.constants';
+import { GetProposalsByRequestDto } from './dto/get-proposals-by-request.dto';
+import { PaginationResult, PaginationUtil } from '../../common/utils/pagination.util';
 
 @Injectable()
 export class ProposalsService {
@@ -109,41 +112,60 @@ export class ProposalsService {
     });
   }
 
-  async findAllByRequest(requestId: string) {
-    return this.proposalModel
-      .find({ requestId: new Types.ObjectId(requestId) })
+  async findAllByRequest(
+    requestId: string,
+    dto: GetProposalsByRequestDto,
+  ): Promise<PaginationResult<ProposalDocument>> {
+    const page = PaginationUtil.normalizePage(dto.page);
+    const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
+    const skip = PaginationUtil.getSkip(page, pageSize);
+
+    const query = { requestId: new Types.ObjectId(requestId) };
+
+    const results = await this.proposalModel
+      .find(query)
       .populate({
         path: 'sellerId',
         select: 'name avatar rating location memberSince completedDeals xp',
       })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
       .exec();
+    const count = await this.proposalModel.countDocuments(query).exec();
+
+    const baseUrl = `/api/proposals/requests/${requestId}`;
+    const resultsArray = results as unknown as ProposalDocument[];
+    return PaginationUtil.createPaginationResult(resultsArray, count, page, pageSize, baseUrl, {
+      page,
+      pageSize,
+    });
   }
 
   async canPropose(
     requestId: string,
     accountId: string,
     sellerProfileId: string,
-  ): Promise<{ canPropose: boolean; reason?: string }> {
+  ): Promise<{ canPropose: boolean; reason?: ProposalRejectionReason }> {
     const sellerProfile = await this.profileModel
       .findOne({ _id: sellerProfileId, accountId: new Types.ObjectId(accountId) })
       .exec();
     if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER) {
-      return { canPropose: false, reason: 'USER_BLOCKED' };
+      return { canPropose: false, reason: ProposalRejectionReason.USER_BLOCKED };
     }
 
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
-      return { canPropose: false, reason: 'REQUEST_NOT_FOUND' };
+      return { canPropose: false, reason: ProposalRejectionReason.REQUEST_NOT_FOUND };
     }
 
     if (request.status !== RequestStatus.ACTIVE) {
-      return { canPropose: false, reason: 'REQUEST_NOT_ACTIVE' };
+      return { canPropose: false, reason: ProposalRejectionReason.REQUEST_NOT_ACTIVE };
     }
 
     const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
     if (buyerProfile && buyerProfile.accountId.toString() === accountId) {
-      return { canPropose: false, reason: 'OWN_REQUEST' };
+      return { canPropose: false, reason: ProposalRejectionReason.OWN_REQUEST };
     }
 
     const existingProposal = await this.proposalModel
@@ -154,7 +176,7 @@ export class ProposalsService {
       .exec();
 
     if (existingProposal) {
-      return { canPropose: false, reason: 'ALREADY_PROPOSED' };
+      return { canPropose: false, reason: ProposalRejectionReason.ALREADY_PROPOSED };
     }
 
     return { canPropose: true };
