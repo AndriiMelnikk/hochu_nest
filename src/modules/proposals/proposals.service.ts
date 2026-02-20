@@ -147,13 +147,6 @@ export class ProposalsService {
     accountId: string,
     sellerProfileId: string,
   ): Promise<{ canPropose: boolean; reason?: ProposalRejectionReason }> {
-    const sellerProfile = await this.profileModel
-      .findOne({ _id: sellerProfileId, accountId: new Types.ObjectId(accountId) })
-      .exec();
-    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER) {
-      return { canPropose: false, reason: ProposalRejectionReason.USER_BLOCKED };
-    }
-
     const request = await this.requestModel.findById(requestId).exec();
     if (!request) {
       return { canPropose: false, reason: ProposalRejectionReason.REQUEST_NOT_FOUND };
@@ -166,6 +159,13 @@ export class ProposalsService {
     const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
     if (buyerProfile && buyerProfile.accountId.toString() === accountId) {
       return { canPropose: false, reason: ProposalRejectionReason.OWN_REQUEST };
+    }
+
+    const sellerProfile = await this.profileModel
+      .findOne({ _id: sellerProfileId, accountId: new Types.ObjectId(accountId) })
+      .exec();
+    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER || sellerProfile.isBlocked) {
+      return { canPropose: false, reason: ProposalRejectionReason.USER_BLOCKED };
     }
 
     const existingProposal = await this.proposalModel
