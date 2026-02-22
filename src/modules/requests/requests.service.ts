@@ -318,6 +318,39 @@ export class RequestsService {
     return request as unknown as Request;
   }
 
+  async cancel(id: string, buyerProfileId: string): Promise<Request> {
+    const request = await this.findOne(id);
+    const buyerIdStr =
+      typeof request.buyerId === 'object' && request.buyerId && '_id' in request.buyerId
+        ? (request.buyerId as { _id: Types.ObjectId })._id.toString()
+        : String(request.buyerId);
+
+    if (buyerIdStr !== buyerProfileId) {
+      throw new ForbiddenException(
+        this.i18n.t('common.requests.forbidden_update_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (
+      request.status === RequestStatus.CLOSED ||
+      request.status === RequestStatus.COMPLETED ||
+      request.status === RequestStatus.CANCELLED
+    ) {
+      throw new BadRequestException(
+        this.i18n.t('common.requests.cannot_cancel_request', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    request.status = RequestStatus.CANCELLED;
+    await request.save();
+
+    return request as unknown as Request;
+  }
+
   async remove(id: string, buyerProfileId: string): Promise<{ success: boolean }> {
     const request = await this.findOne(id);
     const buyerIdStr =

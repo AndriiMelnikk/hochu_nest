@@ -73,6 +73,20 @@ export class RequestsController {
     return this.requestsService.update(id, updateRequestDto, user.profileId);
   }
 
+  @Patch(':id/cancel')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel request' })
+  @ApiParam({ name: 'id', description: 'Request ID' })
+  @ApiResponse({ status: 200, description: 'Request cancelled' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async cancel(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ): Promise<Request> {
+    return await this.requestsService.cancel(id, user.profileId);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
