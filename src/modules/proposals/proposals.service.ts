@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
@@ -90,7 +90,9 @@ export class ProposalsService {
 
     await proposal.save();
 
-    await this.requestModel.updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } }).exec();
+    await this.requestModel
+      .updateOne({ _id: requestId }, { $inc: { proposalsCount: 1, pendingProposalsCount: 1 } })
+      .exec();
 
     await this.xpService.awardXp(sellerProfileId, 5);
     await this.achievementsService.checkAndUnlockAchievements(sellerProfileId);
@@ -106,10 +108,15 @@ export class ProposalsService {
       });
     }
 
-    return proposal.populate({
-      path: 'sellerId',
-      select: 'name avatar rating location memberSince completedDeals xp',
-    });
+    return proposal.populate([
+      {
+        path: 'sellerId',
+        select: 'name avatar rating location memberSince completedDeals xp',
+      },
+      {
+        path: 'requestId',
+      },
+    ]);
   }
 
   async findAllByRequest(
@@ -120,7 +127,11 @@ export class ProposalsService {
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
     const skip = PaginationUtil.getSkip(page, pageSize);
 
-    const query = { requestId: new Types.ObjectId(requestId) };
+    const query: FilterQuery<ProposalDocument> = { requestId: new Types.ObjectId(requestId) };
+
+    if (dto.status) {
+      query.status = { $in: dto.status };
+    }
 
     const results = await this.proposalModel
       .find(query)
@@ -136,10 +147,19 @@ export class ProposalsService {
 
     const baseUrl = `/api/proposals/requests/${requestId}`;
     const resultsArray = results as unknown as ProposalDocument[];
-    return PaginationUtil.createPaginationResult(resultsArray, count, page, pageSize, baseUrl, {
+    const paginationResult = PaginationUtil.createPaginationResult(
+      resultsArray,
+      count,
       page,
       pageSize,
-    });
+      baseUrl,
+      {
+        page,
+        pageSize,
+      },
+    );
+
+    return paginationResult;
   }
 
   async canPropose(
@@ -240,6 +260,12 @@ export class ProposalsService {
       );
     }
 
+    const otherPendingProposalsCount = await this.proposalModel.countDocuments({
+      requestId: proposal.requestId,
+      _id: { $ne: id },
+      status: ProposalStatus.PENDING,
+    });
+
     await Promise.all([
       this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.ACCEPTED }),
       this.proposalModel.updateMany(
@@ -250,7 +276,16 @@ export class ProposalsService {
         },
         { status: ProposalStatus.REJECTED },
       ),
-      this.requestModel.updateOne({ _id: request._id }, { status: RequestStatus.CLOSED }),
+      this.requestModel.updateOne(
+        { _id: request._id },
+        {
+          status: RequestStatus.CLOSED,
+          $inc: {
+            pendingProposalsCount: -(otherPendingProposalsCount + 1),
+            rejectedProposalsCount: otherPendingProposalsCount,
+          },
+        },
+      ),
     ]);
 
     const sellerProfileIdStr =
@@ -316,6 +351,12 @@ export class ProposalsService {
     }
 
     await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.REJECTED });
+    await this.requestModel
+      .updateOne(
+        { _id: request._id },
+        { $inc: { pendingProposalsCount: -1, rejectedProposalsCount: 1 } },
+      )
+      .exec();
 
     const sellerProfileIdStr =
       typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId

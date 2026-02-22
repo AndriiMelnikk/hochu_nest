@@ -8,6 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
+import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import {
   Category,
   CategoryDocument,
@@ -51,6 +52,7 @@ export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'catego
 export class RequestsService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
     @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
     private xpService: XpService,
@@ -215,7 +217,39 @@ export class RequestsService {
 
   async getById(id: string): Promise<FormattedRequest> {
     const request = await this.findOne(id);
-    return this.formatLeanRequest(request.toObject() as unknown as LeanRequest);
+
+    const [pendingCount, rejectedCount] = await Promise.all([
+      this.proposalModel.countDocuments({
+        requestId: new Types.ObjectId(id),
+        status: ProposalStatus.PENDING,
+      }),
+      this.proposalModel.countDocuments({
+        requestId: new Types.ObjectId(id),
+        status: ProposalStatus.REJECTED,
+      }),
+    ]);
+
+    const requestObj = request.toObject() as unknown as LeanRequest;
+
+    if (
+      request.pendingProposalsCount !== pendingCount ||
+      request.rejectedProposalsCount !== rejectedCount
+    ) {
+      await this.requestModel
+        .updateOne(
+          { _id: id },
+          {
+            pendingProposalsCount: pendingCount,
+            rejectedProposalsCount: rejectedCount,
+          },
+        )
+        .exec();
+    }
+
+    requestObj.pendingProposalsCount = pendingCount;
+    requestObj.rejectedProposalsCount = rejectedCount;
+
+    return this.formatLeanRequest(requestObj);
   }
 
   private formatLeanRequest(request: LeanRequest): FormattedRequest {

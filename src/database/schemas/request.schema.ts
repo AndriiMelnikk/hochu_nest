@@ -4,9 +4,11 @@ import { Document, Types } from 'mongoose';
 export type RequestDocument = Request & Document;
 
 export enum RequestStatus {
-  // PENDING = 'pending',
+  PENDING = 'pending',
   ACTIVE = 'active',
   CLOSED = 'closed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
   REJECTED = 'rejected',
 }
 
@@ -58,6 +60,12 @@ export class Request {
 
   @Prop({ type: Number, default: 0 })
   proposalsCount: number;
+
+  @Prop({ type: Number, default: 0 })
+  pendingProposalsCount: number;
+
+  @Prop({ type: Number, default: 0 })
+  rejectedProposalsCount: number;
 
   @Prop({
     type: String,
