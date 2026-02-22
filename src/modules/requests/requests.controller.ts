@@ -57,7 +57,6 @@ export class RequestsController {
     const request = await this.requestsService.getById(id);
     return request;
   }
-  ч;
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
