@@ -31,6 +31,7 @@
     "rejected_success": "Proposal rejected successfully",
     "only_owner_complete": "Only request owner can complete deals",
     "must_be_accepted_to_complete": "Proposal must be accepted to complete",
-    "completed_success": "Deal completed successfully"
+    "completed_success": "Deal completed successfully",
+    "forbidden_update_proposal": "You can only update your own proposals"
   }
 }

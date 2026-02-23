@@ -11,6 +11,8 @@ import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schem
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { CreateProposalDto } from './dto/create-proposal.dto';
+import { UpdateProposalDto } from './dto/update-proposal.dto';
+
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -220,6 +222,112 @@ export class ProposalsService {
         }),
       );
     }
+
+    return proposal;
+  }
+
+  async update(id: string, updateProposalDto: UpdateProposalDto, sellerProfileId: string) {
+    const proposal = await this.findOne(id);
+    const sellerIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+
+    if (sellerIdStr !== sellerProfileId) {
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.forbidden_update_proposal', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (proposal.status !== ProposalStatus.PENDING) {
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.proposal_not_pending', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    // Calculate changes
+    const changes: Array<{ field: string; oldValue: any; newValue: any }> = [];
+
+    if (updateProposalDto.price !== undefined && updateProposalDto.price !== proposal.price) {
+      changes.push({
+        field: 'price',
+        oldValue: proposal.price,
+        newValue: updateProposalDto.price,
+      });
+    }
+    if (updateProposalDto.title !== undefined && updateProposalDto.title !== proposal.title) {
+      changes.push({
+        field: 'title',
+        oldValue: proposal.title,
+        newValue: updateProposalDto.title,
+      });
+    }
+    if (
+      updateProposalDto.description !== undefined &&
+      updateProposalDto.description !== proposal.description
+    ) {
+      changes.push({
+        field: 'description',
+        oldValue: proposal.description,
+        newValue: updateProposalDto.description,
+      });
+    }
+    if (
+      updateProposalDto.estimatedTime !== undefined &&
+      updateProposalDto.estimatedTime !== proposal.estimatedTime
+    ) {
+      changes.push({
+        field: 'estimatedTime',
+        oldValue: proposal.estimatedTime,
+        newValue: updateProposalDto.estimatedTime,
+      });
+    }
+    if (
+      updateProposalDto.warranty !== undefined &&
+      updateProposalDto.warranty !== proposal.warranty
+    ) {
+      changes.push({
+        field: 'warranty',
+        oldValue: proposal.warranty,
+        newValue: updateProposalDto.warranty,
+      });
+    }
+    if (
+      updateProposalDto.itemCondition !== undefined &&
+      updateProposalDto.itemCondition !== proposal.itemCondition
+    ) {
+      changes.push({
+        field: 'itemCondition',
+        oldValue: proposal.itemCondition,
+        newValue: updateProposalDto.itemCondition,
+      });
+    }
+
+    if (updateProposalDto.images !== undefined) {
+      const oldImages = proposal.images || [];
+      const newImages = updateProposalDto.images || [];
+      if (JSON.stringify(oldImages) !== JSON.stringify(newImages)) {
+        changes.push({ field: 'images', oldValue: oldImages, newValue: newImages });
+      }
+    }
+
+    // Track edit history
+    const editEntry = {
+      timestamp: new Date(),
+      changes: changes.length > 0 ? changes : undefined,
+    };
+
+    if (!proposal.edits) {
+      proposal.edits = [];
+    }
+    proposal.edits.push(editEntry);
+
+    Object.assign(proposal, updateProposalDto);
+    await proposal.save();
 
     return proposal;
   }

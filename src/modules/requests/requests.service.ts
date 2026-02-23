@@ -48,6 +48,13 @@ export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'catego
   category: Category;
 };
 
+const URGENCY_MAP: Record<number, string> = {
+  1: 'Гнучко',
+  2: 'Протягом тижня',
+  3: '2-3 дні',
+  4: 'Терміново',
+};
+
 @Injectable()
 export class RequestsService {
   constructor(
@@ -302,13 +309,128 @@ export class RequestsService {
       );
     }
 
+    // Calculate changes
+    const changes: Array<{ field: string; oldValue: any; newValue: any }> = [];
+
+    if (updateRequestDto.title !== undefined && updateRequestDto.title !== request.title) {
+      changes.push({
+        field: 'title',
+        oldValue: request.title,
+        newValue: updateRequestDto.title,
+      });
+    }
+    if (
+      updateRequestDto.description !== undefined &&
+      updateRequestDto.description !== request.description
+    ) {
+      changes.push({
+        field: 'description',
+        oldValue: request.description,
+        newValue: updateRequestDto.description,
+      });
+    }
+    if (
+      updateRequestDto.budgetMin !== undefined &&
+      updateRequestDto.budgetMin !== request.budgetMin
+    ) {
+      changes.push({
+        field: 'budgetMin',
+        oldValue: request.budgetMin,
+        newValue: updateRequestDto.budgetMin,
+      });
+    }
+    if (
+      updateRequestDto.budgetMax !== undefined &&
+      updateRequestDto.budgetMax !== request.budgetMax
+    ) {
+      changes.push({
+        field: 'budgetMax',
+        oldValue: request.budgetMax,
+        newValue: updateRequestDto.budgetMax,
+      });
+    }
+    if (updateRequestDto.location !== undefined && updateRequestDto.location !== request.location) {
+      changes.push({
+        field: 'location',
+        oldValue: request.location,
+        newValue: updateRequestDto.location,
+      });
+    }
+    if (updateRequestDto.urgency !== undefined && updateRequestDto.urgency !== request.urgency) {
+      changes.push({
+        field: 'urgency',
+        oldValue: {
+          value: request.urgency,
+          label: URGENCY_MAP[request.urgency] || String(request.urgency),
+        },
+        newValue: {
+          value: updateRequestDto.urgency,
+          label: URGENCY_MAP[updateRequestDto.urgency] || String(updateRequestDto.urgency),
+        },
+      });
+    }
+    if (
+      updateRequestDto.itemCondition !== undefined &&
+      updateRequestDto.itemCondition !== request.itemCondition
+    ) {
+      changes.push({
+        field: 'itemCondition',
+        oldValue: request.itemCondition,
+        newValue: updateRequestDto.itemCondition,
+      });
+    }
+
+    if (updateRequestDto.category !== undefined) {
+      let currentCategoryId: string | undefined;
+
+      if (request.category && typeof request.category === 'object' && '_id' in request.category) {
+        currentCategoryId = (request.category as any)._id.toString();
+      } else if (request.category) {
+        currentCategoryId = String(request.category);
+      }
+
+      if (currentCategoryId !== updateRequestDto.category) {
+        const lang = (I18nContext.current()?.lang || 'uk') as keyof CategoryTranslations;
+        const newCategory = await this.categoryModel
+          .findById(updateRequestDto.category)
+          .lean()
+          .exec();
+
+        const getCategoryName = (cat: any): string => {
+          if (!cat) return 'Unknown';
+          if (typeof cat === 'object' && 'translations' in cat) {
+            const translations = (cat as Category).translations;
+            return translations[lang]?.title || translations['uk']?.title || 'Unknown';
+          }
+          return 'Unknown';
+        };
+
+        changes.push({
+          field: 'category',
+          oldValue: {
+            id: currentCategoryId,
+            name: getCategoryName(request.category),
+          },
+          newValue: {
+            id: updateRequestDto.category,
+            name: getCategoryName(newCategory),
+          },
+        });
+      }
+    }
+
+    if (updateRequestDto.images !== undefined) {
+      const oldImages = request.images || [];
+      const newImages = updateRequestDto.images || [];
+      if (JSON.stringify(oldImages) !== JSON.stringify(newImages)) {
+        changes.push({ field: 'images', oldValue: oldImages, newValue: newImages });
+      }
+    }
+
     // Track edit history
     const editEntry = {
-      text: this.i18n.t('common.requests.request_updated_at', {
-        lang: I18nContext.current()?.lang,
-        args: { timestamp: new Date().toISOString() },
-      }),
       timestamp: new Date(),
+      changes: changes.length > 0 ? changes : undefined,
     };
     request.edits.push(editEntry);
 

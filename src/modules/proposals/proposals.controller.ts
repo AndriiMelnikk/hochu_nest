@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ProposalsService } from './proposals.service';
 import { CreateProposalDto } from './dto/create-proposal.dto';
+import { UpdateProposalDto } from './dto/update-proposal.dto';
+
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -63,6 +65,21 @@ export class ProposalsController {
   @ApiResponse({ status: 404, description: 'Proposal not found' })
   async findOne(@Param('id', ParseObjectIdPipe) id: string) {
     return this.proposalsService.findOne(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update proposal' })
+  @ApiParam({ name: 'id', description: 'Proposal ID' })
+  @ApiResponse({ status: 200, description: 'Proposal updated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async update(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() updateProposalDto: UpdateProposalDto,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return await this.proposalsService.update(id, updateProposalDto, user.profileId);
   }
 
   @Post(':id/accept')

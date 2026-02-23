@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, Schema as MongooseSchema } from 'mongoose';
 import { ItemCondition } from './request.schema';
 
 export type ProposalDocument = Proposal & Document;
@@ -52,6 +52,26 @@ export class Proposal {
     default: ProposalStatus.PENDING,
   })
   status: ProposalStatus;
+
+  @Prop({
+    type: [
+      {
+        timestamp: Date,
+        changes: [
+          {
+            field: String,
+            oldValue: MongooseSchema.Types.Mixed,
+            newValue: MongooseSchema.Types.Mixed,
+          },
+        ],
+      },
+    ],
+    default: [],
+  })
+  edits: Array<{
+    timestamp: Date;
+    changes?: Array<{ field: string; oldValue: any; newValue: any }>;
+  }>;
 
   createdAt: Date;
   updatedAt: Date;
