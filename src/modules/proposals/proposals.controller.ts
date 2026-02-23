@@ -82,6 +82,20 @@ export class ProposalsController {
     return await this.proposalsService.update(id, updateProposalDto, user.profileId);
   }
 
+  @Post(':id/withdraw')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('seller', 'admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Withdraw proposal' })
+  @ApiParam({ name: 'id', description: 'Proposal ID' })
+  @ApiResponse({ status: 200, description: 'Proposal withdrawn' })
+  async withdraw(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return this.proposalsService.withdraw(id, user.profileId);
+  }
+
   @Post(':id/accept')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('buyer', 'admin')

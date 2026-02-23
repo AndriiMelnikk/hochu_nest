@@ -32,6 +32,8 @@
     "only_owner_complete": "Only request owner can complete deals",
     "must_be_accepted_to_complete": "Proposal must be accepted to complete",
     "completed_success": "Deal completed successfully",
-    "forbidden_update_proposal": "You can only update your own proposals"
+    "forbidden_update_proposal": "You can only update your own proposals",
+    "only_owner_withdraw": "Only proposal owner can withdraw proposals",
+    "withdrawn_success": "Proposal withdrawn successfully"
   }
 }

@@ -9,6 +9,7 @@ export enum ProposalStatus {
   ACCEPTED = 'accepted',
   REJECTED = 'rejected',
   COMPLETED = 'completed',
+  WITHDRAWN = 'withdrawn',
 }
 
 @Schema({ timestamps: true })

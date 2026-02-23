@@ -133,6 +133,8 @@ export class ProposalsService {
 
     if (dto.status) {
       query.status = { $in: dto.status };
+    } else {
+      query.status = { $ne: ProposalStatus.WITHDRAWN };
     }
 
     const results = await this.proposalModel
@@ -198,6 +200,10 @@ export class ProposalsService {
       .exec();
 
     if (existingProposal) {
+      if (existingProposal.status === ProposalStatus.WITHDRAWN) {
+        // The user already proposed and withdrew, so they cannot propose again.
+        return { canPropose: false, reason: ProposalRejectionReason.ALREADY_PROPOSED };
+      }
       return { canPropose: false, reason: ProposalRejectionReason.ALREADY_PROPOSED };
     }
 
@@ -330,6 +336,52 @@ export class ProposalsService {
     await proposal.save();
 
     return proposal;
+  }
+
+  async withdraw(id: string, sellerProfileId: string) {
+    const proposal = await this.findOne(id);
+    const request = await this.requestModel.findById(proposal.requestId).exec();
+
+    if (!request) {
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found_short', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    const sellerIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+
+    if (sellerIdStr !== sellerProfileId) {
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.only_owner_withdraw', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (proposal.status !== ProposalStatus.PENDING) {
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.proposal_not_pending', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.WITHDRAWN });
+    await this.requestModel
+      .updateOne({ _id: request._id }, { $inc: { proposalsCount: -1, pendingProposalsCount: -1 } })
+      .exec();
+
+    return {
+      success: true,
+      message: this.i18n.t('common.proposals.withdrawn_success', {
+        lang: I18nContext.current()?.lang,
+      }),
+    };
   }
 
   async accept(id: string, buyerProfileId: string) {

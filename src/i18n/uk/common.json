@@ -32,6 +32,8 @@
     "only_owner_complete": "Завершувати угоди може лише власник запиту",
     "must_be_accepted_to_complete": "Пропозицію спочатку потрібно прийняти",
     "completed_success": "Угоду успішно завершено",
-    "forbidden_update_proposal": "Ви можете оновлювати тільки власні пропозиції"
+    "forbidden_update_proposal": "Ви можете оновлювати тільки власні пропозиції",
+    "only_owner_withdraw": "Відкликати пропозицію може лише її автор",
+    "withdrawn_success": "Пропозицію успішно відкликано"
   }
 }
