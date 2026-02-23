@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
+import { ProfileType } from '../enums/profile-type.enum';
+import { ContactChannel } from '../enums/contact-channel.enum';
 
 export type ProfileDocument = HydratedDocument<Profile>;
 
-export enum ProfileType {
-  BUYER = 'buyer',
-  SELLER = 'seller',
-}
+// Re-export for backward compatibility
+export { ProfileType };
 
 @Schema({ timestamps: true })
 export class Profile {
@@ -54,6 +54,9 @@ export class Profile {
 
   @Prop({ type: Number, default: 0, index: true })
   xp: number;
+
+  @Prop({ type: Object, default: {} })
+  contacts: Partial<Record<ContactChannel, string>>;
 
   createdAt: Date;
   updatedAt: Date;

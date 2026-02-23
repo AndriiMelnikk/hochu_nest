@@ -2,6 +2,7 @@ import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/c
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateContactsDto } from './dto/update-contacts.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
@@ -19,6 +20,15 @@ export class UsersController {
   async getMe(@CurrentUser() user: { id: string; profileId: string }) {
     return this.usersService.findMe(user.id, user.profileId);
   }
+
+  @Get('profile/:id')
+  @ApiOperation({ summary: 'Get profile details by ID' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile found' })
+  async getProfile(@Param('id', ParseObjectIdPipe) id: string) {
+    return await this.usersService.findProfile(id);
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -78,5 +88,27 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Profile reviews' })
   async getReviews(@Param('id', ParseObjectIdPipe) id: string) {
     return this.usersService.getProfileReviews(id);
+  }
+
+  @Get(':id/contacts')
+  @ApiOperation({ summary: 'Get profile contacts' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile contacts' })
+  async getContacts(@Param('id', ParseObjectIdPipe) id: string) {
+    return this.usersService.getProfileContacts(id);
+  }
+
+  @Patch(':id/contacts')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update profile contacts' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Profile contacts updated' })
+  async updateContacts(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() updateContactsDto: UpdateContactsDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.usersService.updateProfileContacts(id, updateContactsDto, user.id);
   }
 }

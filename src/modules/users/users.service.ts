@@ -10,6 +10,10 @@ import { AchievementsService } from '../achievements/achievements.service';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Review, ReviewDocument } from '../../database/schemas/review.schema';
+import { ContactChannel } from '../../database/enums/contact-channel.enum';
+import { ALLOWED_CONTACTS } from '../../database/constants/profile-contacts.constant';
+import { UpdateContactsDto } from './dto/update-contacts.dto';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -92,6 +96,14 @@ export class UsersService {
       account: this.sanitizeAccount(account as Account & { _id: Types.ObjectId }),
       profile,
     };
+  }
+
+  async findProfile(profileId: string) {
+    const profile = await this.profileModel.findById(profileId).lean<Profile>().exec();
+    if (!profile) {
+      throw new NotFoundException('Profile not found');
+    }
+    return profile;
   }
 
   async updateMe(accountId: string, profileId: string, updateUserDto: UpdateUserDto) {
@@ -303,6 +315,46 @@ export class UsersService {
       .countDocuments({ targetProfileId: new Types.ObjectId(profileId) })
       .exec();
     return { count, results };
+  }
+
+  async getProfileContacts(profileId: string) {
+    const profile = await this.profileModel.findById(profileId).exec();
+    if (!profile) {
+      throw new NotFoundException(`Profile with ID ${profileId} not found`);
+    }
+    return profile.contacts || {};
+  }
+
+  async updateProfileContacts(
+    profileId: string,
+    updateContactsDto: UpdateContactsDto,
+    userId: string,
+  ) {
+    const profile = await this.profileModel.findOne({ _id: profileId, accountId: userId }).exec();
+    if (!profile) {
+      throw new NotFoundException('Profile not found or does not belong to your account');
+    }
+
+    const allowedChannels = ALLOWED_CONTACTS[profile.type] || [];
+    const newContacts = { ...(profile.contacts || {}) };
+
+    for (const [key, value] of Object.entries(updateContactsDto)) {
+      if (value !== undefined) {
+        if (!allowedChannels.includes(key as ContactChannel)) {
+          throw new BadRequestException(
+            `Contact channel '${key}' is not allowed for profile type '${profile.type}'`,
+          );
+        }
+        if (value === null || value === '') {
+          delete newContacts[key as ContactChannel];
+        } else {
+          newContacts[key as ContactChannel] = value;
+        }
+      }
+    }
+
+    profile.contacts = newContacts;
+    return profile.save();
   }
 
   private sanitizeAccount(account: any) {
