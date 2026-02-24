@@ -85,6 +85,7 @@ export class ReviewsService {
       authorProfileId: new Types.ObjectId(authorProfileId),
       targetProfileId: new Types.ObjectId(targetProfileId),
       proposalId: new Types.ObjectId(proposalId),
+      requestId: request._id,
       rating,
       comment: comment || null,
     });
@@ -112,7 +113,13 @@ export class ReviewsService {
     return review;
   }
 
-  async findAll(targetProfileId?: string, page?: number, pageSize?: number) {
+  async findAll(
+    targetProfileId?: string,
+    requestId?: string,
+    proposalId?: string,
+    page?: number,
+    pageSize?: number,
+  ) {
     const normalizedPage = PaginationUtil.normalizePage(page);
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
@@ -120,6 +127,12 @@ export class ReviewsService {
     const query: Record<string, unknown> = {};
     if (targetProfileId) {
       query.targetProfileId = new Types.ObjectId(targetProfileId);
+    }
+    if (requestId) {
+      query.requestId = new Types.ObjectId(requestId);
+    }
+    if (proposalId) {
+      query.proposalId = new Types.ObjectId(proposalId);
     }
 
     const results = await this.reviewModel
@@ -143,7 +156,7 @@ export class ReviewsService {
       normalizedPage,
       normalizedPageSize,
       '/api/reviews',
-      { targetProfileId },
+      { targetProfileId, requestId, proposalId },
     );
   }
 

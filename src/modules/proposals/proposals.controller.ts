@@ -124,6 +124,20 @@ export class ProposalsController {
     return this.proposalsService.reject(id, user.profileId);
   }
 
+  @Post(':id/cancel')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('buyer', 'admin')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cancel accepted proposal and reopen request' })
+  @ApiParam({ name: 'id', description: 'Proposal ID' })
+  @ApiResponse({ status: 200, description: 'Proposal cancelled and request reopened' })
+  async cancel(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string; profileId: string },
+  ) {
+    return this.proposalsService.cancel(id, user.profileId);
+  }
+
   @Post(':id/complete')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('buyer', 'admin')

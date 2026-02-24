@@ -440,6 +440,10 @@ export class ProposalsService {
         { _id: request._id },
         {
           status: RequestStatus.CLOSED,
+          executorId:
+            typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+              ? (proposal.sellerId as { _id: Types.ObjectId })._id
+              : (proposal.sellerId as Types.ObjectId),
           $inc: {
             pendingProposalsCount: -(otherPendingProposalsCount + 1),
             rejectedProposalsCount: otherPendingProposalsCount,
@@ -569,7 +573,15 @@ export class ProposalsService {
       );
     }
 
-    await this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.COMPLETED });
+    await Promise.all([
+      this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.COMPLETED }),
+      this.requestModel.updateOne(
+        { _id: request._id },
+        {
+          status: RequestStatus.COMPLETED,
+        },
+      ),
+    ]);
 
     const sellerProfileIdStr =
       typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
@@ -595,6 +607,69 @@ export class ProposalsService {
     return {
       success: true,
       message: this.i18n.t('common.proposals.completed_success', {
+        lang: I18nContext.current()?.lang,
+      }),
+    };
+  }
+
+  async cancel(id: string, buyerProfileId: string) {
+    const proposal = await this.findOne(id);
+    const request = await this.requestModel.findById(proposal.requestId).exec();
+
+    if (!request) {
+      throw new NotFoundException(
+        this.i18n.t('common.proposals.request_not_found_short', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (request.buyerId.toString() !== buyerProfileId) {
+      throw new ForbiddenException(
+        this.i18n.t('common.proposals.only_owner_reject', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (proposal.status !== ProposalStatus.ACCEPTED) {
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.must_be_accepted_to_cancel', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    await Promise.all([
+      this.proposalModel.updateOne({ _id: id }, { status: ProposalStatus.REJECTED }),
+      this.requestModel.updateOne(
+        { _id: request._id },
+        {
+          status: RequestStatus.ACTIVE,
+          $inc: { rejectedProposalsCount: 1 },
+          $unset: { executorId: '' },
+        },
+      ),
+    ]);
+
+    const sellerProfileIdStr =
+      typeof proposal.sellerId === 'object' && proposal.sellerId && '_id' in proposal.sellerId
+        ? (proposal.sellerId as { _id: Types.ObjectId })._id.toString()
+        : (proposal.sellerId as Types.ObjectId).toString();
+    const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
+    if (sellerProfile) {
+      await this.notificationsService.create({
+        accountId: sellerProfile.accountId.toString(),
+        type: NotificationType.PROPOSAL_REJECTED,
+        title: 'Пропозицію скасовано',
+        message: `Покупець скасував раніше прийняту пропозицію на запит "${request.title}"`,
+        link: `/request/${request._id.toString()}`,
+      });
+    }
+
+    return {
+      success: true,
+      message: this.i18n.t('common.proposals.cancelled_success', {
         lang: I18nContext.current()?.lang,
       }),
     };

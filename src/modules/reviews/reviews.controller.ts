@@ -26,10 +26,12 @@ export class ReviewsController {
   @ApiResponse({ status: 200, description: 'List of reviews' })
   async findAll(
     @Query('targetProfileId') targetProfileId?: string,
+    @Query('requestId') requestId?: string,
+    @Query('proposalId') proposalId?: string,
     @Query('page') page?: number,
     @Query('pageSize') pageSize?: number,
   ) {
-    return this.reviewsService.findAll(targetProfileId, page, pageSize);
+    return this.reviewsService.findAll(targetProfileId, requestId, proposalId, page, pageSize);
   }
 
   @Get(':id')

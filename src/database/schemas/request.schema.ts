@@ -52,6 +52,9 @@ export class Request {
   @Prop({ type: Types.ObjectId, ref: 'Profile', required: true })
   buyerId: Types.ObjectId;
 
+  @Prop({ type: Types.ObjectId, ref: 'Profile', required: false })
+  executorId?: Types.ObjectId;
+
   @Prop({ type: [String], default: [] })
   images: string[];
 
