@@ -30,14 +30,6 @@ export class R2StorageService implements OnModuleInit {
     const rawPrefix = this.configService.get<string>('upload.r2.prefix') || '';
     this.keyPrefix = rawPrefix ? `${rawPrefix.replace(/^\/+|\/+$/g, '')}/` : '';
 
-    console.log('this.endpoint', this.endpoint);
-    console.log('this.accessKeyId', this.accessKeyId);
-    console.log('this.secretAccessKey', this.secretAccessKey);
-    console.log('this.bucket', this.bucket);
-    console.log('this.publicBaseUrl', this.publicBaseUrl);
-    console.log('this.keyPrefix', this.keyPrefix);
-    console.log('this.storageProvider', this.storageProvider);
-
     this.client = new S3Client({
       region,
       endpoint: this.endpoint || undefined,
@@ -59,7 +51,9 @@ export class R2StorageService implements OnModuleInit {
       this.logger.log('Cloudflare R2 connection established');
     } catch (error) {
       this.logger.error('Cloudflare R2 connection failed', error);
-      throw new InternalServerErrorException(`Cloudflare R2 connection failed: ${error.message}`);
+      throw new InternalServerErrorException(
+        `Cloudflare R2 connection failed: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -77,12 +71,16 @@ export class R2StorageService implements OnModuleInit {
     );
   }
 
-  async upload(file: Express.Multer.File, filename: string): Promise<{ url: string }> {
+  async upload(
+    file: Express.Multer.File,
+    filename: string,
+    folder?: string,
+  ): Promise<{ url: string }> {
     if (!this.accessKeyId || !this.secretAccessKey || !this.endpoint || !this.bucket) {
       throw new InternalServerErrorException('Cloudflare R2 is not configured');
     }
 
-    const key = `${this.keyPrefix}${filename}`;
+    const key = `${this.keyPrefix}${folder ? folder + '/' : ''}${filename}`;
     try {
       await this.client.send(
         new PutObjectCommand({

@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, UnsupportedMediaTypeException } from '
 import { ConfigService } from '@nestjs/config';
 import * as path from 'path';
 import { R2StorageService } from './storage/r2-storage.service';
+import { UploadType } from './dto/upload.dto';
 
 @Injectable()
 export class UploadService {
@@ -21,7 +22,11 @@ export class UploadService {
     ];
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<{ url: string }> {
+  async uploadFile(
+    file: Express.Multer.File,
+    userId: string,
+    type: UploadType,
+  ): Promise<{ url: string }> {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -44,15 +49,10 @@ export class UploadService {
     // Generate unique filename
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const filename = `${uniqueSuffix}.${fileExtension}`;
-    return this.r2StorageService.upload(file, filename);
+
+    // Determine folder structure based on type and userId
+    const folder = `${type}s/${userId}`;
+
+    return this.r2StorageService.upload(file, filename, folder);
   }
-
-  // async checkR2Health(): Promise<{ status: 'ok' }> {
-  //   if (this.storageProvider !== 'r2') {
-  //     throw new InternalServerErrorException('Cloudflare R2 is not configured');
-  //   }
-
-  //   await this.r2StorageService.checkConnection();
-  //   return { status: 'ok' };
-  // }
 }

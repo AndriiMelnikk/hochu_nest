@@ -1,5 +1,6 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Req } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -10,6 +11,8 @@ import {
 } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { UploadType } from './dto/upload.dto';
+import { RequestUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Upload')
 @Controller('upload')
@@ -18,9 +21,9 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post()
+  @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
-  @ApiOperation({ summary: 'Upload image file' })
+  @ApiOperation({ summary: 'Upload avatar image' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -31,11 +34,68 @@ export class UploadController {
           format: 'binary',
         },
       },
+      required: ['file'],
     },
   })
-  @ApiResponse({ status: 201, description: 'File uploaded successfully' })
+  @ApiResponse({ status: 201, description: 'Avatar uploaded successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return this.uploadService.uploadFile(file);
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request & { user: RequestUser },
+  ) {
+    const userId = req.user?.id;
+    return this.uploadService.uploadFile(file, userId, UploadType.AVATAR);
+  }
+
+  @Post('post')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload post image' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Post image uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async uploadPostImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request & { user: RequestUser },
+  ) {
+    const userId = req.user?.id;
+    return this.uploadService.uploadFile(file, userId, UploadType.POST);
+  }
+
+  @Post('photo')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload general photo' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Photo uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async uploadPhoto(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: Request & { user: RequestUser },
+  ) {
+    const userId = req.user?.id;
+    return this.uploadService.uploadFile(file, userId, UploadType.PHOTO);
   }
 }
