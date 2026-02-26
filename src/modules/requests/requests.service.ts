@@ -22,6 +22,7 @@ import { PaginationResult, PaginationUtil } from '../../common/utils/pagination.
 import { SortUtil } from '../../common/utils/sort.util';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
+import { UploadService } from '../upload/upload.service';
 
 type PopulatedBuyer = {
   _id: Types.ObjectId;
@@ -65,6 +66,7 @@ export class RequestsService {
     private xpService: XpService,
     private achievementsService: AchievementsService,
     private readonly i18n: I18nService,
+    private readonly uploadService: UploadService,
   ) {}
 
   async create(createRequestDto: CreateRequestDto, buyerProfileId: string) {
@@ -87,6 +89,10 @@ export class RequestsService {
     });
 
     await request.save();
+
+    if (createRequestDto.images && createRequestDto.images.length > 0) {
+      await this.uploadService.confirmUploads(createRequestDto.images, request._id.toString());
+    }
 
     await this.xpService.awardXp(buyerProfileId, 10);
     await this.achievementsService.checkAndUnlockAchievements(buyerProfileId);
@@ -436,6 +442,10 @@ export class RequestsService {
 
     Object.assign(request, updateRequestDto);
     await request.save();
+
+    if (updateRequestDto.images && updateRequestDto.images.length > 0) {
+      await this.uploadService.confirmUploads(updateRequestDto.images, request._id.toString());
+    }
 
     return request as unknown as Request;
   }

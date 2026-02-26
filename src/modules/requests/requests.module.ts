@@ -8,6 +8,7 @@ import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AchievementsModule } from '../achievements/achievements.module';
     ]),
     XpModule,
     AchievementsModule,
+    UploadModule,
   ],
   controllers: [RequestsController],
   providers: [RequestsService],

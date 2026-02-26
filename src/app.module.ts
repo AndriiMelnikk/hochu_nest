@@ -29,6 +29,8 @@ import { XpModule } from './modules/xp/xp.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
 
+import { ScheduleModule } from '@nestjs/schedule';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -36,6 +38,7 @@ import { LocationsModule } from './modules/locations/locations.module';
       load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig],
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     I18nModule.forRoot({
       fallbackLanguage: 'uk',
       loaderOptions: {

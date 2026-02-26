@@ -1,6 +1,11 @@
 import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 
 @Injectable()
 export class R2StorageService implements OnModuleInit {
@@ -75,7 +80,7 @@ export class R2StorageService implements OnModuleInit {
     file: Express.Multer.File,
     filename: string,
     folder?: string,
-  ): Promise<{ url: string }> {
+  ): Promise<{ url: string; key: string }> {
     if (!this.accessKeyId || !this.secretAccessKey || !this.endpoint || !this.bucket) {
       throw new InternalServerErrorException('Cloudflare R2 is not configured');
     }
@@ -96,6 +101,25 @@ export class R2StorageService implements OnModuleInit {
     }
 
     const baseUrl = this.publicBaseUrl || `${this.endpoint}/${this.bucket}`;
-    return { url: `${baseUrl.replace(/\/$/, '')}/${key}` };
+    const url = `${baseUrl.replace(/\/$/, '')}/${key}`;
+    return { url, key };
+  }
+
+  async delete(key: string): Promise<void> {
+    if (!this.accessKeyId || !this.secretAccessKey || !this.endpoint || !this.bucket) {
+      throw new InternalServerErrorException('Cloudflare R2 is not configured');
+    }
+
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+    } catch (error) {
+      this.logger.error(`Failed to delete file from Cloudflare R2: ${key}`, error);
+      throw new InternalServerErrorException('Failed to delete file from Cloudflare R2');
+    }
   }
 }

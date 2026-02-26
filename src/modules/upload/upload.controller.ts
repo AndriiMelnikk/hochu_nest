@@ -1,4 +1,13 @@
-import { Controller, Post, UseInterceptors, UploadedFile, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  UseGuards,
+  Req,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
 import {
@@ -8,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { UploadService } from './upload.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -97,5 +107,16 @@ export class UploadController {
   ) {
     const userId = req.user?.id;
     return this.uploadService.uploadFile(file, userId, UploadType.PHOTO);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: 'Delete uploaded file' })
+  @ApiQuery({ name: 'url', required: true, description: 'File URL to delete' })
+  @ApiResponse({ status: 200, description: 'File deleted successfully' })
+  @ApiResponse({ status: 404, description: 'File not found' })
+  async deleteFile(@Query('url') url: string, @Req() req: Request & { user: RequestUser }) {
+    const userId = req.user?.id;
+    await this.uploadService.deleteFile(url, userId);
+    return { success: true };
   }
 }
