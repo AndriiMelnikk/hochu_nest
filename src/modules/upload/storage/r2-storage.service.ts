@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class R2StorageService implements OnModuleInit {
@@ -30,9 +30,18 @@ export class R2StorageService implements OnModuleInit {
     const rawPrefix = this.configService.get<string>('upload.r2.prefix') || '';
     this.keyPrefix = rawPrefix ? `${rawPrefix.replace(/^\/+|\/+$/g, '')}/` : '';
 
+    console.log('this.endpoint', this.endpoint);
+    console.log('this.accessKeyId', this.accessKeyId);
+    console.log('this.secretAccessKey', this.secretAccessKey);
+    console.log('this.bucket', this.bucket);
+    console.log('this.publicBaseUrl', this.publicBaseUrl);
+    console.log('this.keyPrefix', this.keyPrefix);
+    console.log('this.storageProvider', this.storageProvider);
+
     this.client = new S3Client({
       region,
       endpoint: this.endpoint || undefined,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: this.accessKeyId,
         secretAccessKey: this.secretAccessKey,
@@ -48,9 +57,9 @@ export class R2StorageService implements OnModuleInit {
     try {
       await this.checkConnection();
       this.logger.log('Cloudflare R2 connection established');
-    } catch (_error) {
-      this.logger.error('Cloudflare R2 connection failed');
-      throw new InternalServerErrorException('Cloudflare R2 connection failed');
+    } catch (error) {
+      this.logger.error('Cloudflare R2 connection failed', error);
+      throw new InternalServerErrorException(`Cloudflare R2 connection failed: ${error.message}`);
     }
   }
 
@@ -59,7 +68,13 @@ export class R2StorageService implements OnModuleInit {
       throw new InternalServerErrorException('Cloudflare R2 is not configured');
     }
 
-    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+    // await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
+    await this.client.send(
+      new ListObjectsV2Command({
+        Bucket: this.bucket,
+        MaxKeys: 1,
+      }),
+    );
   }
 
   async upload(file: Express.Multer.File, filename: string): Promise<{ url: string }> {

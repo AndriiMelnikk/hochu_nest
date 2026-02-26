@@ -23,7 +23,7 @@ import { BlogModule } from './modules/blog/blog.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
-// import { UploadModule } from './modules/upload/upload.module';
+import { UploadModule } from './modules/upload/upload.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { XpModule } from './modules/xp/xp.module';
 import { CategoriesModule } from './modules/categories/categories.module';
@@ -59,7 +59,7 @@ import { LocationsModule } from './modules/locations/locations.module';
     NotificationsModule,
     CategoriesModule,
     LocationsModule,
-    // UploadModule,
+    UploadModule,
     AdminModule,
   ],
   controllers: [AppController],
