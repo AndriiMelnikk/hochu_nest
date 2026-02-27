@@ -63,7 +63,14 @@ export class UploadService {
     const filename = `${uniqueSuffix}.${fileExtension}`;
 
     // Determine folder structure based on type and userId
-    const folder = `${type}s/${userId}`;
+    let folder = `${type}s/${userId}`;
+
+    if (type === UploadType.POST) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      folder = `${type}s/${year}/${month}/${userId}`;
+    }
 
     const { url, key } = await this.r2StorageService.upload(file, filename, folder);
 

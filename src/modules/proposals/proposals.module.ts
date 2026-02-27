@@ -9,6 +9,7 @@ import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { RequestsModule } from '../requests/requests.module';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { RequestsModule } from '../requests/requests.module';
     AchievementsModule,
     RequestsModule,
     NotificationsModule,
+    UploadModule,
   ],
   controllers: [ProposalsController],
   providers: [ProposalsService],

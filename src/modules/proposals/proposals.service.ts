@@ -16,6 +16,7 @@ import { UpdateProposalDto } from './dto/update-proposal.dto';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { UploadService } from '../upload/upload.service';
 import { NotificationType } from '../../database/schemas/notification.schema';
 import { ProposalRejectionReason } from './proposals.constants';
 import { GetProposalsByRequestDto } from './dto/get-proposals-by-request.dto';
@@ -31,6 +32,7 @@ export class ProposalsService {
     private achievementsService: AchievementsService,
     private notificationsService: NotificationsService,
     private readonly i18n: I18nService,
+    private uploadService: UploadService,
   ) {}
 
   async create(requestId: string, createProposalDto: CreateProposalDto, sellerProfileId: string) {
@@ -91,6 +93,10 @@ export class ProposalsService {
     });
 
     await proposal.save();
+
+    if (createProposalDto.images && createProposalDto.images.length > 0) {
+      await this.uploadService.confirmUploads(createProposalDto.images, proposal._id.toString());
+    }
 
     await this.requestModel
       .updateOne({ _id: requestId }, { $inc: { proposalsCount: 1, pendingProposalsCount: 1 } })
@@ -334,6 +340,10 @@ export class ProposalsService {
 
     Object.assign(proposal, updateProposalDto);
     await proposal.save();
+
+    if (updateProposalDto.images && updateProposalDto.images.length > 0) {
+      await this.uploadService.confirmUploads(updateProposalDto.images, proposal._id.toString());
+    }
 
     return proposal;
   }
