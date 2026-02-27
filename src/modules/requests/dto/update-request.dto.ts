@@ -34,7 +34,6 @@ export class UpdateRequestDto {
   @ApiProperty({ required: false })
   @IsNumber()
   @IsOptional()
-  @Min(0)
   budgetMin?: number;
 
   @ApiProperty({ required: false })

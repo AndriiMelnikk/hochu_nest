@@ -35,20 +35,20 @@ export class CreateRequestDto {
   @IsNotEmpty()
   category: string;
 
-  @ApiProperty({ example: 1000, description: 'Minimum budget' })
+  @ApiProperty({ example: 1000, description: 'Minimum budget', required: false })
+  @IsOptional()
   @IsNumber()
-  @Min(0)
-  budgetMin: number;
+  budgetMin?: number;
 
   @ApiProperty({ example: 5000, description: 'Maximum budget' })
   @IsNumber()
   @Min(0)
   budgetMax: number;
 
-  @ApiProperty({ example: 'Kyiv', description: 'Location' })
+  @ApiProperty({ example: 'Kyiv', description: 'Location', required: false })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  location: string;
+  location?: string;
 
   @ApiProperty({
     example: 1,

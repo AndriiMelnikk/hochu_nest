@@ -76,7 +76,7 @@ export class RequestsService {
         this.i18n.t('common.auth.unauthorized', { lang: I18nContext.current()?.lang }),
       );
     }
-    if (createRequestDto.budgetMax < createRequestDto.budgetMin) {
+    if (createRequestDto.budgetMax < (createRequestDto.budgetMin || 0)) {
       throw new BadRequestException(
         this.i18n.t('common.requests.budget_min_max_error', { lang: I18nContext.current()?.lang }),
       );

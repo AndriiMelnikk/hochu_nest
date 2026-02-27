@@ -30,13 +30,13 @@ export class Request {
   @Prop({ type: Types.ObjectId, ref: 'Category', nullable: true })
   category: Types.ObjectId;
 
-  @Prop({ type: Number, required: true, min: 0 })
+  @Prop({ type: Number, required: false })
   budgetMin: number;
 
   @Prop({ type: Number, required: true, min: 0 })
   budgetMax: number;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   location: string;
 
   @Prop({ type: Number, required: true })
