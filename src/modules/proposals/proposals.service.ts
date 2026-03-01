@@ -119,7 +119,7 @@ export class ProposalsService {
     return proposal.populate([
       {
         path: 'sellerId',
-        select: 'name avatar rating location memberSince completedDeals xp',
+        select: 'name lastName avatar rating location memberSince completedDeals xp',
       },
       {
         path: 'requestId',
@@ -147,7 +147,7 @@ export class ProposalsService {
       .find(query)
       .populate({
         path: 'sellerId',
-        select: 'name avatar rating location memberSince completedDeals xp',
+        select: 'name lastName avatar rating location memberSince completedDeals xp',
       })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -221,7 +221,7 @@ export class ProposalsService {
       .findById(id)
       .populate({
         path: 'sellerId',
-        select: 'name avatar rating location memberSince completedDeals xp',
+        select: 'name lastName avatar rating location memberSince completedDeals xp',
       })
       .populate('requestId')
       .exec();

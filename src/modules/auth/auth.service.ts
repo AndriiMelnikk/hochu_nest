@@ -33,7 +33,7 @@ export class AuthService {
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    const { email, password, name, type } = registerDto;
+    const { email, password, name, lastName, type } = registerDto;
 
     const existingAccount = await this.accountModel.findOne({ email }).exec();
     if (existingAccount) {
@@ -56,6 +56,7 @@ export class AuthService {
     const profile = await this.profileModel.create({
       accountId: account._id,
       name,
+      lastName,
       type: profileType,
       rating: 0,
       reviewsCount: 0,
@@ -79,6 +80,8 @@ export class AuthService {
       account: this.sanitizeAccount(account as unknown as AccountDocument),
       profiles: profiles.map((p) => ({
         id: (p as { _id: Types.ObjectId })._id.toString(),
+        name: (p as { name: string }).name,
+        lastName: (p as { lastName?: string }).lastName,
         type: (p as { type: string }).type,
         rating: (p as { rating: number }).rating,
         xp: (p as { xp: number }).xp,
@@ -155,6 +158,8 @@ export class AuthService {
       account: this.sanitizeAccount(account as unknown as AccountDocument),
       profiles: profiles.map((p) => ({
         id: (p as { _id: Types.ObjectId })._id.toString(),
+        name: (p as { name: string }).name,
+        lastName: (p as { lastName?: string }).lastName,
         type: (p as { type: string }).type,
         rating: (p as { rating: number }).rating,
         xp: (p as { xp: number }).xp,

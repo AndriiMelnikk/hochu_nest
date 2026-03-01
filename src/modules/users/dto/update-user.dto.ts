@@ -8,6 +8,12 @@ export class UpdateUserDto {
   @MaxLength(255)
   name?: string;
 
+  @ApiProperty({ example: 'Smith', required: false })
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  lastName?: string;
+
   @ApiProperty({ example: 'https://example.com/avatar.jpg', required: false })
   @IsString()
   @IsOptional()

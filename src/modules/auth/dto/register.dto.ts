@@ -18,6 +18,12 @@ export class RegisterDto {
   @MaxLength(255)
   name: string;
 
+  @ApiPropertyOptional({ example: 'Smith', description: 'User lastName' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  lastName?: string;
+
   @ApiProperty({ example: 'user@example.com', description: 'User email' })
   @IsEmail()
   @IsNotEmpty()

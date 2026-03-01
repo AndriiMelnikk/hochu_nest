@@ -32,6 +32,7 @@ type PopulatedBuyer = {
   completedDeals?: number;
   xp?: number;
   name: string;
+  lastName?: string;
   avatar?: string;
 };
 
@@ -180,7 +181,7 @@ export class RequestsService {
       .populate([
         {
           path: 'buyerId',
-          select: 'rating location memberSince completedDeals xp name avatar',
+          select: 'rating location memberSince completedDeals xp name lastName avatar',
         },
         { path: 'category' },
       ])
@@ -210,7 +211,7 @@ export class RequestsService {
       .populate([
         {
           path: 'buyerId',
-          select: 'rating location memberSince completedDeals xp name avatar',
+          select: 'rating location memberSince completedDeals xp name lastName avatar',
         },
         { path: 'category' },
       ])

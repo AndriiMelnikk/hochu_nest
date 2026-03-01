@@ -121,6 +121,7 @@ export class UsersService {
     }
 
     if (updateUserDto.name !== undefined) currentProfile.name = updateUserDto.name;
+    if (updateUserDto.lastName !== undefined) currentProfile.lastName = updateUserDto.lastName;
 
     // Update avatar on the specific profile
     if (updateUserDto.avatar !== undefined) currentProfile.avatar = updateUserDto.avatar;
@@ -129,31 +130,17 @@ export class UsersService {
       const profiles = await this.profileModel.find({ accountId: account._id }).exec();
       for (const p of profiles) {
         p.location = updateUserDto.location;
-        if (updateUserDto.name !== undefined) p.name = updateUserDto.name; // Update name on all profiles? Or just one?
-        // Usually name is per profile if it's "Profile Name" but usually "User Name" is shared.
-        // If we moved it to profile, maybe it should be synced or maybe specific.
-        // User asked "field name also needs to be moved from account to profile".
-        // Assuming it acts like location/avatar which are per profile (or synced if desired).
-        // Let's assume we update the current profile's name.
-        // But if the user expects "name" to be their "identity" across profiles, we might want to sync.
-        // The original code for location synced it across all profiles:
-        /*
-        if (updateUserDto.location !== undefined) {
-            const profiles = await this.profileModel.find({ accountId: account._id }).exec();
-            for (const p of profiles) {
-                p.location = updateUserDto.location;
-                await p.save();
-            }
-        }
-        */
-        // Let's stick to updating the current profile first, and maybe sync if logic dictates.
-        // If I look at the previous `updateMe` logic for location, it iterates all profiles.
-        // I will do the same for name if it's updated.
+        if (updateUserDto.name !== undefined) p.name = updateUserDto.name;
+        if (updateUserDto.lastName !== undefined) p.lastName = updateUserDto.lastName;
         await p.save();
       }
     } else {
-      // If location wasn't updated, we still need to save the profile if avatar or name changed
-      if (updateUserDto.avatar !== undefined || updateUserDto.name !== undefined) {
+      // If location wasn't updated, we still need to save the profile if avatar, name or lastName changed
+      if (
+        updateUserDto.avatar !== undefined ||
+        updateUserDto.name !== undefined ||
+        updateUserDto.lastName !== undefined
+      ) {
         await currentProfile.save();
       }
     }
@@ -271,6 +258,7 @@ export class UsersService {
         completedDeals: p.completedDeals,
         accountId: p.accountId,
         name: p.name,
+        lastName: p.lastName,
         avatar: p.avatar,
       })),
       count,
@@ -308,7 +296,7 @@ export class UsersService {
   async getProfileReviews(profileId: string) {
     const results = await this.reviewModel
       .find({ targetProfileId: new Types.ObjectId(profileId) })
-      .populate({ path: 'authorProfileId', select: 'avatar name' })
+      .populate({ path: 'authorProfileId', select: 'avatar name lastName' })
       .sort({ createdAt: -1 })
       .exec();
     const count = await this.reviewModel

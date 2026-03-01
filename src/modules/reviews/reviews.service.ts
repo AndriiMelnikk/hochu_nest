@@ -137,10 +137,10 @@ export class ReviewsService {
 
     const results = await this.reviewModel
       .find(query)
-      .populate({ path: 'authorProfileId', select: 'avatar name' })
+      .populate({ path: 'authorProfileId', select: 'avatar name lastName' })
       .populate({
         path: 'targetProfileId',
-        select: 'rating type avatar name',
+        select: 'rating type avatar name lastName',
       })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -163,10 +163,10 @@ export class ReviewsService {
   async findOne(id: string) {
     const review = await this.reviewModel
       .findById(id)
-      .populate({ path: 'authorProfileId', select: 'avatar name' })
+      .populate({ path: 'authorProfileId', select: 'avatar name lastName' })
       .populate({
         path: 'targetProfileId',
-        select: 'rating type avatar name',
+        select: 'rating type avatar name lastName',
       })
       .exec();
 

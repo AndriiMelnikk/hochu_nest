@@ -72,7 +72,11 @@ export class AdminService {
     const skip = ((page || 1) - 1) * (pageSize || 20);
     const results = await this.proposalModel
       .find({ status: ProposalStatus.PENDING })
-      .populate({ path: 'sellerId', populate: { path: 'accountId', select: 'name email' } })
+      .populate({
+        path: 'sellerId',
+        select: 'name lastName avatar',
+        populate: { path: 'accountId', select: 'email' },
+      })
       .populate('requestId', 'title')
       .sort({ createdAt: -1 })
       .skip(skip)

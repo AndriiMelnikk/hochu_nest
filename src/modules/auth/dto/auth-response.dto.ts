@@ -5,6 +5,12 @@ export class ProfileSummaryDto {
   @ApiProperty()
   id: string;
 
+  @ApiProperty()
+  name: string;
+
+  @ApiProperty({ required: false })
+  lastName?: string;
+
   @ApiProperty({ enum: ['buyer', 'seller'] })
   type: string;
 

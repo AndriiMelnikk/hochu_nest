@@ -43,6 +43,9 @@ export class Profile {
   @Prop({ required: true, trim: true })
   name: string;
 
+  @Prop({ default: null, trim: true })
+  lastName: string;
+
   @Prop({ default: null })
   avatar: string;
 
