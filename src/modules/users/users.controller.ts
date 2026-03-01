@@ -32,13 +32,27 @@ export class UsersController {
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update current account (name, avatar, location)' })
-  @ApiResponse({ status: 200, description: 'Account updated' })
+  @ApiOperation({ summary: 'Update current active profile (name, avatar, location)' })
+  @ApiResponse({ status: 200, description: 'Profile updated' })
   async updateMe(
     @CurrentUser() user: { id: string; profileId: string },
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.updateMe(user.id, user.profileId, updateUserDto);
+  }
+
+  @Patch('profile/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update specific profile by ID (name, avatar, location)' })
+  @ApiParam({ name: 'id', description: 'Profile ID to update' })
+  @ApiResponse({ status: 200, description: 'Profile updated' })
+  async updateProfile(
+    @CurrentUser() user: { id: string },
+    @Param('id', ParseObjectIdPipe) profileId: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersService.updateMe(user.id, profileId, updateUserDto);
   }
 
   @Get(':id')

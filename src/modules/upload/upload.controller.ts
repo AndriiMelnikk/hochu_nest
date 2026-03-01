@@ -7,6 +7,7 @@ import {
   Req,
   Delete,
   Query,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Request } from 'express';
@@ -23,13 +24,17 @@ import { UploadService } from './upload.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { UploadType } from './dto/upload.dto';
 import { RequestUser } from '../auth/strategies/jwt.strategy';
+import { UsersService } from '../users/users.service';
 
 @ApiTags('Upload')
 @Controller('upload')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly uploadService: UploadService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
@@ -43,6 +48,11 @@ export class UploadController {
           type: 'string',
           format: 'binary',
         },
+        profileId: {
+          type: 'string',
+          description:
+            'Optional profile ID to update avatar for. Defaults to current active profile.',
+        },
       },
       required: ['file'],
     },
@@ -52,9 +62,32 @@ export class UploadController {
   async uploadAvatar(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request & { user: RequestUser },
+    @Body('profileId') profileId?: string,
   ) {
     const userId = req.user?.id;
-    return this.uploadService.uploadFile(file, userId, UploadType.AVATAR);
+    const targetProfileId = profileId || req.user?.profileId;
+
+    // Get current profile to check for existing avatar
+    const { profile } = await this.usersService.findMe(userId, targetProfileId);
+    const oldAvatarUrl = profile.avatar;
+
+    const result = await this.uploadService.uploadFile(file, userId, UploadType.AVATAR);
+
+    // Update profile avatar link
+    await this.usersService.updateMe(userId, targetProfileId, { avatar: result.url });
+    await this.uploadService.confirmUploads([result.url], targetProfileId);
+
+    // Delete old avatar if it existed
+    if (oldAvatarUrl) {
+      try {
+        await this.uploadService.deleteByUrl(oldAvatarUrl);
+      } catch (error) {
+        // We don't want to fail the request if deletion of the old file fails
+        console.error(`Failed to delete old avatar ${oldAvatarUrl}:`, error);
+      }
+    }
+
+    return result;
   }
 
   @Post('post')
