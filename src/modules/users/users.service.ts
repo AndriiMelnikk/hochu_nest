@@ -318,7 +318,13 @@ export class UsersService {
     updateContactsDto: UpdateContactsDto,
     userId: string,
   ) {
-    const profile = await this.profileModel.findOne({ _id: profileId, accountId: userId }).exec();
+    const profile = await this.profileModel
+      .findOne({
+        _id: new Types.ObjectId(profileId),
+        accountId: new Types.ObjectId(userId),
+      })
+      .exec();
+
     if (!profile) {
       throw new NotFoundException('Profile not found or does not belong to your account');
     }
