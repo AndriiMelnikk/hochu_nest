@@ -101,6 +101,82 @@ export class RequestsService {
     return request;
   }
 
+  // async findFeed(
+  //   dto: GetRequestsDto,
+  //   userProfileId: string,
+  // ): Promise<PaginationResult<FormattedRequest>> {
+  //   const profile = await this.profileModel.findById(userProfileId).exec();
+  //   if (!profile) {
+  //     throw new NotFoundException(
+  //       this.i18n.t('common.profile.not_found', { lang: I18nContext.current()?.lang }),
+  //     );
+  //   }
+
+  //   const feedDto = { ...dto };
+  //   if (!feedDto.location && profile.location) {
+  //     feedDto.location = profile.location;
+  //   }
+
+  //   return this.findAll(feedDto, userProfileId);
+  // }
+
+  async findAllByProfileId(
+    dto: GetRequestsDto,
+    profileId: string,
+  ): Promise<PaginationResult<FormattedRequest>> {
+    const page = PaginationUtil.normalizePage(dto.page);
+    const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
+    const skip = PaginationUtil.getSkip(page, pageSize);
+
+    const query: FilterQuery<RequestDocument> = {
+      buyerId: new Types.ObjectId(profileId),
+    };
+
+    if (dto.status) {
+      query.status = dto.status;
+    }
+
+    if (dto.search) {
+      query.$or = [
+        { title: { $regex: dto.search, $options: 'i' } },
+        { description: { $regex: dto.search, $options: 'i' } },
+      ];
+    }
+
+    const sortObj = SortUtil.buildSortObject(dto.sort);
+    const sort = (sortObj && typeof sortObj === 'object'
+      ? sortObj
+      : { createdAt: -1 }) as unknown as Record<string, 1 | -1>;
+
+    const results = (await this.requestModel
+      .find(query)
+      .populate([
+        {
+          path: 'buyerId',
+          select: 'rating location memberSince completedDeals xp name lastName avatar',
+        },
+        { path: 'category' },
+      ])
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec()) as unknown as LeanRequest[];
+
+    const count = await this.requestModel.countDocuments(query).exec();
+
+    const formattedResults = results.map((request) => this.formatLeanRequest(request));
+
+    return PaginationUtil.createPaginationResult(
+      formattedResults,
+      count,
+      page,
+      pageSize,
+      `/api/requests/by-profile/${profileId}`,
+      dto,
+    );
+  }
+
   async findAll(dto: GetRequestsDto): Promise<PaginationResult<FormattedRequest>> {
     const page = PaginationUtil.normalizePage(dto.page);
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);

@@ -41,6 +41,19 @@ export class RequestsController {
     return this.requestsService.create(createRequestDto, user.profileId);
   }
 
+  @Get('feed/:profileId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get personalized requests feed by profile ID' })
+  @ApiParam({ name: 'profileId', description: 'User profile ID' })
+  @ApiResponse({ status: 200, description: 'List of personalized requests' })
+  async findAllByProfileId(
+    @Param('profileId', ParseObjectIdPipe) profileId: string,
+    @Query() query: GetRequestsDto,
+  ): Promise<PaginationResult<FormattedRequest>> {
+    return this.requestsService.findAllByProfileId(query, profileId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all requests' })
   @ApiResponse({ status: 200, description: 'List of requests' })
