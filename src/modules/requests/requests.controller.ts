@@ -115,7 +115,6 @@ export class RequestsController {
   }
 
   @Get('proposals/:profileId')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get requests with proposals by profile ID' })
   @ApiParam({ name: 'profileId', description: 'User profile ID for proposals' })

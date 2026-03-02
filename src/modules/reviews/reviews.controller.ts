@@ -5,6 +5,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import { GetReviewsQueryDto } from './dto/get-reviews-query.dto';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -24,21 +25,15 @@ export class ReviewsController {
   @Get()
   @ApiOperation({ summary: 'Get all reviews' })
   @ApiResponse({ status: 200, description: 'List of reviews' })
-  async findAll(
-    @Query('targetProfileId') targetProfileId?: string,
-    @Query('requestId') requestId?: string,
-    @Query('proposalId') proposalId?: string,
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
-    return this.reviewsService.findAll(targetProfileId, requestId, proposalId, page, pageSize);
+  async findAll(@Query() query: GetReviewsQueryDto) {
+    return await this.reviewsService.findAll(query);
   }
 
   @Get('stats/:targetProfileId')
   @ApiOperation({ summary: 'Get review stats for a profile' })
   @ApiResponse({ status: 200, description: 'Review stats' })
   async getStats(@Param('targetProfileId', ParseObjectIdPipe) targetProfileId: string) {
-    return this.reviewsService.getStats(targetProfileId);
+    return await this.reviewsService.getStats(targetProfileId);
   }
 
   @Get(':id')
@@ -46,6 +41,6 @@ export class ReviewsController {
   @ApiResponse({ status: 200, description: 'Review found' })
   @ApiResponse({ status: 404, description: 'Review not found' })
   async findOne(@Param('id', ParseObjectIdPipe) id: string) {
-    return this.reviewsService.findOne(id);
+    return await this.reviewsService.findOne(id);
   }
 }

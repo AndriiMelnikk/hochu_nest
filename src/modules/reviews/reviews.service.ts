@@ -11,6 +11,7 @@ import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schem
 import { Request, RequestDocument } from '../../database/schemas/request.schema';
 import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { GetReviewsQueryDto } from './dto/get-reviews-query.dto';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -113,13 +114,8 @@ export class ReviewsService {
     return review;
   }
 
-  async findAll(
-    targetProfileId?: string,
-    requestId?: string,
-    proposalId?: string,
-    page?: number,
-    pageSize?: number,
-  ) {
+  async findAll(queryDto: GetReviewsQueryDto) {
+    const { targetProfileId, authorProfileId, requestId, proposalId, page, pageSize } = queryDto;
     const normalizedPage = PaginationUtil.normalizePage(page);
     const normalizedPageSize = PaginationUtil.normalizePageSize(pageSize);
     const skip = PaginationUtil.getSkip(normalizedPage, normalizedPageSize);
@@ -127,6 +123,9 @@ export class ReviewsService {
     const query: Record<string, unknown> = {};
     if (targetProfileId) {
       query.targetProfileId = new Types.ObjectId(targetProfileId);
+    }
+    if (authorProfileId) {
+      query.authorProfileId = new Types.ObjectId(authorProfileId);
     }
     if (requestId) {
       query.requestId = new Types.ObjectId(requestId);
@@ -142,6 +141,18 @@ export class ReviewsService {
         path: 'targetProfileId',
         select: 'rating type avatar name lastName',
       })
+      .populate({
+        path: 'requestId',
+        select: '_id title',
+      })
+      .populate({
+        path: 'proposalId',
+        select: 'requestId',
+        populate: {
+          path: 'requestId',
+          select: '_id title',
+        },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(normalizedPageSize)
@@ -156,7 +167,7 @@ export class ReviewsService {
       normalizedPage,
       normalizedPageSize,
       '/api/reviews',
-      { targetProfileId, requestId, proposalId },
+      { targetProfileId, authorProfileId, requestId, proposalId },
     );
   }
 
@@ -167,6 +178,18 @@ export class ReviewsService {
       .populate({
         path: 'targetProfileId',
         select: 'rating type avatar name lastName',
+      })
+      .populate({
+        path: 'requestId',
+        select: '_id title',
+      })
+      .populate({
+        path: 'proposalId',
+        select: 'requestId',
+        populate: {
+          path: 'requestId',
+          select: '_id title',
+        },
       })
       .exec();
 
