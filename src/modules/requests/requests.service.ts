@@ -581,4 +581,75 @@ export class RequestsService {
   async incrementProposalsCount(requestId: string) {
     await this.requestModel.updateOne({ _id: requestId }, { $inc: { proposalsCount: 1 } }).exec();
   }
+
+  async findAllWithProposalsByProfileId(
+    dto: GetRequestsDto,
+    profileId: string,
+  ): Promise<PaginationResult<FormattedRequest>> {
+    const page = PaginationUtil.normalizePage(dto.page);
+    const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
+    const skip = PaginationUtil.getSkip(page, pageSize);
+
+    // 1. Find all proposals by the given profileId
+    const proposals = await this.proposalModel
+      .find({ sellerId: new Types.ObjectId(profileId) })
+      .select('requestId')
+      .lean()
+      .exec();
+
+    // 2. Extract unique request IDs
+    const requestIds = [...new Set(proposals.map((p) => p.requestId.toString()))].map(
+      (id) => new Types.ObjectId(id),
+    );
+
+    // 3. Build the query for requests
+    const query: FilterQuery<RequestDocument> = {
+      _id: { $in: requestIds },
+    };
+
+    if (dto.status) {
+      query.status = dto.status;
+    }
+
+    if (dto.search) {
+      query.$or = [
+        { title: { $regex: dto.search, $options: 'i' } },
+        { description: { $regex: dto.search, $options: 'i' } },
+      ];
+    }
+
+    // 4. Sort and paginate
+    const sortObj = SortUtil.buildSortObject(dto.sort);
+    const sort = (sortObj && typeof sortObj === 'object'
+      ? sortObj
+      : { createdAt: -1 }) as unknown as Record<string, 1 | -1>;
+
+    const results = (await this.requestModel
+      .find(query)
+      .populate([
+        {
+          path: 'buyerId',
+          select: 'rating location memberSince completedDeals xp name lastName avatar',
+        },
+        { path: 'category' },
+      ])
+      .sort(sort)
+      .skip(skip)
+      .limit(pageSize)
+      .lean()
+      .exec()) as unknown as LeanRequest[];
+
+    const count = await this.requestModel.countDocuments(query).exec();
+
+    const formattedResults = results.map((request) => this.formatLeanRequest(request));
+
+    return PaginationUtil.createPaginationResult(
+      formattedResults,
+      count,
+      page,
+      pageSize,
+      `/api/requests/proposals/${profileId}`,
+      dto,
+    );
+  }
 }

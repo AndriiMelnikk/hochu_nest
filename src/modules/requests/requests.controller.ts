@@ -113,4 +113,17 @@ export class RequestsController {
   ): Promise<{ success: boolean }> {
     return this.requestsService.remove(id, user.profileId);
   }
+
+  @Get('proposals/:profileId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get requests with proposals by profile ID' })
+  @ApiParam({ name: 'profileId', description: 'User profile ID for proposals' })
+  @ApiResponse({ status: 200, description: 'List of requests with proposals' })
+  async findAllWithProposalsByProfileId(
+    @Param('profileId', ParseObjectIdPipe) profileId: string,
+    @Query() query: GetRequestsDto,
+  ): Promise<PaginationResult<FormattedRequest>> {
+    return this.requestsService.findAllWithProposalsByProfileId(query, profileId);
+  }
 }
