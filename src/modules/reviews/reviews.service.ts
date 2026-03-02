@@ -177,6 +177,41 @@ export class ReviewsService {
     return review;
   }
 
+  async getStats(targetProfileId: string) {
+    const objectId = new Types.ObjectId(targetProfileId);
+
+    const stats = await this.reviewModel.aggregate([
+      { $match: { targetProfileId: objectId } },
+      {
+        $group: {
+          _id: '$rating',
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const result = {
+      total: 0,
+      stars: {
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+      },
+    };
+
+    for (const stat of stats as { _id: number; count: number }[]) {
+      const rating = stat._id;
+      if (rating >= 1 && rating <= 5) {
+        result.stars[rating as 1 | 2 | 3 | 4 | 5] = stat.count;
+        result.total += stat.count;
+      }
+    }
+
+    return result;
+  }
+
   private async updateProfileRating(profileId: string) {
     const reviews = await this.reviewModel
       .find({ targetProfileId: new Types.ObjectId(profileId) })

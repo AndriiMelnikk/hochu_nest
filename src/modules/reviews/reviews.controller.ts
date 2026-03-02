@@ -34,6 +34,13 @@ export class ReviewsController {
     return this.reviewsService.findAll(targetProfileId, requestId, proposalId, page, pageSize);
   }
 
+  @Get('stats/:targetProfileId')
+  @ApiOperation({ summary: 'Get review stats for a profile' })
+  @ApiResponse({ status: 200, description: 'Review stats' })
+  async getStats(@Param('targetProfileId', ParseObjectIdPipe) targetProfileId: string) {
+    return this.reviewsService.getStats(targetProfileId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get review by ID' })
   @ApiResponse({ status: 200, description: 'Review found' })
