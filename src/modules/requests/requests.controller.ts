@@ -42,7 +42,6 @@ export class RequestsController {
   }
 
   @Get('feed/:profileId')
-  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get personalized requests feed by profile ID' })
   @ApiParam({ name: 'profileId', description: 'User profile ID' })
