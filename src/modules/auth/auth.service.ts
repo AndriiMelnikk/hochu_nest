@@ -169,7 +169,16 @@ export class AuthService {
     };
   }
 
-  async switchProfile(accountId: string, profileId: string): Promise<TokenResponseDto> {
+  async switchProfile(accountId: string, profileId: string): Promise<AuthResponseDto> {
+    const account = await this.accountModel.findById(accountId).exec();
+    if (!account) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_not_found', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
     const profile = await this.profileModel
       .findOne({ _id: new Types.ObjectId(profileId), accountId: new Types.ObjectId(accountId) })
       .exec();
@@ -180,10 +189,28 @@ export class AuthService {
         }),
       );
     }
-    return this.generateTokens(accountId, profileId).then((tokens) => ({
+
+    const tokens = await this.generateTokens(accountId, profileId);
+    const profiles = await this.profileModel
+      .find({ accountId: account._id })
+      .lean<Profile[]>()
+      .exec();
+
+    return {
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
-    }));
+      account: this.sanitizeAccount(account as unknown as AccountDocument),
+      profiles: profiles.map((p) => ({
+        id: (p as { _id: Types.ObjectId })._id.toString(),
+        name: (p as { name: string }).name,
+        lastName: (p as { lastName?: string }).lastName,
+        type: (p as { type: string }).type,
+        rating: (p as { rating: number }).rating,
+        xp: (p as { xp: number }).xp,
+        completedDeals: (p as { completedDeals: number }).completedDeals,
+      })),
+      currentProfileId: profileId,
+    };
   }
 
   async refreshToken(refreshToken: string): Promise<TokenResponseDto> {

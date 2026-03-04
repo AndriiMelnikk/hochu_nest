@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SwitchProfileDto } from './dto/switch-profile.dto';
+import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -39,7 +40,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Switch active profile and get new tokens' })
   @ApiBody({ type: SwitchProfileDto })
-  @ApiResponse({ status: 200, description: 'New tokens with selected profile' })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'New tokens and account state with selected profile',
+  })
   @ApiResponse({ status: 400, description: 'Profile not found or not owned' })
   async switchProfile(@CurrentUser() user: { id: string }, @Body() body: SwitchProfileDto) {
     return this.authService.switchProfile(user.id, body.profileId);

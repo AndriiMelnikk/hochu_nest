@@ -1,7 +1,15 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Patch, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateContactsDto } from './dto/update-contacts.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -19,6 +27,29 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Account and profile' })
   async getMe(@CurrentUser() user: { id: string; profileId: string }) {
     return this.usersService.findMe(user.id, user.profileId);
+  }
+
+  @Get('me/profiles')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all profiles associated with the current account' })
+  @ApiResponse({ status: 200, description: 'List of profiles' })
+  async getMeProfiles(@CurrentUser() user: { id: string }) {
+    return await this.usersService.findProfilesByAccountId(user.id);
+  }
+
+  @Post('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create a new profile for the current account' })
+  @ApiBody({ type: CreateProfileDto })
+  @ApiResponse({ status: 201, description: 'Profile created' })
+  @ApiResponse({ status: 409, description: 'Profile of this type already exists' })
+  async createProfile(
+    @CurrentUser() user: { id: string },
+    @Body() createProfileDto: CreateProfileDto,
+  ) {
+    return await this.usersService.createProfile(user.id, createProfileDto);
   }
 
   @Get('profile/:id')

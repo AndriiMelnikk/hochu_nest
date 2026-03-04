@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Account, AccountDocument } from '../../database/schemas/account.schema';
 import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateProfileDto } from './dto/create-profile.dto';
 import { GetUsersDto } from './dto/get-users.dto';
 import { PaginationUtil } from '../../common/utils/pagination.util';
 import { AchievementsService } from '../achievements/achievements.service';
@@ -13,7 +19,6 @@ import { Review, ReviewDocument } from '../../database/schemas/review.schema';
 import { ContactChannel } from '../../database/enums/contact-channel.enum';
 import { ALLOWED_CONTACTS } from '../../database/constants/profile-contacts.constant';
 import { UpdateContactsDto } from './dto/update-contacts.dto';
-import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UsersService {
@@ -104,6 +109,43 @@ export class UsersService {
       throw new NotFoundException('Profile not found');
     }
     return profile;
+  }
+
+  async findProfilesByAccountId(accountId: string): Promise<Profile[]> {
+    return (await this.profileModel
+      .find({ accountId: new Types.ObjectId(accountId) })
+      .lean<Profile>()
+      .exec()) as unknown as Profile[];
+  }
+
+  async createProfile(
+    accountId: string,
+    createProfileDto: CreateProfileDto,
+  ): Promise<ProfileDocument> {
+    const { type, name, lastName } = createProfileDto;
+
+    const existingProfile = await this.profileModel
+      .findOne({ accountId: new Types.ObjectId(accountId), type })
+      .exec();
+
+    if (existingProfile) {
+      throw new ConflictException(`Profile of type ${type} already exists for this account`);
+    }
+
+    const profile = await this.profileModel.create({
+      accountId: new Types.ObjectId(accountId),
+      type,
+      name,
+      lastName,
+      rating: 0,
+      reviewsCount: 0,
+      completedDeals: 0,
+      xp: 0,
+      memberSince: new Date(),
+      isVerified: false,
+    });
+
+    return profile as unknown as ProfileDocument;
   }
 
   async updateMe(accountId: string, profileId: string, updateUserDto: UpdateUserDto) {
