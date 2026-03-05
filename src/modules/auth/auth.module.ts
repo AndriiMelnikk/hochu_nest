@@ -10,9 +10,11 @@ import { Account, AccountSchema } from '../../database/schemas/account.schema';
 import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { RefreshToken, RefreshTokenSchema } from '../../database/schemas/refresh-token.schema';
 import jwtConfig from '../../config/jwt.config';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule.forFeature(jwtConfig)],

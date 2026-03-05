@@ -6,7 +6,9 @@
     "invalid_token": "Invalid or expired refresh token",
     "user_not_found": "User not found or blocked",
     "profile_not_found": "Profile not found or does not belong to your account",
-    "unauthorized": "You are not authorized"
+    "unauthorized": "You are not authorized",
+    "invalid_password": "Old password is invalid",
+    "invalid_reset_token": "Invalid or expired password reset token"
   },
   "requests": {
     "budget_min_max_error": "Maximum budget must be greater than or equal to minimum budget",

@@ -16,6 +16,12 @@ export class Account {
   @Prop({ type: Boolean, default: false })
   isAdmin: boolean;
 
+  @Prop()
+  resetPasswordToken?: string;
+
+  @Prop()
+  resetPasswordExpires?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }

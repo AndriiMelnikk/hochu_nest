@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { Account, AccountDocument } from '../../database/schemas/account.schema';
 import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { RefreshToken, RefreshTokenDocument } from '../../database/schemas/refresh-token.schema';
@@ -19,6 +21,10 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { TokenResponseDto } from './dto/token-response.dto';
 import { LogoutResponseDto } from './dto/logout-response.dto';
 import { TokenPairDto } from './dto/token-pair.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -30,6 +36,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private readonly i18n: I18nService,
+    private mailService: MailService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
@@ -301,6 +308,74 @@ export class AuthService {
         .exec();
     }
     return { success: true };
+  }
+
+  async changePassword(accountId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
+    const { oldPassword, newPassword } = changePasswordDto;
+    const account = await this.accountModel.findById(accountId).exec();
+
+    if (!account) {
+      throw new NotFoundException(
+        this.i18n.t('common.auth.user_not_found', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(oldPassword, account.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_password', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    account.password = hashedPassword;
+    await account.save();
+  }
+
+  async forgotPassword(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
+    const { email } = forgotPasswordDto;
+    const account = await this.accountModel.findOne({ email }).exec();
+
+    if (!account) {
+      // Don't reveal if user exists
+      return;
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    account.resetPasswordToken = token;
+    account.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    await account.save();
+    await this.mailService.sendPasswordResetEmail(email, token);
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
+    const { token, newPassword } = resetPasswordDto;
+    const account = await this.accountModel
+      .findOne({
+        resetPasswordToken: token,
+        resetPasswordExpires: { $gt: new Date() },
+      })
+      .exec();
+
+    if (!account) {
+      throw new BadRequestException(
+        this.i18n.t('common.auth.invalid_reset_token', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    account.password = hashedPassword;
+    account.resetPasswordToken = undefined;
+    account.resetPasswordExpires = undefined;
+
+    await account.save();
   }
 
   private async generateTokens(

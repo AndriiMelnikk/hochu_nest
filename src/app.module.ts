@@ -31,11 +31,14 @@ import { LocationsModule } from './modules/locations/locations.module';
 
 import { ScheduleModule } from '@nestjs/schedule';
 
+import mailConfig from './config/mail.config';
+import { MailModule } from './modules/mail/mail.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig],
+      load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig, mailConfig],
       envFilePath: '.env',
     }),
     ScheduleModule.forRoot(),
@@ -49,6 +52,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     DatabaseModule,
     AuthModule,
+    MailModule,
     UsersModule,
     XpModule,
     AchievementsModule,
