@@ -11,9 +11,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
+  const corsOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '*';
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: corsOrigin.includes(',') ? corsOrigin.split(',') : corsOrigin,
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
 
   // Global validation pipe

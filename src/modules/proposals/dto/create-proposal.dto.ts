@@ -1,4 +1,4 @@
-import { ItemCondition } from '@database/schemas/request.schema';
+import { ItemCondition } from '../../../database/schemas/request.schema';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,

@@ -5,7 +5,7 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import { ReportTargetType } from 'src/database/schemas/report.schema';
+import { ReportTargetType } from '../../database/schemas/report.schema';
 
 @ApiTags('Reports')
 @Controller()

@@ -9,10 +9,10 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
-import { Proposal } from '@database/schemas/proposal.schema';
+import { Proposal } from '../../database/schemas/proposal.schema';
 import { ProposalRejectionReason } from './proposals.constants';
 import { GetProposalsByRequestDto } from './dto/get-proposals-by-request.dto';
-import { PaginationResult } from 'src/common/utils/pagination.util';
+import { PaginationResult } from '../../common/utils/pagination.util';
 
 @ApiTags('Proposals')
 @Controller('proposals')

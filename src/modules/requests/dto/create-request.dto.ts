@@ -11,7 +11,7 @@ import {
   ArrayMaxSize,
   IsEnum,
 } from 'class-validator';
-import { ItemCondition } from 'src/database/schemas/request.schema';
+import { ItemCondition } from '../../../database/schemas/request.schema';
 
 export class CreateRequestDto {
   @ApiProperty({ example: 'Need website design', description: 'Request title' })
