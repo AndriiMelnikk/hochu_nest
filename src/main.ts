@@ -11,12 +11,18 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
-  const corsOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '*';
+  const rawOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '*';
+  const allowedOrigins = rawOrigin.split(',').map((o) => o.trim());
+
+  Logger.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
+
   app.enableCors({
-    origin: corsOrigin.includes(',') ? corsOrigin.split(',') : corsOrigin,
+    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Global validation pipe
