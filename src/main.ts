@@ -44,9 +44,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 8080;
-  await app.listen(port);
-  Logger.log(`
+  // If we are not on Vercel, listen on the port
+  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    const port = process.env.PORT || 8080;
+    await app.listen(port);
+    Logger.log(`
 ╔═══════════════════════════════════════════════════╗
 ║                                                   ║
 ║          Hochu API Server                         ║
@@ -56,7 +58,24 @@ async function bootstrap() {
 ║                                                   ║
 ╚═══════════════════════════════════════════════════╝
       `);
-  Logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+    Logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  }
+
+  // Export for Vercel
+  await app.init();
+  const expressApp = app.getHttpAdapter().getInstance();
+  return expressApp;
 }
 
-bootstrap();
+// For local development
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  bootstrap();
+}
+
+// Export for Vercel serverless function
+export const handler = async (req: any, res: any) => {
+  const app = await bootstrap();
+  return app(req, res);
+};
+
+export default handler;
