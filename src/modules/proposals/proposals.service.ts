@@ -194,7 +194,12 @@ export class ProposalsService {
     const sellerProfile = await this.profileModel
       .findOne({ _id: sellerProfileId, accountId: new Types.ObjectId(accountId) })
       .exec();
-    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER || sellerProfile.isBlocked) {
+
+    if (!sellerProfile || sellerProfile.type !== ProfileType.SELLER) {
+      return { canPropose: false, reason: ProposalRejectionReason.NOT_SELLER };
+    }
+
+    if (sellerProfile.isBlocked) {
       return { canPropose: false, reason: ProposalRejectionReason.USER_BLOCKED };
     }
 
