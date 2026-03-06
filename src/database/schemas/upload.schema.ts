@@ -20,7 +20,7 @@ export class Upload {
   @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
   userId: Types.ObjectId;
 
-  @Prop({ required: true, enum: UploadType })
+  @Prop({ required: true, enum: UploadType, type: String })
   type: UploadType;
 
   @Prop({ required: true })

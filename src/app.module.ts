@@ -39,7 +39,7 @@ import { MailModule } from './modules/mail/mail.module';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig, mailConfig],
-      envFilePath: '.env',
+      envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
     }),
     ScheduleModule.forRoot(),
     I18nModule.forRoot({
