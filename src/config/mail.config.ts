@@ -5,5 +5,6 @@ export default registerAs('mail', () => ({
   port: parseInt(process.env.MAIL_PORT || '587', 10),
   user: process.env.MAIL_USER,
   password: process.env.MAIL_PASSWORD,
-  from: process.env.MAIL_FROM || '"No Reply" <noreply@example.com>',
+  from: process.env.MAIL_FROM || 'noreply@example.com',
+  fromName: process.env.MAIL_FROM_NAME || 'Hochu',
 }));

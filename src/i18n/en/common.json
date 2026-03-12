@@ -1,4 +1,13 @@
 {
+  "mail": {
+    "reset_password": {
+      "subject": "Password Reset Request",
+      "greeting": "Hey,",
+      "body": "You requested a password reset. Please click the link below to set a new password:",
+      "button": "Reset Password",
+      "ignore": "If you did not request this, you can safely ignore this email."
+    }
+  },
   "auth": {
     "user_exists": "User with this email already exists",
     "invalid_credentials": "Invalid credentials",

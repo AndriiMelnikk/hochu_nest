@@ -350,7 +350,8 @@ export class AuthService {
     account.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
 
     await account.save();
-    await this.mailService.sendPasswordResetEmail(email, token);
+    const lang = I18nContext.current()?.lang ?? 'uk';
+    await this.mailService.sendPasswordResetEmail(email, token, lang);
   }
 
   async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<void> {
