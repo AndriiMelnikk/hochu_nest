@@ -10,6 +10,7 @@ import jwtConfig from './config/jwt.config';
 import uploadConfig from './config/upload.config';
 import appConfig from './config/app.config';
 import novaPoshtaConfig from './config/nova-poshta.config';
+import googleConfig from './config/google.config';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -38,7 +39,15 @@ import { MailModule } from './modules/mail/mail.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, uploadConfig, appConfig, novaPoshtaConfig, mailConfig],
+      load: [
+        databaseConfig,
+        jwtConfig,
+        uploadConfig,
+        appConfig,
+        novaPoshtaConfig,
+        mailConfig,
+        googleConfig,
+      ],
       envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
     }),
     ScheduleModule.forRoot(),

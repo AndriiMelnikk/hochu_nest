@@ -10,8 +10,11 @@ export class Account {
   @Prop({ required: true, lowercase: true, trim: true })
   email: string;
 
-  @Prop({ required: true })
-  password: string;
+  @Prop({ required: false })
+  password?: string;
+
+  @Prop({ default: null })
+  googleId?: string;
 
   @Prop({ type: Boolean, default: false })
   isAdmin: boolean;

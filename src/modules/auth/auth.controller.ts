@@ -1,5 +1,23 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards, Patch } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Patch,
+  Get,
+  Req,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -9,8 +27,11 @@ import { AuthResponseDto } from './dto/auth-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleTokenDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { GoogleUser } from './strategies/google.strategy';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -35,6 +56,29 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  @ApiResponse({ status: 302, description: 'Redirects to Google consent screen' })
+  async googleAuth() {}
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiExcludeEndpoint()
+  googleAuthCallback(@Req() req: Request): Promise<AuthResponseDto> {
+    return this.authService.googleLogin(req.user as GoogleUser);
+  }
+
+  @Post('google/token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login or register with Google ID token (for mobile/SPA clients)' })
+  @ApiBody({ type: GoogleTokenDto })
+  @ApiResponse({ status: 200, type: AuthResponseDto, description: 'Logged in via Google' })
+  @ApiResponse({ status: 401, description: 'Invalid Google token' })
+  googleTokenLogin(@Body() googleTokenDto: GoogleTokenDto): Promise<AuthResponseDto> {
+    return this.authService.googleTokenLogin(googleTokenDto.token);
   }
 
   @Post('switch-profile')

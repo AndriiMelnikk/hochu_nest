@@ -12,6 +12,7 @@ import { Model, Types } from 'mongoose';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import { Account, AccountDocument } from '../../database/schemas/account.schema';
 import { Profile, ProfileDocument, ProfileType } from '../../database/schemas/profile.schema';
 import { RefreshToken, RefreshTokenDocument } from '../../database/schemas/refresh-token.schema';
@@ -25,6 +26,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from '../mail/mail.service';
+import { GoogleUser } from './strategies/google.strategy';
 
 @Injectable()
 export class AuthService {
@@ -110,6 +112,14 @@ export class AuthService {
       );
     }
 
+    if (!account.password) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_credentials', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(password, account.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException(
@@ -174,6 +184,134 @@ export class AuthService {
       })),
       currentProfileId: defaultProfileId.toString(),
     };
+  }
+
+  async googleLogin(googleUser: GoogleUser): Promise<AuthResponseDto> {
+    const { googleId, email, name, lastName, avatar } = googleUser;
+
+    let account = await this.accountModel
+      .findOne({
+        $or: [{ googleId }, { email }],
+      })
+      .exec();
+
+    if (account && !account.googleId) {
+      account.googleId = googleId;
+      await account.save();
+    }
+
+    let isNewAccount = false;
+    if (!account) {
+      isNewAccount = true;
+      account = await this.accountModel.create({
+        email,
+        googleId,
+      });
+    }
+
+    let profile = await this.profileModel
+      .findOne({ accountId: account._id, type: ProfileType.BUYER })
+      .exec();
+
+    if (!profile) {
+      profile = await this.profileModel.findOne({ accountId: account._id }).exec();
+    }
+
+    if (!profile) {
+      const now = new Date();
+      profile = await this.profileModel.create({
+        accountId: account._id,
+        name,
+        lastName,
+        avatar,
+        type: ProfileType.BUYER,
+        rating: 0,
+        reviewsCount: 0,
+        completedDeals: 0,
+        xp: 0,
+        memberSince: now,
+        isVerified: false,
+      });
+    } else if (isNewAccount || (!profile.avatar && avatar)) {
+      if (avatar && !profile.avatar) {
+        profile.avatar = avatar;
+        await profile.save();
+      }
+    }
+
+    if (profile.isBlocked && (!profile.blockedUntil || profile.blockedUntil > new Date())) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.user_blocked', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    const defaultProfileId = profile._id;
+    const tokens = await this.generateTokens(account._id.toString(), defaultProfileId.toString());
+
+    const profiles = await this.profileModel
+      .find({ accountId: account._id })
+      .lean<Profile[]>()
+      .exec();
+
+    return {
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+      account: this.sanitizeAccount(account as unknown as AccountDocument),
+      profiles: profiles.map((p) => ({
+        id: (p as { _id: Types.ObjectId })._id.toString(),
+        name: (p as { name: string }).name,
+        lastName: (p as { lastName?: string }).lastName,
+        type: (p as { type: string }).type,
+        rating: (p as { rating: number }).rating,
+        xp: (p as { xp: number }).xp,
+        completedDeals: (p as { completedDeals: number }).completedDeals,
+      })),
+      currentProfileId: defaultProfileId.toString(),
+    };
+  }
+
+  async googleTokenLogin(idToken: string): Promise<AuthResponseDto> {
+    const clientId = this.configService.get<string>('google.clientId');
+    if (!clientId) {
+      throw new Error('Google client ID is not configured');
+    }
+
+    const client = new OAuth2Client(clientId);
+    let payload;
+
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
+      payload = ticket.getPayload();
+    } catch {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_google_token', {
+          lang: I18nContext.current()?.lang,
+          defaultValue: 'Invalid Google token',
+        }),
+      );
+    }
+
+    if (!payload || !payload.email) {
+      throw new UnauthorizedException(
+        this.i18n.t('common.auth.invalid_google_token', {
+          lang: I18nContext.current()?.lang,
+          defaultValue: 'Invalid Google token',
+        }),
+      );
+    }
+
+    return this.googleLogin({
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.given_name ?? payload.name ?? '',
+      lastName: payload.family_name,
+      avatar: payload.picture,
+    });
   }
 
   async switchProfile(accountId: string, profileId: string): Promise<AuthResponseDto> {
@@ -318,6 +456,15 @@ export class AuthService {
       throw new NotFoundException(
         this.i18n.t('common.auth.user_not_found', {
           lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
+    if (!account.password) {
+      throw new BadRequestException(
+        this.i18n.t('common.auth.google_no_password', {
+          lang: I18nContext.current()?.lang,
+          defaultValue: 'Cannot change password for Google-authenticated account',
         }),
       );
     }
