@@ -2,15 +2,20 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AcceptLanguageResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
+import { ScheduleModule } from '@nestjs/schedule';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
+
+// Configs
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import uploadConfig from './config/upload.config';
 import appConfig from './config/app.config';
 import novaPoshtaConfig from './config/nova-poshta.config';
 import googleConfig from './config/google.config';
+import mailConfig from './config/mail.config';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -29,10 +34,6 @@ import { AdminModule } from './modules/admin/admin.module';
 import { XpModule } from './modules/xp/xp.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
-
-import { ScheduleModule } from '@nestjs/schedule';
-
-import mailConfig from './config/mail.config';
 import { MailModule } from './modules/mail/mail.module';
 
 @Module({

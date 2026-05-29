@@ -13,11 +13,10 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { MessagesService } from '../messages.service';
 import { CreateMessageDto } from '../dto/create-message.dto';
+import { getSocketIoCorsOptions } from '../../../config/cors.origins';
 
 @WebSocketGateway({
-  cors: {
-    origin: '*',
-  },
+  cors: getSocketIoCorsOptions(),
   namespace: '/messages',
 })
 @Injectable()

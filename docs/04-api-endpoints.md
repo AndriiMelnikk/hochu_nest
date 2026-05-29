@@ -3,7 +3,7 @@
 ## Базовий URL
 
 ```
-https://api.hochu.com/api
+https://api.shukayu.com/api
 ```
 
 або для розробки:

@@ -28,7 +28,7 @@
 ```json
 {
   "count": 150,
-  "next": "https://api.hochu.com/api/requests?page=2",
+  "next": "https://api.shukayu.com/api/requests?page=2",
   "previous": null,
   "results": [...]
 }

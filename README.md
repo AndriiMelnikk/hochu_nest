@@ -1,6 +1,6 @@
-# Hochu Backend API
+# shukayu Backend API
 
-Backend API for Hochu - a marketplace for services (freelance platform).
+Backend API for shukayu - a marketplace for services (freelance platform).
 
 ## Technology Stack
 
@@ -32,6 +32,12 @@ Required environment variables:
 - `JWT_SECRET` - JWT secret key
 - `JWT_REFRESH_SECRET` - JWT refresh token secret
 - `PORT` - Server port (default: 8080)
+
+Optional (CORS / frontend):
+
+- `CORS_ORIGIN` - Comma-separated extra allowed origins (defaults already include `http://shukayu.com.ua`, `https://shukayu.com.ua`, and `www` variants)
+- `FRONTEND_URL` - Frontend base URL for emails and CORS (production default: `https://shukayu.com.ua`)
+- `CORS_ALLOW_ALL=true` - Allow any origin (development only)
 
 ## Running the app
 

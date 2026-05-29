@@ -3,6 +3,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { getAllowedOrigins, getCorsOptions } from './config/cors.origins';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,16 +11,7 @@ async function bootstrap() {
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // CORS
-  const rawOrigin = process.env.CORS_ORIGIN || process.env.FRONTEND_URL || '*';
-  const allowedOrigins = rawOrigin.split(',').map((o) => o.trim());
-
-  app.enableCors({
-    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
-    credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
-  });
+  app.enableCors(getCorsOptions());
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -38,8 +30,8 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('Hochu API')
-    .setDescription('API documentation for Hochu marketplace')
+    .setTitle('shukayu API')
+    .setDescription('API documentation for shukayu marketplace')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -52,7 +44,7 @@ async function bootstrap() {
   Logger.log(`
 ╔═══════════════════════════════════════════════════╗
 ║                                                   ║
-║          Hochu API Server                         ║
+║          shukayu API Server                         ║
 ║                                                   ║
 ║  Server running on: http://localhost:${port}         ║
 ║  Environment: ${process.env.NODE_ENV || 'development'}                         ║
@@ -60,6 +52,7 @@ async function bootstrap() {
 ╚═══════════════════════════════════════════════════╝
   `);
   Logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  Logger.log(`CORS allowed origins: ${getAllowedOrigins().join(', ')}`);
 }
 
 bootstrap();
