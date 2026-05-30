@@ -1,4 +1,4 @@
-const DEFAULT_CORS_ORIGINS = [
+export const DEFAULT_CORS_ORIGINS = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://shukayu.com.ua',
@@ -27,37 +27,14 @@ export function getAllowedOrigins(): string[] {
   return [...new Set([...DEFAULT_CORS_ORIGINS, ...fromEnv])];
 }
 
-export type CorsOriginCallback = (
-  origin: string | undefined,
-  callback: (err: Error | null, allow?: boolean) => void,
-) => void;
-
-export function createCorsOriginValidator(
-  allowedOrigins: string[],
-): boolean | string[] | CorsOriginCallback {
-  if (allowedOrigins.includes('*')) {
-    return true;
-  }
-
-  const normalized = new Set(allowedOrigins.map(normalizeOrigin));
-
-  return (origin, callback) => {
-    if (!origin) {
-      callback(null, true);
-      return;
-    }
-    callback(null, normalized.has(normalizeOrigin(origin)));
-  };
-}
-
 export function getCorsOptions() {
   const allowedOrigins = getAllowedOrigins();
 
   return {
-    origin: createCorsOriginValidator(allowedOrigins),
+    origin: allowedOrigins.includes('*') ? true : allowedOrigins,
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization', 'X-Requested-With'],
   };
 }
 
