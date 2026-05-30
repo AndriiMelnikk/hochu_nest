@@ -6,7 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Patch,
-  Get,
+  // Get,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -19,7 +19,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
+// import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Auth')
@@ -47,11 +47,11 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @Get('google')
-  @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: 'Initiate Google OAuth login' })
-  @ApiResponse({ status: 302, description: 'Redirects to Google consent screen' })
-  async googleAuth() {}
+  // @Get('google')
+  // @UseGuards(GoogleAuthGuard)
+  // @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  // @ApiResponse({ status: 302, description: 'Redirects to Google consent screen' })
+  // async googleAuth() {}
 
   // @Get('google/callback')
   // @UseGuards(GoogleAuthGuard)

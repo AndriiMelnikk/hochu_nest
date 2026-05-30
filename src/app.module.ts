@@ -14,7 +14,7 @@ import jwtConfig from './config/jwt.config';
 import uploadConfig from './config/upload.config';
 import appConfig from './config/app.config';
 import novaPoshtaConfig from './config/nova-poshta.config';
-import googleConfig from './config/google.config';
+// import googleConfig from './config/google.config';
 import mailConfig from './config/mail.config';
 
 // Modules
@@ -47,7 +47,7 @@ import { MailModule } from './modules/mail/mail.module';
         appConfig,
         novaPoshtaConfig,
         mailConfig,
-        googleConfig,
+        // googleConfig,
       ],
       envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
     }),
