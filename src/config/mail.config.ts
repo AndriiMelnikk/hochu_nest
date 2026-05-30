@@ -7,4 +7,5 @@ export default registerAs('mail', () => ({
   password: process.env.MAIL_PASSWORD,
   from: process.env.MAIL_FROM || 'noreply@example.com',
   fromName: process.env.MAIL_FROM_NAME || 'shukayu',
+  contactRecipient: process.env.CONTACT_RECIPIENT_EMAIL || process.env.MAIL_USER,
 }));

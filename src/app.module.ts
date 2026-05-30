@@ -35,6 +35,7 @@ import { XpModule } from './modules/xp/xp.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { LocationsModule } from './modules/locations/locations.module';
 import { MailModule } from './modules/mail/mail.module';
+import { ContactModule } from './modules/contact/contact.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { MailModule } from './modules/mail/mail.module';
     DatabaseModule,
     AuthModule,
     MailModule,
+    ContactModule,
     UsersModule,
     XpModule,
     AchievementsModule,

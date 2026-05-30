@@ -6,7 +6,17 @@
       "body": "You requested a password reset. Please click the link below to set a new password:",
       "button": "Reset Password",
       "ignore": "If you did not request this, you can safely ignore this email."
+    },
+    "contact": {
+      "subject_prefix": "Contact form",
+      "name_label": "Name",
+      "email_label": "Email",
+      "subject_label": "Subject",
+      "message_label": "Message"
     }
+  },
+  "contact": {
+    "success": "Thank you! Your message has been sent."
   },
   "auth": {
     "user_exists": "User with this email already exists",

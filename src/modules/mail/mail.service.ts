@@ -34,4 +34,38 @@ export class MailService {
       },
     });
   }
+
+  async sendContactFormEmail(
+    data: { name: string; email: string; subject: string; message: string },
+    lang: string = 'uk',
+  ) {
+    const recipient = this.configService.get<string>('mail.contactRecipient');
+
+    if (!recipient) {
+      throw new Error('Contact recipient email is not configured');
+    }
+
+    const subjectPrefix = this.i18n.t('common.mail.contact.subject_prefix', { lang });
+    const nameLabel = this.i18n.t('common.mail.contact.name_label', { lang });
+    const emailLabel = this.i18n.t('common.mail.contact.email_label', { lang });
+    const subjectLabel = this.i18n.t('common.mail.contact.subject_label', { lang });
+    const messageLabel = this.i18n.t('common.mail.contact.message_label', { lang });
+
+    await this.mailerService.sendMail({
+      to: recipient,
+      replyTo: data.email,
+      subject: `${subjectPrefix}: ${data.subject}`,
+      template: 'contact-form',
+      context: {
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        nameLabel,
+        emailLabel,
+        subjectLabel,
+        messageLabel,
+      },
+    });
+  }
 }
