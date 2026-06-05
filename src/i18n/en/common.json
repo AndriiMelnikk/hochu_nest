@@ -27,7 +27,11 @@
     "profile_not_found": "Profile not found or does not belong to your account",
     "unauthorized": "You are not authorized",
     "invalid_password": "Old password is invalid",
-    "invalid_reset_token": "Invalid or expired password reset token"
+    "invalid_reset_token": "Invalid or expired password reset token",
+    "invalid_google_token": "Invalid Google token",
+    "google_email_not_verified": "Google email is not verified",
+    "google_not_configured": "Google authentication is not configured",
+    "google_no_password": "Cannot change password for Google-authenticated account"
   },
   "requests": {
     "budget_min_max_error": "Maximum budget must be greater than or equal to minimum budget",

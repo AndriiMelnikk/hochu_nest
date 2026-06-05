@@ -6,12 +6,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-// import { GoogleStrategy } from './strategies/google.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 import { Account, AccountSchema } from '../../database/schemas/account.schema';
 import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { RefreshToken, RefreshTokenSchema } from '../../database/schemas/refresh-token.schema';
 import jwtConfig from '../../config/jwt.config';
-// import googleConfig from '../../config/google.config';
+import googleConfig from '../../config/google.config';
 import { MailModule } from '../mail/mail.module';
 
 @Module({
@@ -19,7 +19,7 @@ import { MailModule } from '../mail/mail.module';
     MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
-      imports: [ConfigModule.forFeature(jwtConfig) /* , ConfigModule.forFeature(googleConfig) */],
+      imports: [ConfigModule.forFeature(jwtConfig), ConfigModule.forFeature(googleConfig)],
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('jwt.secret');
         const expiresIn = configService.get<string>('jwt.expiresIn');
@@ -43,7 +43,7 @@ import { MailModule } from '../mail/mail.module';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy /* , GoogleStrategy */],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   exports: [
     AuthService,
     JwtStrategy,

@@ -32,3 +32,4 @@ export class Account {
 export const AccountSchema = SchemaFactory.createForClass(Account);
 
 AccountSchema.index({ email: 1 }, { unique: true });
+AccountSchema.index({ googleId: 1 }, { unique: true, sparse: true });

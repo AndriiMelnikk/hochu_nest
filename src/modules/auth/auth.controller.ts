@@ -1,31 +1,40 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   HttpCode,
   HttpStatus,
   UseGuards,
   Patch,
-  // Get,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SwitchProfileDto } from './dto/switch-profile.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { GoogleTokenDto } from './dto/google-login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-// import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
+import { GoogleAuthGuard } from '../../common/guards/google-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { GoogleUser } from './strategies/google.strategy';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -47,28 +56,59 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  // @Get('google')
-  // @UseGuards(GoogleAuthGuard)
-  // @ApiOperation({ summary: 'Initiate Google OAuth login' })
-  // @ApiResponse({ status: 302, description: 'Redirects to Google consent screen' })
-  // async googleAuth() {}
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Login or register with Google ID token (Auth.js / Next.js frontend)',
+    description:
+      'Accepts Google ID token from Auth.js signIn callback (account.id_token) and returns platform JWT tokens.',
+  })
+  @ApiBody({ type: GoogleTokenDto })
+  @ApiResponse({
+    status: 200,
+    type: AuthResponseDto,
+    description: 'Logged in or registered via Google',
+  })
+  @ApiResponse({ status: 401, description: 'Invalid Google token' })
+  googleTokenLogin(@Body() googleTokenDto: GoogleTokenDto): Promise<AuthResponseDto> {
+    return this.authService.googleTokenLogin(googleTokenDto.token);
+  }
 
-  // @Get('google/callback')
-  // @UseGuards(GoogleAuthGuard)
-  // @ApiExcludeEndpoint()
-  // googleAuthCallback(@Req() req: Request): Promise<AuthResponseDto> {
-  //   return this.authService.googleLogin(req.user as GoogleUser);
-  // }
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({
+    summary: 'Initiate Google OAuth redirect flow',
+    description: 'Redirects the user to Google for authentication (alternative to ID token flow).',
+  })
+  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth' })
+  googleAuthRedirect(): void {
+    // Passport handles the redirect via GoogleAuthGuard
+  }
 
-  // @Post('google/token')
-  // @HttpCode(HttpStatus.OK)
-  // @ApiOperation({ summary: 'Login or register with Google ID token (for mobile/SPA clients)' })
-  // @ApiBody({ type: GoogleTokenDto })
-  // @ApiResponse({ status: 200, type: AuthResponseDto, description: 'Logged in via Google' })
-  // @ApiResponse({ status: 401, description: 'Invalid Google token' })
-  // googleTokenLogin(@Body() googleTokenDto: GoogleTokenDto): Promise<AuthResponseDto> {
-  //   return this.authService.googleTokenLogin(googleTokenDto.token);
-  // }
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({
+    summary: 'Google OAuth callback (redirect flow)',
+    description:
+      'Handles Google redirect, issues platform JWT tokens, and redirects to the frontend with tokens in the URL hash.',
+  })
+  @ApiResponse({ status: 302, description: 'Redirect to frontend with tokens' })
+  async googleAuthCallback(
+    @Req() req: Request & { user: GoogleUser },
+    @Res() res: Response,
+  ): Promise<void> {
+    const authResponse = await this.authService.googleLogin(req.user);
+    const frontendUrl =
+      this.configService.get<string>('app.frontendUrl') ?? 'http://localhost:3000';
+
+    const hash = new URLSearchParams({
+      access_token: authResponse.access_token,
+      refresh_token: authResponse.refresh_token,
+      currentProfileId: authResponse.currentProfileId,
+    }).toString();
+
+    res.redirect(`${frontendUrl}/auth/google/callback#${hash}`);
+  }
 
   @Post('switch-profile')
   @UseGuards(JwtAuthGuard)
