@@ -22,6 +22,6 @@ export default registerAs('google', () => {
     clientId: clientIds[0],
     clientIds,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${apiBaseUrl}/auth/google/callback`,
+    callbackUrl: process.env.GOOGLE_CALLBACK_URL || `${apiBaseUrl}/api/auth/google/callback`,
   };
 });
