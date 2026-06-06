@@ -8,6 +8,11 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+interface MulterLikeError extends Error {
+  code?: string;
+  field?: string;
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -34,6 +39,19 @@ export class HttpExceptionFilter implements ExceptionFilter {
         code = responseObj.code || exception.name;
         details = responseObj.details || null;
       }
+    } else if (this.isMulterError(exception)) {
+      status = HttpStatus.BAD_REQUEST;
+      code = exception.code || 'MULTER_ERROR';
+
+      if (exception.code === 'LIMIT_FILE_SIZE') {
+        message = 'File is too large';
+      } else if (exception.code === 'LIMIT_UNEXPECTED_FILE') {
+        message = 'Unexpected file field. Use form field name "file"';
+      } else {
+        message = exception.message;
+      }
+
+      details = { field: exception.field };
     } else if (exception instanceof Error) {
       message = exception.message;
       code = exception.name;
@@ -62,5 +80,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     );
 
     response.status(status).json(errorResponse);
+  }
+
+  private isMulterError(exception: unknown): exception is MulterLikeError {
+    return (
+      exception instanceof Error &&
+      exception.name === 'MulterError' &&
+      'code' in exception &&
+      typeof (exception as MulterLikeError).code === 'string'
+    );
   }
 }

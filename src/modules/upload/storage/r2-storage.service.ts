@@ -96,7 +96,11 @@ export class R2StorageService implements OnModuleInit {
           ContentLength: file.size,
         }),
       );
-    } catch (_error) {
+    } catch (error) {
+      this.logger.error(
+        `Failed to upload file to Cloudflare R2 (key=${key}, mime=${file.mimetype}, size=${file.size})`,
+        error,
+      );
       throw new InternalServerErrorException('Failed to upload file to Cloudflare R2');
     }
 

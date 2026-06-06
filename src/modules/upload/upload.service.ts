@@ -6,13 +6,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as path from 'path';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { R2StorageService } from './storage/r2-storage.service';
 import { UploadType } from './dto/upload.dto';
 import { Upload, UploadDocument, UploadStatus } from '../../database/schemas/upload.schema';
+import { resolveFileExtension } from './upload.multer-options';
 
 @Injectable()
 export class UploadService {
@@ -31,6 +31,8 @@ export class UploadService {
       'jpeg',
       'png',
       'webp',
+      'heic',
+      'heif',
     ];
   }
 
@@ -40,21 +42,35 @@ export class UploadService {
     type: UploadType,
   ): Promise<{ url: string; id: string }> {
     if (!file) {
-      throw new BadRequestException('No file provided');
+      throw new BadRequestException(
+        'No file provided. Ensure the form field is named "file" and Content-Type is multipart/form-data',
+      );
     }
 
     // Validate file size
     if (file.size > this.maxFileSize) {
       throw new BadRequestException(
-        `File size exceeds maximum allowed size of ${this.maxFileSize / 1024 / 1024}MB`,
+        `File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds maximum allowed size of ${this.maxFileSize / 1024 / 1024}MB`,
       );
     }
 
-    // Validate file type
-    const fileExtension = path.extname(file.originalname).toLowerCase().slice(1);
-    if (!this.allowedTypes.includes(fileExtension)) {
+    // Validate file type (extension from filename, fallback to MIME type for mobile clients)
+    const fileExtension = resolveFileExtension(file.originalname, file.mimetype);
+    if (!fileExtension) {
+      this.logger.warn(
+        `Upload rejected: unknown file type (user=${userId}, name="${file.originalname}", mime="${file.mimetype}", size=${file.size})`,
+      );
       throw new UnsupportedMediaTypeException(
-        `File type ${fileExtension} is not allowed. Allowed types: ${this.allowedTypes.join(', ')}`,
+        `Could not determine file type (name: "${file.originalname}", mime: "${file.mimetype}")`,
+      );
+    }
+
+    if (!this.allowedTypes.includes(fileExtension)) {
+      this.logger.warn(
+        `Upload rejected: disallowed type "${fileExtension}" (user=${userId}, name="${file.originalname}", mime="${file.mimetype}")`,
+      );
+      throw new UnsupportedMediaTypeException(
+        `File type "${fileExtension}" is not allowed. Allowed types: ${this.allowedTypes.join(', ')}`,
       );
     }
 

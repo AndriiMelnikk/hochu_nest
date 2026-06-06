@@ -3,7 +3,7 @@ import { registerAs } from '@nestjs/config';
 export default registerAs('upload', () => ({
   dest: process.env.UPLOAD_DEST || './uploads',
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10), // 10MB
-  allowedFileTypes: (process.env.ALLOWED_FILE_TYPES || 'jpg,jpeg,png,webp').split(','),
+  allowedFileTypes: (process.env.ALLOWED_FILE_TYPES || 'jpg,jpeg,png,webp,heic,heif').split(','),
   storageProvider: process.env.STORAGE_PROVIDER || 'r2',
   r2: {
     accountId: process.env.R2_ACCOUNT_ID || '',
