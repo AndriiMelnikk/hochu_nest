@@ -47,6 +47,15 @@ export class UploadService {
       );
     }
 
+    if (!file.size || !file.buffer?.length) {
+      this.logger.warn(
+        `Upload rejected: empty file (user=${userId}, name="${file.originalname}", mime="${file.mimetype}")`,
+      );
+      throw new BadRequestException(
+        'File is empty. On iPhone, wait until the photo is downloaded from iCloud, then try again',
+      );
+    }
+
     // Validate file size
     if (file.size > this.maxFileSize) {
       throw new BadRequestException(
@@ -54,11 +63,11 @@ export class UploadService {
       );
     }
 
-    // Validate file type (extension from filename, fallback to MIME type for mobile clients)
-    const fileExtension = resolveFileExtension(file.originalname, file.mimetype);
+    // Validate file type: filename -> MIME -> magic bytes (common for iOS screenshots without extension)
+    const fileExtension = resolveFileExtension(file.originalname, file.mimetype, file.buffer);
     if (!fileExtension) {
       this.logger.warn(
-        `Upload rejected: unknown file type (user=${userId}, name="${file.originalname}", mime="${file.mimetype}", size=${file.size})`,
+        `Upload rejected: unknown file type (user=${userId}, name="${file.originalname}", mime="${file.mimetype}", size=${file.size}, header=${file.buffer.subarray(0, 12).toString('hex')})`,
       );
       throw new UnsupportedMediaTypeException(
         `Could not determine file type (name: "${file.originalname}", mime: "${file.mimetype}")`,
