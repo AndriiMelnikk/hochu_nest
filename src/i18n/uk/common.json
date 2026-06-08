@@ -39,18 +39,18 @@
   },
   "requests": {
     "budget_min_max_error": "Максимальний бюджет повинен бути більшим або рівним мінімальному бюджету",
-    "request_not_found": "Запит з ID {{id}} не знайдено",
+    "request_not_found": "Запит з ID {id} не знайдено",
     "forbidden_update_request": "Ви можете оновлювати тільки власні запити",
     "cannot_update_closed_request": "Неможливо оновити закритий запит",
-    "request_updated_at": "Запит оновлено о {{timestamp}}",
+    "request_updated_at": "Запит оновлено о {timestamp}",
     "forbidden_delete_request": "Ви можете видаляти тільки власні запити"
   },
   "proposals": {
-    "request_not_found": "Запит з ID {{id}} не знайдено",
+    "request_not_found": "Запит з ID {id} не знайдено",
     "request_not_active": "Запит не активний",
     "cannot_propose_own_request": "Не можна створити пропозицію на власний запит",
     "already_proposed": "Ви вже створили пропозицію на цей запит",
-    "proposal_not_found": "Пропозицію з ID {{id}} не знайдено",
+    "proposal_not_found": "Пропозицію з ID {id} не знайдено",
     "request_not_found_short": "Запит не знайдено",
     "only_owner_accept": "Приймати пропозиції може лише власник запиту",
     "request_already_closed": "Запит вже закрито",
@@ -69,19 +69,19 @@
     "templates": {
       "new_proposal": {
         "title": "Нова пропозиція",
-        "message": "На ваш запит \"{{requestTitle}}\" надійшла нова пропозиція"
+        "message": "На ваш запит \"{requestTitle}\" надійшла нова пропозиція"
       },
       "proposal_accepted": {
         "title": "Пропозицію прийнято",
-        "message": "Вашу пропозицію на запит \"{{requestTitle}}\" прийнято"
+        "message": "Вашу пропозицію на запит \"{requestTitle}\" прийнято"
       },
       "proposal_rejected": {
         "title": "Пропозицію відхилено",
-        "message": "Вашу пропозицію на запит \"{{requestTitle}}\" відхилено"
+        "message": "Вашу пропозицію на запит \"{requestTitle}\" відхилено"
       },
       "proposal_cancelled": {
         "title": "Пропозицію скасовано",
-        "message": "Покупець скасував раніше прийняту пропозицію на запит \"{{requestTitle}}\""
+        "message": "Покупець скасував раніше прийняту пропозицію на запит \"{requestTitle}\""
       },
       "new_message": {
         "title": "Нове повідомлення",
@@ -89,7 +89,7 @@
       },
       "review_received": {
         "title": "Новий відгук",
-        "message": "Ви отримали новий відгук з рейтингом {{rating}}★"
+        "message": "Ви отримали новий відгук з рейтингом {rating}★"
       },
       "achievement_unlocked": {
         "title": "Нове досягнення",
@@ -97,15 +97,15 @@
       },
       "request_approved": {
         "title": "Запит схвалено",
-        "message": "Ваш запит \"{{requestTitle}}\" схвалено та опубліковано"
+        "message": "Ваш запит \"{requestTitle}\" схвалено та опубліковано"
       },
       "request_rejected": {
         "title": "Запит відхилено",
-        "message": "Ваш запит \"{{requestTitle}}\" відхилено модератором"
+        "message": "Ваш запит \"{requestTitle}\" відхилено модератором"
       },
       "new_request_in_category": {
         "title": "Новий запит",
-        "message": "З'явився новий запит \"{{requestTitle}}\" у вашій категорії"
+        "message": "З'явився новий запит \"{requestTitle}\" у вашій категорії"
       }
     }
   }

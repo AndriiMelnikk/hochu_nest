@@ -39,18 +39,18 @@
   },
   "requests": {
     "budget_min_max_error": "Maximum budget must be greater than or equal to minimum budget",
-    "request_not_found": "Request with ID {{id}} not found",
+    "request_not_found": "Request with ID {id} not found",
     "forbidden_update_request": "You can only update your own requests",
     "cannot_update_closed_request": "Cannot update closed request",
-    "request_updated_at": "Request updated at {{timestamp}}",
+    "request_updated_at": "Request updated at {timestamp}",
     "forbidden_delete_request": "You can only delete your own requests"
   },
   "proposals": {
-    "request_not_found": "Request with ID {{id}} not found",
+    "request_not_found": "Request with ID {id} not found",
     "request_not_active": "Request is not active",
     "cannot_propose_own_request": "You cannot create proposal on your own request",
     "already_proposed": "You have already created a proposal for this request",
-    "proposal_not_found": "Proposal with ID {{id}} not found",
+    "proposal_not_found": "Proposal with ID {id} not found",
     "request_not_found_short": "Request not found",
     "only_owner_accept": "Only request owner can accept proposals",
     "request_already_closed": "Request is already closed",
@@ -69,19 +69,19 @@
     "templates": {
       "new_proposal": {
         "title": "New proposal",
-        "message": "A new proposal was submitted for your request \"{{requestTitle}}\""
+        "message": "A new proposal was submitted for your request \"{requestTitle}\""
       },
       "proposal_accepted": {
         "title": "Proposal accepted",
-        "message": "Your proposal for request \"{{requestTitle}}\" was accepted"
+        "message": "Your proposal for request \"{requestTitle}\" was accepted"
       },
       "proposal_rejected": {
         "title": "Proposal rejected",
-        "message": "Your proposal for request \"{{requestTitle}}\" was rejected"
+        "message": "Your proposal for request \"{requestTitle}\" was rejected"
       },
       "proposal_cancelled": {
         "title": "Proposal cancelled",
-        "message": "The buyer cancelled a previously accepted proposal for request \"{{requestTitle}}\""
+        "message": "The buyer cancelled a previously accepted proposal for request \"{requestTitle}\""
       },
       "new_message": {
         "title": "New message",
@@ -89,7 +89,7 @@
       },
       "review_received": {
         "title": "New review",
-        "message": "You received a new review with rating {{rating}}★"
+        "message": "You received a new review with rating {rating}★"
       },
       "achievement_unlocked": {
         "title": "Achievement unlocked",
@@ -97,15 +97,15 @@
       },
       "request_approved": {
         "title": "Request approved",
-        "message": "Your request \"{{requestTitle}}\" was approved and published"
+        "message": "Your request \"{requestTitle}\" was approved and published"
       },
       "request_rejected": {
         "title": "Request rejected",
-        "message": "Your request \"{{requestTitle}}\" was rejected by a moderator"
+        "message": "Your request \"{requestTitle}\" was rejected by a moderator"
       },
       "new_request_in_category": {
         "title": "New request",
-        "message": "A new request \"{{requestTitle}}\" appeared in your category"
+        "message": "A new request \"{requestTitle}\" appeared in your category"
       }
     }
   }
