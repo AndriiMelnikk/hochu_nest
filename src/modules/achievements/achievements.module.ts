@@ -7,6 +7,7 @@ import {
   UserAchievementSchema,
 } from '../../database/schemas/user-achievement.schema';
 import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
       { name: UserAchievement.name, schema: UserAchievementSchema },
       { name: Profile.name, schema: ProfileSchema },
     ]),
+    NotificationsModule,
   ],
   providers: [AchievementsService],
   exports: [AchievementsService],

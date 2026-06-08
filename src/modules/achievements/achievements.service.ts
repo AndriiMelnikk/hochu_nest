@@ -7,6 +7,8 @@ import {
   UserAchievementDocument,
 } from '../../database/schemas/user-achievement.schema';
 import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../../database/schemas/notification.schema';
 
 @Injectable()
 export class AchievementsService {
@@ -16,6 +18,7 @@ export class AchievementsService {
     @InjectModel(UserAchievement.name)
     private userAchievementModel: Model<UserAchievementDocument>,
     @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async findAll() {
@@ -81,6 +84,17 @@ export class AchievementsService {
       unlockedAt: new Date(),
     });
     await userAchievement.save();
+
+    const profile = await this.profileModel.findById(profileId).exec();
+    if (profile) {
+      await this.notificationsService.dispatch({
+        type: NotificationType.ACHIEVEMENT_UNLOCKED,
+        accountId: profile.accountId.toString(),
+        profileId,
+        metadata: { achievementId },
+        link: '/achievements',
+      });
+    }
   }
 
   private checkCondition(

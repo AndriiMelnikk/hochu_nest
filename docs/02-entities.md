@@ -34,6 +34,7 @@
 - `completedDeals` - кількість завершених угод
 - `location` - локація
 - `xp` - досвід (XP) для гейміфікації
+- `notificationPreferences` - налаштування сповіщень per profile (категорії, канали, фільтри підписки на нові запити)
 - `createdAt`, `updatedAt`
 
 ### 3. Request (Запит)
@@ -183,7 +184,40 @@
 - `achievementId` - ID досягнення (foreign key до Achievement)
 - `unlockedAt` - дата отримання
 
-### 11. Category (Категорія)
+### 11. Notification (Сповіщення)
+
+Inbox-запис про подію для акаунта.
+
+**Поля:**
+
+- `id` - унікальний ідентифікатор
+- `accountId` - ID акаунта (foreign key до Account)
+- `profileId` - ID профілю (buyer/seller контекст, опціонально)
+- `type` - тип події (new_proposal, proposal_accepted, new_message, тощо)
+- `category` - категорія для preferences (new_requests, messages, reviews, тощо)
+- `title` - заголовок
+- `message` - текст сповіщення
+- `link` - посилання для фронтенду
+- `metadata` - структуровані дані (requestId, proposalId, achievementId)
+- `read` - чи прочитано
+- `createdAt` - дата створення
+
+### 12. RequestSubscription (Підписка на нові запити)
+
+Окрема підписка продавця на нові запити з фільтрами.
+
+**Поля:**
+
+- `id` - унікальний ідентифікатор
+- `sellerProfileId` - ID профілю продавця
+- `categories` - масив категорій для фільтрації
+- `location` - локація (опціонально)
+- `budgetMin`, `budgetMax` - діапазон бюджету (опціонально)
+- `enabled` - чи активна підписка
+- `channels` - канали доставки (in_app, email)
+- `createdAt`, `updatedAt`
+
+### 13. Category (Категорія)
 
 Категорії для запитів та навігації. Підкатегорії реалізовані через `parentId` і масив `path` для швидкої побудови дерева.
 

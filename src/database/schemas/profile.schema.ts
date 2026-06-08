@@ -2,6 +2,11 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { ProfileType } from '../enums/profile-type.enum';
 import { ContactChannel } from '../enums/contact-channel.enum';
+import {
+  NotificationPreferences,
+  NotificationPreferencesSchema,
+  defaultNotificationPreferences,
+} from './notification-preferences.schema';
 
 export type ProfileDocument = HydratedDocument<Profile>;
 
@@ -60,6 +65,12 @@ export class Profile {
 
   @Prop({ type: Object, default: {} })
   contacts: Partial<Record<ContactChannel, string>>;
+
+  @Prop({
+    type: NotificationPreferencesSchema,
+    default: () => defaultNotificationPreferences(),
+  })
+  notificationPreferences: NotificationPreferences;
 
   createdAt: Date;
   updatedAt: Date;

@@ -6,6 +6,9 @@ import { Profile, ProfileDocument } from '../../database/schemas/profile.schema'
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
 import { Proposal, ProposalDocument, ProposalStatus } from '../../database/schemas/proposal.schema';
 import { Report, ReportDocument, ReportStatus } from '../../database/schemas/report.schema';
+import { NotificationsService } from '../notifications/notifications.service';
+import { RequestsService } from '../requests/requests.service';
+import { NotificationType } from '../../database/schemas/notification.schema';
 
 @Injectable()
 export class AdminService {
@@ -15,6 +18,8 @@ export class AdminService {
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
     @InjectModel(Proposal.name) private proposalModel: Model<ProposalDocument>,
     @InjectModel(Report.name) private reportModel: Model<ReportDocument>,
+    private readonly notificationsService: NotificationsService,
+    private readonly requestsService: RequestsService,
   ) {}
 
   async getAnalytics() {
@@ -53,11 +58,42 @@ export class AdminService {
   }
 
   async approveRequest(id: string) {
+    const request = await this.requestModel.findById(id).exec();
+    if (!request) {
+      return { success: false, message: 'Request not found' };
+    }
+
+    const wasActive = request.status === RequestStatus.ACTIVE;
     await this.requestModel.updateOne({ _id: id }, { status: RequestStatus.ACTIVE }).exec();
+
+    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
+    if (buyerProfile) {
+      await this.notificationsService.dispatch({
+        type: NotificationType.REQUEST_APPROVED,
+        accountId: buyerProfile.accountId.toString(),
+        profileId: buyerProfile._id.toString(),
+        metadata: {
+          requestId: id,
+          requestTitle: request.title,
+        },
+        link: `/request/${id}`,
+      });
+    }
+
+    if (!wasActive) {
+      request.status = RequestStatus.ACTIVE;
+      await this.requestsService.notifySellersAboutNewRequest(request);
+    }
+
     return { success: true, message: 'Request approved' };
   }
 
   async rejectRequest(id: string, reason: string) {
+    const request = await this.requestModel.findById(id).exec();
+    if (!request) {
+      return { success: false, message: 'Request not found' };
+    }
+
     await this.requestModel
       .updateOne(
         { _id: id },
@@ -65,6 +101,21 @@ export class AdminService {
         { strict: false },
       )
       .exec();
+
+    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
+    if (buyerProfile) {
+      await this.notificationsService.dispatch({
+        type: NotificationType.REQUEST_REJECTED,
+        accountId: buyerProfile.accountId.toString(),
+        profileId: buyerProfile._id.toString(),
+        metadata: {
+          requestId: id,
+          requestTitle: request.title,
+        },
+        link: `/request/${id}`,
+      });
+    }
+
     return { success: true, message: 'Request rejected' };
   }
 

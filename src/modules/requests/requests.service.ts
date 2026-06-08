@@ -23,6 +23,8 @@ import { SortUtil } from '../../common/utils/sort.util';
 import { XpService } from '../xp/xp.service';
 import { AchievementsService } from '../achievements/achievements.service';
 import { UploadService } from '../upload/upload.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../../database/schemas/notification.schema';
 
 type PopulatedBuyer = {
   _id: Types.ObjectId;
@@ -68,6 +70,7 @@ export class RequestsService {
     private achievementsService: AchievementsService,
     private readonly i18n: I18nService,
     private readonly uploadService: UploadService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createRequestDto: CreateRequestDto, buyerProfileId: string) {
@@ -98,7 +101,28 @@ export class RequestsService {
     await this.xpService.awardXp(buyerProfileId, 10);
     await this.achievementsService.checkAndUnlockAchievements(buyerProfileId);
 
+    await this.notifySellersAboutNewRequest(request);
+
     return request;
+  }
+
+  async notifySellersAboutNewRequest(request: RequestDocument): Promise<void> {
+    const matches = await this.notificationsService.findMatchingSellerProfiles(request);
+
+    await Promise.all(
+      matches.map((match) =>
+        this.notificationsService.dispatch({
+          type: NotificationType.NEW_REQUEST_IN_CATEGORY,
+          accountId: match.accountId,
+          profileId: match.profile._id.toString(),
+          metadata: {
+            requestId: request._id.toString(),
+            requestTitle: request.title,
+          },
+          link: `/request/${request._id.toString()}`,
+        }),
+      ),
+    );
   }
 
   // async findFeed(

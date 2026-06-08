@@ -8,6 +8,7 @@ import { Request, RequestSchema } from '../../database/schemas/request.schema';
 import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { Review, ReviewSchema } from '../../database/schemas/review.schema';
 import { AchievementsModule } from '../achievements/achievements.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AchievementsModule } from '../achievements/achievements.module';
       { name: Review.name, schema: ReviewSchema },
     ]),
     AchievementsModule,
+    NotificationsModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],

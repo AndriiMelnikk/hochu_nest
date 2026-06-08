@@ -1,4 +1,14 @@
-import { Controller, Get, Patch, Post, Param, Body, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Delete,
+  Param,
+  Body,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,6 +21,11 @@ import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateContactsDto } from './dto/update-contacts.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { UpdateNotificationPreferencesDto } from '../notifications/dto/update-notification-preferences.dto';
+import { CreateRequestSubscriptionDto } from '../notifications/dto/create-request-subscription.dto';
+import { UpdateRequestSubscriptionDto } from '../notifications/dto/update-request-subscription.dto';
+import { GetRequestSubscriptionsDto } from '../notifications/dto/get-request-subscriptions.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
@@ -18,7 +33,10 @@ import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -155,5 +173,91 @@ export class UsersController {
     @CurrentUser() user: { id: string },
   ) {
     return this.usersService.updateProfileContacts(id, updateContactsDto, user.id);
+  }
+
+  @Get(':id/notification-preferences')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get profile notification preferences' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Notification preferences' })
+  async getNotificationPreferences(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.getNotificationPreferences(id, user.id);
+  }
+
+  @Patch(':id/notification-preferences')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update profile notification preferences' })
+  @ApiParam({ name: 'id', description: 'Profile ID' })
+  @ApiResponse({ status: 200, description: 'Updated notification preferences' })
+  async updateNotificationPreferences(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: UpdateNotificationPreferencesDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.updateNotificationPreferences(id, user.id, dto);
+  }
+
+  @Get(':id/request-subscriptions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get seller request subscriptions' })
+  @ApiParam({ name: 'id', description: 'Seller profile ID' })
+  @ApiResponse({ status: 200, description: 'Paginated list of request subscriptions' })
+  async getRequestSubscriptions(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Query() query: GetRequestSubscriptionsDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.findRequestSubscriptions(id, user.id, query);
+  }
+
+  @Post(':id/request-subscriptions')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Create seller request subscription' })
+  @ApiParam({ name: 'id', description: 'Seller profile ID' })
+  @ApiResponse({ status: 201, description: 'Request subscription created' })
+  async createRequestSubscription(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Body() dto: CreateRequestSubscriptionDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.createRequestSubscription(id, user.id, dto);
+  }
+
+  @Patch(':id/request-subscriptions/:subscriptionId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update seller request subscription' })
+  @ApiParam({ name: 'id', description: 'Seller profile ID' })
+  @ApiParam({ name: 'subscriptionId', description: 'Subscription ID' })
+  @ApiResponse({ status: 200, description: 'Request subscription updated' })
+  async updateRequestSubscription(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('subscriptionId', ParseObjectIdPipe) subscriptionId: string,
+    @Body() dto: UpdateRequestSubscriptionDto,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.updateRequestSubscription(id, subscriptionId, user.id, dto);
+  }
+
+  @Delete(':id/request-subscriptions/:subscriptionId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete seller request subscription' })
+  @ApiParam({ name: 'id', description: 'Seller profile ID' })
+  @ApiParam({ name: 'subscriptionId', description: 'Subscription ID' })
+  @ApiResponse({ status: 200, description: 'Request subscription deleted' })
+  async deleteRequestSubscription(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @Param('subscriptionId', ParseObjectIdPipe) subscriptionId: string,
+    @CurrentUser() user: { id: string },
+  ) {
+    return this.notificationsService.removeRequestSubscription(id, subscriptionId, user.id);
   }
 }

@@ -7,6 +7,8 @@ import { Profile, ProfileSchema } from '../../database/schemas/profile.schema';
 import { Request, RequestSchema } from '../../database/schemas/request.schema';
 import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema';
 import { Report, ReportSchema } from '../../database/schemas/report.schema';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { RequestsModule } from '../requests/requests.module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { Report, ReportSchema } from '../../database/schemas/report.schema';
       { name: Proposal.name, schema: ProposalSchema },
       { name: Report.name, schema: ReportSchema },
     ]),
+    NotificationsModule,
+    RequestsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

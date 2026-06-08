@@ -35,14 +35,18 @@ export class MessagesService {
 
     await message.save();
 
-    // Create notification if receiver is offline (will be sent via WebSocket if online)
-    await this.notificationsService.create({
-      accountId: receiverId,
-      type: NotificationType.NEW_MESSAGE,
-      title: 'Нове повідомлення',
-      message: `Ви отримали нове повідомлення`,
-      link: `/messages`,
-    });
+    if (!this.notificationsService.isAccountOnline(receiverId)) {
+      await this.notificationsService.dispatch({
+        type: NotificationType.NEW_MESSAGE,
+        accountId: receiverId,
+        metadata: {
+          senderAccountId: senderId,
+          requestId: requestId ?? undefined,
+          proposalId: proposalId ?? undefined,
+        },
+        link: '/messages',
+      });
+    }
 
     await message.populate('senderId', 'name avatar');
     return await message.populate('receiverId', 'name avatar');

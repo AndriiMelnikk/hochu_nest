@@ -107,11 +107,15 @@ export class ProposalsService {
 
     const buyerProfileDoc = await this.profileModel.findById(request.buyerId).exec();
     if (buyerProfileDoc) {
-      await this.notificationsService.create({
-        accountId: buyerProfileDoc.accountId.toString(),
+      await this.notificationsService.dispatch({
         type: NotificationType.NEW_PROPOSAL,
-        title: 'Нова пропозиція',
-        message: `На ваш запит "${request.title}" надійшла нова пропозиція`,
+        accountId: buyerProfileDoc.accountId.toString(),
+        profileId: buyerProfileDoc._id.toString(),
+        metadata: {
+          requestId,
+          proposalId: proposal._id.toString(),
+          requestTitle: request.title,
+        },
         link: `/request/${requestId}`,
       });
     }
@@ -484,11 +488,15 @@ export class ProposalsService {
 
     const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
     if (sellerProfile) {
-      await this.notificationsService.create({
-        accountId: sellerProfile.accountId.toString(),
+      await this.notificationsService.dispatch({
         type: NotificationType.PROPOSAL_ACCEPTED,
-        title: 'Пропозицію прийнято',
-        message: `Вашу пропозицію на запит "${request.title}" прийнято`,
+        accountId: sellerProfile.accountId.toString(),
+        profileId: sellerProfile._id.toString(),
+        metadata: {
+          requestId: request._id.toString(),
+          proposalId: id,
+          requestTitle: request.title,
+        },
         link: `/proposal/${id}`,
       });
     }
@@ -543,11 +551,15 @@ export class ProposalsService {
         : (proposal.sellerId as Types.ObjectId).toString();
     const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
     if (sellerProfile) {
-      await this.notificationsService.create({
-        accountId: sellerProfile.accountId.toString(),
+      await this.notificationsService.dispatch({
         type: NotificationType.PROPOSAL_REJECTED,
-        title: 'Пропозицію відхилено',
-        message: `Вашу пропозицію на запит "${request.title}" відхилено`,
+        accountId: sellerProfile.accountId.toString(),
+        profileId: sellerProfile._id.toString(),
+        metadata: {
+          requestId: request._id.toString(),
+          proposalId: id,
+          requestTitle: request.title,
+        },
         link: `/request/${request._id.toString()}`,
       });
     }
@@ -673,11 +685,15 @@ export class ProposalsService {
         : (proposal.sellerId as Types.ObjectId).toString();
     const sellerProfile = await this.profileModel.findById(sellerProfileIdStr).exec();
     if (sellerProfile) {
-      await this.notificationsService.create({
+      await this.notificationsService.dispatch({
+        type: NotificationType.PROPOSAL_CANCELLED,
         accountId: sellerProfile.accountId.toString(),
-        type: NotificationType.PROPOSAL_REJECTED,
-        title: 'Пропозицію скасовано',
-        message: `Покупець скасував раніше прийняту пропозицію на запит "${request.title}"`,
+        profileId: sellerProfile._id.toString(),
+        metadata: {
+          requestId: request._id.toString(),
+          proposalId: id,
+          requestTitle: request.title,
+        },
         link: `/request/${request._id.toString()}`,
       });
     }

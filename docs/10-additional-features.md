@@ -47,41 +47,56 @@
 
 ## Нотифікації
 
-Система нотифікацій для інформування користувачів про:
+Централізована система сповіщень з preferences per profile, dispatcher, in-app inbox, WebSocket та email-каналом.
 
-- Нові пропозиції на їх запити
-- Прийняття/відхилення їх пропозицій
-- Нові повідомлення
-- Отримання відгуків
-- Розблоковування досягнень
+**Категорії preferences:**
 
-**API Endpoints:**
+- `new_requests` - підписка продавця на нові запити
+- `request_updates` - статус запиту (схвалено/відхилено)
+- `my_request_activity` - нова пропозиція на запит покупця
+- `my_proposal_status` - статус пропозиції продавця
+- `messages` - нові повідомлення
+- `reviews` - нові відгуки
+- `achievements` - розблоковані досягнення
 
-- `GET /api/notifications` - отримати нотифікації
-  - Headers: `Authorization: Bearer <access_token>`
-  - Query параметри:
-    - `unread` (boolean, опціонально) - тільки непрочитані
-    - `page` (number, опціонально)
-    - `pageSize` (number, опціонально)
-  - Response: `{ count: number, results: Notification[] }`
+**API Endpoints (inbox):**
 
+- `GET /api/notifications` - отримати нотифікації (пагіновано)
+  - Query: `unread`, `category`, `profileId`, `page` (default 1), `pageSize` (default 20, max 100)
+  - Response: `{ count, next, previous, results }`
+- `GET /api/notifications/unread-count` - кількість непрочитаних
 - `PATCH /api/notifications/:id/read` - позначити як прочитане
-  - Headers: `Authorization: Bearer <access_token>`
-  - Response: `{ success: boolean }`
-
 - `PATCH /api/notifications/read-all` - позначити всі як прочитані
-  - Headers: `Authorization: Bearer <access_token>`
-  - Response: `{ success: boolean }`
+
+**API Endpoints (preferences):**
+
+- `GET /api/users/:id/notification-preferences`
+- `PATCH /api/users/:id/notification-preferences`
+
+**API Endpoints (request subscriptions):**
+
+- `GET /api/users/:id/request-subscriptions` (пагіновано: `page`, `pageSize`)
+- `POST /api/users/:id/request-subscriptions`
+- `PATCH /api/users/:id/request-subscriptions/:subscriptionId`
+- `DELETE /api/users/:id/request-subscriptions/:subscriptionId`
+
+**WebSocket namespace:** `/notifications`
+
+- `notification:new` - нове сповіщення
+- `notification:unread_count` - оновлення лічильника
 
 **Таблиця notifications:**
 
-| Поле       | Тип          | Обмеження                   | Опис                     |
-| ---------- | ------------ | --------------------------- | ------------------------ |
-| id         | INT          | PRIMARY KEY, AUTO_INCREMENT | Унікальний ідентифікатор |
-| accountId  | ObjectId     | NOT NULL, ref: Account      | ID акаунта               |
-| type       | VARCHAR(50)  | NOT NULL                    | Тип нотифікації          |
-| title      | VARCHAR(255) | NOT NULL                    | Заголовок                |
-| message    | TEXT         | NOT NULL                    | Текст нотифікації        |
-| link       | VARCHAR(500) | NULL                        | Посилання                |
-| read       | BOOLEAN      | DEFAULT FALSE               | Чи прочитано             |
-| created_at | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP   | Дата створення           |
+| Поле      | Тип          | Обмеження              | Опис                     |
+| --------- | ------------ | ---------------------- | ------------------------ |
+| id        | ObjectId     | PRIMARY KEY            | Унікальний ідентифікатор |
+| accountId | ObjectId     | NOT NULL, ref: Account | ID акаунта               |
+| profileId | ObjectId     | NULL, ref: Profile     | Контекст buyer/seller    |
+| type      | VARCHAR(50)  | NOT NULL               | Тип нотифікації          |
+| category  | VARCHAR(50)  | NOT NULL               | Категорія preferences    |
+| title     | VARCHAR(255) | NOT NULL               | Заголовок                |
+| message   | TEXT         | NOT NULL               | Текст нотифікації        |
+| link      | VARCHAR(500) | NULL                   | Посилання                |
+| metadata  | Object       | NULL                   | requestId, proposalId... |
+| read      | BOOLEAN      | DEFAULT FALSE          | Чи прочитано             |
+| createdAt | Date         | DEFAULT NOW            | Дата створення           |

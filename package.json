@@ -22,6 +22,8 @@
     "test:staged": "jest --onlyChanged",
     "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
     "migrate:account-profile": "ts-node -r tsconfig-paths/register src/scripts/migrate-user-to-account-profile.ts",
+    "migrate:notification-preferences": "ts-node -r tsconfig-paths/register src/scripts/migrate-notification-preferences.ts",
+    "migrate:request-subscriptions": "ts-node -r tsconfig-paths/register src/scripts/migrate-request-subscriptions.ts",
     "prepare": "husky || true",
     "commit": "git-cz",
     "commit:retry": "git-cz --retry"

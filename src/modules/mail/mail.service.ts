@@ -68,4 +68,26 @@ export class MailService {
       },
     });
   }
+
+  async sendNotificationEmail(
+    email: string,
+    data: { title: string; message: string; link?: string; lang?: string },
+  ) {
+    const frontendUrl = this.configService.get('app.frontendUrl');
+    const lang = data.lang ?? 'uk';
+    const subject = this.i18n.t('common.mail.notification.subject', { lang });
+    const button = this.i18n.t('common.mail.notification.button', { lang });
+    const link = data.link ? `${frontendUrl}${data.link}` : frontendUrl;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `${subject}: ${data.title}`,
+      template: 'notification',
+      context: {
+        message: data.message,
+        link: data.link ? link : null,
+        button,
+      },
+    });
+  }
 }

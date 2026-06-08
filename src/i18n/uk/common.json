@@ -13,6 +13,10 @@
       "email_label": "Email",
       "subject_label": "Тема",
       "message_label": "Повідомлення"
+    },
+    "notification": {
+      "subject": "Нове сповіщення",
+      "button": "Переглянути"
     }
   },
   "contact": {
@@ -60,5 +64,49 @@
     "forbidden_update_proposal": "Ви можете оновлювати тільки власні пропозиції",
     "only_owner_withdraw": "Відкликати пропозицію може лише її автор",
     "withdrawn_success": "Пропозицію успішно відкликано"
+  },
+  "notifications": {
+    "templates": {
+      "new_proposal": {
+        "title": "Нова пропозиція",
+        "message": "На ваш запит \"{{requestTitle}}\" надійшла нова пропозиція"
+      },
+      "proposal_accepted": {
+        "title": "Пропозицію прийнято",
+        "message": "Вашу пропозицію на запит \"{{requestTitle}}\" прийнято"
+      },
+      "proposal_rejected": {
+        "title": "Пропозицію відхилено",
+        "message": "Вашу пропозицію на запит \"{{requestTitle}}\" відхилено"
+      },
+      "proposal_cancelled": {
+        "title": "Пропозицію скасовано",
+        "message": "Покупець скасував раніше прийняту пропозицію на запит \"{{requestTitle}}\""
+      },
+      "new_message": {
+        "title": "Нове повідомлення",
+        "message": "Ви отримали нове повідомлення"
+      },
+      "review_received": {
+        "title": "Новий відгук",
+        "message": "Ви отримали новий відгук з рейтингом {{rating}}★"
+      },
+      "achievement_unlocked": {
+        "title": "Нове досягнення",
+        "message": "Ви розблокували нове досягнення"
+      },
+      "request_approved": {
+        "title": "Запит схвалено",
+        "message": "Ваш запит \"{{requestTitle}}\" схвалено та опубліковано"
+      },
+      "request_rejected": {
+        "title": "Запит відхилено",
+        "message": "Ваш запит \"{{requestTitle}}\" відхилено модератором"
+      },
+      "new_request_in_category": {
+        "title": "Новий запит",
+        "message": "З'явився новий запит \"{{requestTitle}}\" у вашій категорії"
+      }
+    }
   }
 }

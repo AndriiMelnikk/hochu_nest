@@ -103,11 +103,15 @@ export class ReviewsService {
 
     await this.achievementsService.checkAndUnlockAchievements(authorProfileId);
 
-    await this.notificationsService.create({
-      accountId: targetProfile.accountId.toString(),
+    await this.notificationsService.dispatch({
       type: NotificationType.REVIEW_RECEIVED,
-      title: 'Новий відгук',
-      message: `Ви отримали новий відгук з рейтингом ${rating}★`,
+      accountId: targetProfile.accountId.toString(),
+      profileId: targetProfileId,
+      metadata: {
+        proposalId,
+        requestId: request._id.toString(),
+        rating,
+      },
       link: `/profiles/${targetProfileId}/reviews`,
     });
 

@@ -4,6 +4,7 @@ import { NotificationsService } from './notifications.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
+import { GetNotificationsDto } from './dto/get-notifications.dto';
 
 @ApiTags('Notifications')
 @Controller('notifications')
@@ -14,14 +15,24 @@ export class NotificationsController {
 
   @Get()
   @ApiOperation({ summary: 'Get notifications' })
-  @ApiResponse({ status: 200, description: 'List of notifications' })
-  async findAll(
-    @CurrentUser() user: { id: string },
-    @Query('unread') unread?: boolean,
-    @Query('page') page?: number,
-    @Query('pageSize') pageSize?: number,
-  ) {
-    return this.notificationsService.findAll(user.id, unread, page, pageSize);
+  @ApiResponse({ status: 200, description: 'Paginated list of notifications' })
+  async findAll(@CurrentUser() user: { id: string }, @Query() query: GetNotificationsDto) {
+    return this.notificationsService.findAll(user.id, query);
+  }
+
+  @Get('unread-count')
+  @ApiOperation({ summary: 'Get unread notifications count' })
+  @ApiResponse({ status: 200, description: 'Unread count' })
+  async getUnreadCount(@CurrentUser() user: { id: string }) {
+    const count = await this.notificationsService.getUnreadCount(user.id);
+    return { count };
+  }
+
+  @Patch('read-all')
+  @ApiOperation({ summary: 'Mark all notifications as read' })
+  @ApiResponse({ status: 200, description: 'All notifications marked as read' })
+  async markAllAsRead(@CurrentUser() user: { id: string }) {
+    return this.notificationsService.markAllAsRead(user.id);
   }
 
   @Patch(':id/read')
@@ -32,12 +43,5 @@ export class NotificationsController {
     @CurrentUser() user: { id: string },
   ) {
     return this.notificationsService.markAsRead(id, user.id);
-  }
-
-  @Patch('read-all')
-  @ApiOperation({ summary: 'Mark all notifications as read' })
-  @ApiResponse({ status: 200, description: 'All notifications marked as read' })
-  async markAllAsRead(@CurrentUser() user: { id: string }) {
-    return this.notificationsService.markAllAsRead(user.id);
   }
 }

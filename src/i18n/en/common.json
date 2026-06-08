@@ -13,6 +13,10 @@
       "email_label": "Email",
       "subject_label": "Subject",
       "message_label": "Message"
+    },
+    "notification": {
+      "subject": "New notification",
+      "button": "View"
     }
   },
   "contact": {
@@ -60,5 +64,49 @@
     "forbidden_update_proposal": "You can only update your own proposals",
     "only_owner_withdraw": "Only proposal owner can withdraw proposals",
     "withdrawn_success": "Proposal withdrawn successfully"
+  },
+  "notifications": {
+    "templates": {
+      "new_proposal": {
+        "title": "New proposal",
+        "message": "A new proposal was submitted for your request \"{{requestTitle}}\""
+      },
+      "proposal_accepted": {
+        "title": "Proposal accepted",
+        "message": "Your proposal for request \"{{requestTitle}}\" was accepted"
+      },
+      "proposal_rejected": {
+        "title": "Proposal rejected",
+        "message": "Your proposal for request \"{{requestTitle}}\" was rejected"
+      },
+      "proposal_cancelled": {
+        "title": "Proposal cancelled",
+        "message": "The buyer cancelled a previously accepted proposal for request \"{{requestTitle}}\""
+      },
+      "new_message": {
+        "title": "New message",
+        "message": "You received a new message"
+      },
+      "review_received": {
+        "title": "New review",
+        "message": "You received a new review with rating {{rating}}★"
+      },
+      "achievement_unlocked": {
+        "title": "Achievement unlocked",
+        "message": "You unlocked a new achievement"
+      },
+      "request_approved": {
+        "title": "Request approved",
+        "message": "Your request \"{{requestTitle}}\" was approved and published"
+      },
+      "request_rejected": {
+        "title": "Request rejected",
+        "message": "Your request \"{{requestTitle}}\" was rejected by a moderator"
+      },
+      "new_request_in_category": {
+        "title": "New request",
+        "message": "A new request \"{{requestTitle}}\" appeared in your category"
+      }
+    }
   }
 }

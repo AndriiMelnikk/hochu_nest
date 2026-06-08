@@ -9,6 +9,7 @@ import { Proposal, ProposalSchema } from '../../database/schemas/proposal.schema
 import { XpModule } from '../xp/xp.module';
 import { AchievementsModule } from '../achievements/achievements.module';
 import { UploadModule } from '../upload/upload.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { UploadModule } from '../upload/upload.module';
     XpModule,
     AchievementsModule,
     UploadModule,
+    NotificationsModule,
   ],
   controllers: [RequestsController],
   providers: [RequestsService],
