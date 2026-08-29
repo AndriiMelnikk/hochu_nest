@@ -5,4 +5,5 @@ export enum ProposalRejectionReason {
   OWN_REQUEST = 'OWN_REQUEST',
   ALREADY_PROPOSED = 'ALREADY_PROPOSED',
   NOT_SELLER = 'NOT_SELLER',
+  NO_CONTACTS = 'NO_CONTACTS',
 }

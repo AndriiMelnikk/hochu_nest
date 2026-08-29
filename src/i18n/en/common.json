@@ -50,6 +50,7 @@
     "request_not_active": "Request is not active",
     "cannot_propose_own_request": "You cannot create proposal on your own request",
     "already_proposed": "You have already created a proposal for this request",
+    "no_contacts": "Add at least one contact channel to your profile before creating a proposal",
     "proposal_not_found": "Proposal with ID {id} not found",
     "request_not_found_short": "Request not found",
     "only_owner_accept": "Only request owner can accept proposals",

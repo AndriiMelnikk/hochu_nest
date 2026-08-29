@@ -61,6 +61,14 @@ export class ProposalsService {
       );
     }
 
+    if (!this.hasContactChannels(sellerProfile.contacts)) {
+      throw new BadRequestException(
+        this.i18n.t('common.proposals.no_contacts', {
+          lang: I18nContext.current()?.lang,
+        }),
+      );
+    }
+
     const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
     if (buyerProfile && buyerProfile.accountId.equals(sellerProfile.accountId)) {
       throw new ForbiddenException(
@@ -205,6 +213,10 @@ export class ProposalsService {
 
     if (sellerProfile.isBlocked) {
       return { canPropose: false, reason: ProposalRejectionReason.USER_BLOCKED };
+    }
+
+    if (!this.hasContactChannels(sellerProfile.contacts)) {
+      return { canPropose: false, reason: ProposalRejectionReason.NO_CONTACTS };
     }
 
     const existingProposal = await this.proposalModel
@@ -704,5 +716,15 @@ export class ProposalsService {
         lang: I18nContext.current()?.lang,
       }),
     };
+  }
+
+  private hasContactChannels(contacts: Profile['contacts'] | null | undefined): boolean {
+    if (!contacts) {
+      return false;
+    }
+
+    return Object.values(contacts).some(
+      (value) => typeof value === 'string' && value.trim().length > 0,
+    );
   }
 }
