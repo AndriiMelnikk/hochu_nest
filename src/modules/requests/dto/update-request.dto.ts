@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
-  IsOptional,
-  IsNumber,
-  Min,
-  IsArray,
-  MinLength,
-  MaxLength,
   ArrayMaxSize,
+  IsArray,
   IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
 } from 'class-validator';
 import { ItemCondition } from '../../../database/schemas/request.schema';
 
@@ -24,6 +24,7 @@ export class UpdateRequestDto {
   @IsString()
   @IsOptional()
   @MinLength(10)
+  @MaxLength(5000)
   description?: string;
 
   @ApiProperty({ required: false })
@@ -45,6 +46,7 @@ export class UpdateRequestDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  @MaxLength(255)
   location?: string;
 
   @ApiProperty({ required: false, example: 1, description: 'Urgency level' })

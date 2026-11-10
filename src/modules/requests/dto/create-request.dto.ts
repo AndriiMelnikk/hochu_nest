@@ -1,15 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
+  ArrayMaxSize,
+  IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
-  Min,
-  IsArray,
   IsOptional,
-  MinLength,
+  IsString,
+  Max,
   MaxLength,
-  ArrayMaxSize,
-  IsEnum,
+  Min,
+  MinLength,
 } from 'class-validator';
 import { ItemCondition } from '../../../database/schemas/request.schema';
 
@@ -28,6 +29,7 @@ export class CreateRequestDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(10)
+  @MaxLength(5000)
   description: string;
 
   @ApiProperty({ example: 'Design', description: 'Category' })
@@ -38,16 +40,19 @@ export class CreateRequestDto {
   @ApiProperty({ example: 1000, description: 'Minimum budget', required: false })
   @IsOptional()
   @IsNumber()
+  @Max(100000000)
   budgetMin?: number;
 
   @ApiProperty({ example: 5000, description: 'Maximum budget' })
   @IsNumber()
   @Min(0)
+  @Max(100000000)
   budgetMax: number;
 
   @ApiProperty({ example: 'Kyiv', description: 'Location', required: false })
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   location?: string;
 
   @ApiProperty({

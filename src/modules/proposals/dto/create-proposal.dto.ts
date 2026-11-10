@@ -1,25 +1,29 @@
 import { ItemCondition } from '../../../database/schemas/request.schema';
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsString,
+  ArrayMaxSize,
+  IsArray,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
-  Min,
-  IsArray,
   IsOptional,
-  ArrayMaxSize,
-  IsEnum,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
 } from 'class-validator';
 
 export class CreateProposalDto {
   @ApiProperty({ example: 8080, description: 'Proposed price' })
   @IsNumber()
   @Min(0)
+  @Max(100000000)
   price: number;
 
   @ApiProperty({ example: 'Professional website design', description: 'Proposal title' })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   title: string;
 
   @ApiProperty({
@@ -28,6 +32,7 @@ export class CreateProposalDto {
   })
   @IsString()
   @IsNotEmpty()
+  @MaxLength(5000)
   description: string;
 
   @ApiProperty({ example: 1, description: 'Estimated time level' })
