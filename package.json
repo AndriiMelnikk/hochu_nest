@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:unit": "jest --testPathIgnorePatterns=e2e",
     "test:staged": "jest --onlyChanged",
+    "admin:create": "ts-node -r tsconfig-paths/register src/scripts/create-admin.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
     "migrate:account-profile": "ts-node -r tsconfig-paths/register src/scripts/migrate-user-to-account-profile.ts",
     "migrate:notification-preferences": "ts-node -r tsconfig-paths/register src/scripts/migrate-notification-preferences.ts",

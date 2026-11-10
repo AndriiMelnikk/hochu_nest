@@ -64,3 +64,7 @@ yarn-debug.log*
 yarn-error.log*
 
 .vercel
+
+# graphify
+graphify-out/cost.json
+graphify-out/.graphify_python

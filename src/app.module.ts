@@ -16,6 +16,7 @@ import appConfig from './config/app.config';
 import novaPoshtaConfig from './config/nova-poshta.config';
 import googleConfig from './config/google.config';
 import mailConfig from './config/mail.config';
+import adminConfig from './config/admin.config';
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';
@@ -49,6 +50,7 @@ import { ContactModule } from './modules/contact/contact.module';
         novaPoshtaConfig,
         mailConfig,
         googleConfig,
+        adminConfig,
       ],
       envFilePath: process.env.NODE_ENV ? `.env.${process.env.NODE_ENV}` : '.env',
     }),

@@ -22,6 +22,7 @@ export class NotificationTemplatesService {
     const resolvedLang = lang ?? I18nContext.current()?.lang ?? 'uk';
     const args = {
       requestTitle: metadata?.requestTitle ?? '',
+      reason: metadata?.reason ?? '',
       rating: metadata?.rating ?? 0,
     };
 

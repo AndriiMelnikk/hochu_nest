@@ -7,6 +7,8 @@ export interface NotificationMetadataPayload {
   achievementId?: string;
   requestTitle?: string;
   rating?: number;
+  /** Причина відхилення запиту модератором. */
+  reason?: string;
 }
 
 export interface DispatchNotificationDto {

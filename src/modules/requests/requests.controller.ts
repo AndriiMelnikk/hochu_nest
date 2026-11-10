@@ -17,6 +17,7 @@ import { GetRequestsDto } from './dto/get-requests.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { OptionalJwtAuthGuard } from '../../common/guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ParseObjectIdPipe } from '../../common/pipes/parse-objectid.pipe';
 import { Request } from '../../database/schemas/request.schema';
@@ -42,6 +43,7 @@ export class RequestsController {
   }
 
   @Get('feed/:profileId')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get personalized requests feed by profile ID' })
   @ApiParam({ name: 'profileId', description: 'User profile ID' })
@@ -49,8 +51,9 @@ export class RequestsController {
   async findAllByProfileId(
     @Param('profileId', ParseObjectIdPipe) profileId: string,
     @Query() query: GetRequestsDto,
+    @CurrentUser() viewer?: { profileId?: string } | null,
   ): Promise<PaginationResult<FormattedRequest>> {
-    return this.requestsService.findAllByProfileId(query, profileId);
+    return this.requestsService.findAllByProfileId(query, profileId, viewer?.profileId);
   }
 
   @Get()
@@ -61,12 +64,16 @@ export class RequestsController {
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({ summary: 'Get request by ID' })
   @ApiParam({ name: 'id', description: 'Request ID' })
   @ApiResponse({ status: 200, description: 'Request found' })
   @ApiResponse({ status: 404, description: 'Request not found' })
-  async findOne(@Param('id', ParseObjectIdPipe) id: string): Promise<FormattedRequest> {
-    const request = await this.requestsService.getById(id);
+  async findOne(
+    @Param('id', ParseObjectIdPipe) id: string,
+    @CurrentUser() viewer?: { profileId?: string } | null,
+  ): Promise<FormattedRequest> {
+    const request = await this.requestsService.getById(id, viewer?.profileId);
     return request;
   }
 

@@ -77,6 +77,37 @@ export class Request {
   })
   status: RequestStatus;
 
+  /** Причина відхилення модератором (показується автору запиту). */
+  @Prop({ type: String, required: false })
+  rejectionReason?: string;
+
+  @Prop({ type: Date, required: false })
+  moderatedAt?: Date;
+
+  /** Логін адміністратора, який останнім модерував запит. */
+  @Prop({ type: String, required: false })
+  moderatedBy?: string;
+
+  /** Журнал модерації: хто, що і коли зробив із запитом. */
+  @Prop({
+    type: [
+      {
+        _id: false,
+        action: { type: String, enum: ['approved', 'rejected'] },
+        reason: String,
+        by: String,
+        at: Date,
+      },
+    ],
+    default: [],
+  })
+  moderationLog: Array<{
+    action: 'approved' | 'rejected';
+    reason?: string;
+    by: string;
+    at: Date;
+  }>;
+
   @Prop({
     type: [
       {
@@ -107,5 +138,6 @@ export const RequestSchema = SchemaFactory.createForClass(Request);
 RequestSchema.index({ buyerId: 1 });
 RequestSchema.index({ category: 1 });
 RequestSchema.index({ status: 1 });
+RequestSchema.index({ status: 1, createdAt: 1 });
 RequestSchema.index({ createdAt: -1 });
 RequestSchema.index({ title: 'text', description: 'text' });

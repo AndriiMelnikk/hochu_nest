@@ -52,6 +52,9 @@ export type PopulatedRequestDocument = Omit<RequestDocument, 'buyerId' | 'catego
   category: Category;
 };
 
+/** Статуси, які бачить лише автор запиту (і модератор через адмін-API). */
+const UNMODERATED_STATUSES: RequestStatus[] = [RequestStatus.PENDING, RequestStatus.REJECTED];
+
 const URGENCY_MAP: Record<number, string> = {
   1: 'Гнучко',
   2: 'Протягом тижня',
@@ -89,7 +92,8 @@ export class RequestsService {
     const request = new this.requestModel({
       ...createRequestDto,
       buyerId: new Types.ObjectId(buyerProfileId),
-      status: RequestStatus.ACTIVE,
+      // Новий запит чекає на схвалення адміном; публічно з'явиться після approve
+      status: RequestStatus.PENDING,
     });
 
     await request.save();
@@ -101,7 +105,7 @@ export class RequestsService {
     await this.xpService.awardXp(buyerProfileId, 10);
     await this.achievementsService.checkAndUnlockAchievements(buyerProfileId);
 
-    await this.notifySellersAboutNewRequest(request);
+    // Продавців сповіщаємо після схвалення (AdminService.approveRequest), а не при створенні
 
     return request;
   }
@@ -147,6 +151,7 @@ export class RequestsService {
   async findAllByProfileId(
     dto: GetRequestsDto,
     profileId: string,
+    viewerProfileId?: string,
   ): Promise<PaginationResult<FormattedRequest>> {
     const page = PaginationUtil.normalizePage(dto.page);
     const pageSize = PaginationUtil.normalizePageSize(dto.pageSize);
@@ -158,6 +163,15 @@ export class RequestsService {
 
     if (dto.status) {
       query.status = dto.status;
+    }
+
+    // Запити на модерації/відхилені бачить лише їхній автор
+    if (viewerProfileId !== profileId) {
+      query.status = dto.status
+        ? UNMODERATED_STATUSES.includes(dto.status)
+          ? { $in: [] }
+          : dto.status
+        : { $nin: UNMODERATED_STATUSES };
     }
 
     if (dto.search) {
@@ -209,7 +223,12 @@ export class RequestsService {
     const query: FilterQuery<RequestDocument> = {};
 
     // Default to active requests if no status specified
-    if (!dto.status) {
+    // Публічний список ніколи не показує запити на модерації та відхилені
+    if (
+      !dto.status ||
+      dto.status === RequestStatus.PENDING ||
+      dto.status === RequestStatus.REJECTED
+    ) {
       query.status = RequestStatus.ACTIVE;
     } else {
       query.status = dto.status;
@@ -329,8 +348,21 @@ export class RequestsService {
     return request as unknown as PopulatedRequestDocument;
   }
 
-  async getById(id: string): Promise<FormattedRequest> {
+  async getById(id: string, viewerProfileId?: string): Promise<FormattedRequest> {
     const request = await this.findOne(id);
+
+    if (UNMODERATED_STATUSES.includes(request.status)) {
+      const buyer = request.buyerId as unknown as { _id?: Types.ObjectId };
+      const ownerId = buyer?._id?.toString();
+      if (!viewerProfileId || viewerProfileId !== ownerId) {
+        throw new NotFoundException(
+          this.i18n.t('common.requests.request_not_found', {
+            lang: I18nContext.current()?.lang,
+            args: { id },
+          }),
+        );
+      }
+    }
 
     const [pendingCount, rejectedCount] = await Promise.all([
       this.proposalModel.countDocuments({
@@ -373,6 +405,9 @@ export class RequestsService {
       ...request,
       category: undefined,
     };
+    // Службова інформація модерації не віддається клієнтам
+    delete (formatted as { moderationLog?: unknown }).moderationLog;
+    delete (formatted as { moderatedBy?: unknown }).moderatedBy;
 
     if (request.buyerId && '_id' in request.buyerId) {
       formatted.buyerId = request.buyerId;

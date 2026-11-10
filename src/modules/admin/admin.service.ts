@@ -1,6 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, FilterQuery } from 'mongoose';
+import { Model, FilterQuery, Types } from 'mongoose';
 import { Account, AccountDocument } from '../../database/schemas/account.schema';
 import { Profile, ProfileDocument } from '../../database/schemas/profile.schema';
 import { Request, RequestDocument, RequestStatus } from '../../database/schemas/request.schema';
@@ -9,9 +15,21 @@ import { Report, ReportDocument, ReportStatus } from '../../database/schemas/rep
 import { NotificationsService } from '../notifications/notifications.service';
 import { RequestsService } from '../requests/requests.service';
 import { NotificationType } from '../../database/schemas/notification.schema';
+import {
+  BulkModerationDto,
+  ListModerationRequestsDto,
+  REJECTION_REASON_MIN,
+} from './dto/moderation.dto';
+
+type ModerationRequestLean = Omit<Request, 'buyerId' | 'category'> & {
+  buyerId?: unknown;
+  category?: unknown;
+};
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectModel(Account.name) private accountModel: Model<AccountDocument>,
     @InjectModel(Profile.name) private profileModel: Model<ProfileDocument>,
@@ -57,66 +75,226 @@ export class AdminService {
     };
   }
 
-  async approveRequest(id: string) {
-    const request = await this.requestModel.findById(id).exec();
-    if (!request) {
-      return { success: false, message: 'Request not found' };
-    }
+  // ───────────── Модерація запитів ─────────────
 
-    const wasActive = request.status === RequestStatus.ACTIVE;
-    await this.requestModel.updateOne({ _id: id }, { status: RequestStatus.ACTIVE }).exec();
+  private static readonly APPROVABLE_FROM = [RequestStatus.PENDING, RequestStatus.REJECTED];
+  private static readonly REJECTABLE_FROM = [RequestStatus.PENDING, RequestStatus.ACTIVE];
 
-    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
-    if (buyerProfile) {
-      await this.notificationsService.dispatch({
-        type: NotificationType.REQUEST_APPROVED,
-        accountId: buyerProfile.accountId.toString(),
-        profileId: buyerProfile._id.toString(),
-        metadata: {
-          requestId: id,
-          requestTitle: request.title,
-        },
-        link: `/request/${id}`,
-      });
-    }
-
-    if (!wasActive) {
-      request.status = RequestStatus.ACTIVE;
-      await this.requestsService.notifySellersAboutNewRequest(request);
-    }
-
-    return { success: true, message: 'Request approved' };
+  private formatModerationItem(request: ModerationRequestLean, withLog = false) {
+    const buyer = request.buyerId as
+      | { _id: Types.ObjectId; name?: string; lastName?: string; accountId?: { email?: string } }
+      | undefined;
+    const category = request.category as
+      | { _id: Types.ObjectId; translations?: Record<string, { title?: string }> }
+      | undefined;
+    return {
+      id: request._id.toString(),
+      title: request.title,
+      description: request.description,
+      budgetMin: request.budgetMin,
+      budgetMax: request.budgetMax,
+      urgency: request.urgency,
+      location: request.location,
+      images: request.images ?? [],
+      status: request.status,
+      createdAt: request.createdAt,
+      moderatedAt: request.moderatedAt ?? null,
+      moderatedBy: request.moderatedBy ?? null,
+      rejectionReason: request.rejectionReason ?? null,
+      buyer: buyer
+        ? {
+            id: buyer._id.toString(),
+            name: [buyer.name, buyer.lastName].filter(Boolean).join(' '),
+            email: buyer.accountId?.email ?? null,
+          }
+        : null,
+      category: category
+        ? {
+            id: category._id.toString(),
+            title: category.translations?.uk?.title ?? category.translations?.en?.title ?? '',
+          }
+        : null,
+      ...(withLog ? { moderationLog: request.moderationLog ?? [] } : {}),
+    };
   }
 
-  async rejectRequest(id: string, reason: string) {
-    const request = await this.requestModel.findById(id).exec();
-    if (!request) {
-      return { success: false, message: 'Request not found' };
+  private moderationPopulate = [
+    {
+      path: 'buyerId',
+      select: 'name lastName',
+      populate: { path: 'accountId', select: 'email' },
+    },
+    { path: 'category', select: 'translations' },
+  ];
+
+  async listModerationRequests(dto: ListModerationRequestsDto) {
+    const page = Math.max(1, Math.floor(dto.page || 1));
+    const pageSize = Math.min(100, Math.max(1, Math.floor(dto.pageSize || 20)));
+    const status = dto.status ?? 'pending';
+
+    const query: FilterQuery<RequestDocument> = {};
+    if (status !== 'all') query.status = status as RequestStatus;
+    else
+      query.status = { $in: [RequestStatus.PENDING, RequestStatus.ACTIVE, RequestStatus.REJECTED] };
+    const q = dto.q?.trim();
+    if (q) query.title = { $regex: q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
+
+    // Черга: найстаріші першими; історія: щойно промодеровані зверху
+    const sort: Record<string, 1 | -1> =
+      status === 'pending' ? { createdAt: 1 } : { moderatedAt: -1, createdAt: -1 };
+
+    const [results, count, grouped] = await Promise.all([
+      this.requestModel
+        .find(query)
+        .populate(this.moderationPopulate)
+        .sort(sort)
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .lean()
+        .exec() as unknown as Promise<ModerationRequestLean[]>,
+      this.requestModel.countDocuments(query).exec(),
+      this.requestModel
+        .aggregate([
+          {
+            $match: {
+              status: {
+                $in: [RequestStatus.PENDING, RequestStatus.ACTIVE, RequestStatus.REJECTED],
+              },
+            },
+          },
+          { $group: { _id: '$status', count: { $sum: 1 } } },
+        ])
+        .exec() as Promise<{ _id: string; count: number }[]>,
+    ]);
+
+    const counts = { pending: 0, active: 0, rejected: 0 };
+    for (const g of grouped) {
+      if (g._id in counts) counts[g._id as keyof typeof counts] = g.count;
     }
 
-    await this.requestModel
-      .updateOne(
-        { _id: id },
-        { status: RequestStatus.REJECTED, rejectionReason: reason },
-        { strict: false },
+    return {
+      count,
+      page,
+      pageSize,
+      counts,
+      results: results.map((r) => this.formatModerationItem(r)),
+    };
+  }
+
+  async getModerationRequest(id: string) {
+    const request = (await this.requestModel
+      .findById(id)
+      .populate(this.moderationPopulate)
+      .lean()
+      .exec()) as unknown as ModerationRequestLean | null;
+    if (!request) throw new NotFoundException('Request not found');
+    return this.formatModerationItem(request, true);
+  }
+
+  /** Схвалення: pending/rejected → active. Атомарно, щоб два модератори не обробили запит двічі. */
+  async approveRequest(id: string, adminLogin = 'admin') {
+    const now = new Date();
+    const request = await this.requestModel
+      .findOneAndUpdate(
+        { _id: id, status: { $in: AdminService.APPROVABLE_FROM } },
+        {
+          $set: { status: RequestStatus.ACTIVE, moderatedAt: now, moderatedBy: adminLogin },
+          $unset: { rejectionReason: '' },
+          $push: { moderationLog: { action: 'approved', by: adminLogin, at: now } },
+        },
+        { new: true },
       )
       .exec();
 
-    const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
-    if (buyerProfile) {
+    if (!request) await this.throwModerationError(id, 'approve');
+
+    await this.notifyBuyer(request!, NotificationType.REQUEST_APPROVED);
+    try {
+      await this.requestsService.notifySellersAboutNewRequest(request!);
+    } catch (error) {
+      this.logger.error(`Failed to notify sellers about request ${id}`, error as Error);
+    }
+    return { success: true, message: 'Request approved' };
+  }
+
+  /** Відхилення: pending/active → rejected з обов'язковою причиною. */
+  async rejectRequest(id: string, reason: string, adminLogin = 'admin') {
+    const trimmed = reason?.trim();
+    if (!trimmed || trimmed.length < REJECTION_REASON_MIN) {
+      throw new BadRequestException('Rejection reason is required');
+    }
+    const now = new Date();
+    const request = await this.requestModel
+      .findOneAndUpdate(
+        { _id: id, status: { $in: AdminService.REJECTABLE_FROM } },
+        {
+          $set: {
+            status: RequestStatus.REJECTED,
+            rejectionReason: trimmed,
+            moderatedAt: now,
+            moderatedBy: adminLogin,
+          },
+          $push: {
+            moderationLog: { action: 'rejected', reason: trimmed, by: adminLogin, at: now },
+          },
+        },
+        { new: true },
+      )
+      .exec();
+
+    if (!request) await this.throwModerationError(id, 'reject');
+
+    await this.notifyBuyer(request!, NotificationType.REQUEST_REJECTED, trimmed);
+    return { success: true, message: 'Request rejected' };
+  }
+
+  /** Масова дія: кожен запит обробляється окремо, помилка одного не зупиняє решту. */
+  async bulkModerate(dto: BulkModerationDto, adminLogin = 'admin') {
+    const ids = Array.from(new Set(dto.ids));
+    const succeeded: string[] = [];
+    const failed: { id: string; error: string }[] = [];
+    for (const id of ids) {
+      try {
+        if (dto.action === 'approve') await this.approveRequest(id, adminLogin);
+        else await this.rejectRequest(id, dto.reason ?? '', adminLogin);
+        succeeded.push(id);
+      } catch (error) {
+        failed.push({ id, error: error instanceof Error ? error.message : 'Unknown error' });
+      }
+    }
+    return { succeeded, failed };
+  }
+
+  private async throwModerationError(id: string, action: 'approve' | 'reject'): Promise<never> {
+    const exists = await this.requestModel.exists({ _id: id }).exec();
+    if (!exists) throw new NotFoundException('Request not found');
+    throw new ConflictException(
+      `Request cannot be ${action === 'approve' ? 'approved' : 'rejected'} in its current status`,
+    );
+  }
+
+  private async notifyBuyer(request: RequestDocument, type: NotificationType, reason?: string) {
+    try {
+      const buyerProfile = await this.profileModel.findById(request.buyerId).exec();
+      if (!buyerProfile) return;
       await this.notificationsService.dispatch({
-        type: NotificationType.REQUEST_REJECTED,
+        type,
         accountId: buyerProfile.accountId.toString(),
         profileId: buyerProfile._id.toString(),
         metadata: {
-          requestId: id,
+          requestId: request._id.toString(),
           requestTitle: request.title,
+          ...(reason ? { reason } : {}),
         },
-        link: `/request/${id}`,
+        link: `/request/${request._id.toString()}`,
       });
+    } catch (error) {
+      // Збій сповіщення не повинен скасовувати вже виконану модерацію
+      this.logger.error(
+        `Failed to notify buyer about request ${request._id.toString()}`,
+        error as Error,
+      );
     }
-
-    return { success: true, message: 'Request rejected' };
   }
 
   async getPendingProposals(page?: number, pageSize?: number) {

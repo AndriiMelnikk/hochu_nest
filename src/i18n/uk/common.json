@@ -102,7 +102,7 @@
       },
       "request_rejected": {
         "title": "Запит відхилено",
-        "message": "Ваш запит \"{requestTitle}\" відхилено модератором"
+        "message": "Ваш запит \"{requestTitle}\" відхилено модератором. Причина: {reason}"
       },
       "new_request_in_category": {
         "title": "Новий запит",

@@ -102,7 +102,7 @@
       },
       "request_rejected": {
         "title": "Request rejected",
-        "message": "Your request \"{requestTitle}\" was rejected by a moderator"
+        "message": "Your request \"{requestTitle}\" was rejected by a moderator. Reason: {reason}"
       },
       "new_request_in_category": {
         "title": "New request",
